@@ -159,14 +159,14 @@ export const SCHEME_DB = [
   {
     id: "vriddhapension",
     icon: "👴", color: "#D97706", scope: "national",
-    ministry: { en: "Ministry of Social Justice", hi: "सामाजिक न्याय मंत्रालय" },
-    name:    { en: "National Old Age Pension (NOAPS)", hi: "राष्ट्रीय वृद्धावस्था पेंशन" },
-    benefit: { en: "₹200–₹500/month pension",          hi: "₹200–₹500/माह पेंशन" },
-    tag:     { en: "Senior Citizen", hi: "वरिष्ठ" },
+    ministry: { en: "Ministry of Rural Development (NSAP)", hi: "ग्रामीण विकास मंत्रालय (NSAP)" },
+    name:    { en: "Indira Gandhi National Old Age Pension (IGNOAPS)", hi: "इंदिरा गांधी राष्ट्रीय वृद्धावस्था पेंशन" },
+    benefit: { en: "₹200–₹500/month pension for BPL senior citizens (60+)", hi: "BPL वरिष्ठ नागरिकों (60+) को ₹200–₹500/माह पेंशन" },
+    tag:     { en: "Senior / Pension", hi: "वरिष्ठ / पेंशन" },
     annual: 3600,
     apply:   { en: "nsap.nic.in", hi: "nsap.nic.in" }, applyType: "online",
-    docs:    { en: ["Aadhaar Card","Age Proof","BPL Certificate","Bank Account"],
-               hi: ["आधार कार्ड","आयु प्रमाण","बीपीएल प्रमाण","बैंक खाता"] },
+    docs:    { en: ["Aadhaar Card","Age Proof (60+)","BPL Certificate","Bank Account"],
+               hi: ["आधार कार्ड","आयु प्रमाण (60+)","बीपीएल प्रमाण","बैंक खाता"] },
     match: (a) => (a.who === "senior" || a.age === "above60") && ["below1","1to3"].includes(a.income),
   },
 
@@ -512,20 +512,6 @@ export const SCHEME_DB = [
     docs:    { en: ["School Enrollment Certificate","Aadhaar Card (child)"],
                hi: ["स्कूल नामांकन प्रमाण पत्र","आधार कार्ड (बच्चे का)"] },
     match: (a) => a.who === "student" && ["below1","1to3"].includes(a.income),
-  },
-
-  {
-    id: "ignoaps",
-    icon: "👴", color: "#B45309", scope: "national",
-    ministry: { en: "Ministry of Rural Development", hi: "ग्रामीण विकास मंत्रालय" },
-    name:    { en: "Indira Gandhi National Old Age Pension (IGNOAPS)", hi: "इंदिरा गांधी राष्ट्रीय वृद्धावस्था पेंशन" },
-    benefit: { en: "₹200–₹500/month pension for BPL senior citizens (60+)", hi: "BPL वरिष्ठ नागरिकों (60+) को ₹200–₹500/माह पेंशन" },
-    tag:     { en: "Senior / Pension", hi: "वरिष्ठ / पेंशन" },
-    annual: 3600,
-    apply:   { en: "nsap.nic.in", hi: "nsap.nic.in" }, applyType: "online",
-    docs:    { en: ["Aadhaar Card","BPL Certificate","Age Proof (60+)","Bank Account"],
-               hi: ["आधार कार्ड","BPL प्रमाण पत्र","आयु प्रमाण (60+)","बैंक खाता"] },
-    match: (a) => (a.who === "senior" || a.age === "above60") && ["below1","1to3"].includes(a.income),
   },
 
   {
@@ -1139,19 +1125,43 @@ export const CATEGORIES = {
 // Helper: get schemes matching a category filterKey
 // Usage: getSchemesForCategory("farmer")
 export function getSchemesForCategory(filterKey) {
+  // Housing: both national and state schemes matched by tag
   if (filterKey === "housing") {
-    // Housing doesn't map to "who" — filter by tag instead
     return SCHEME_DB.filter(s =>
       s.tag.en.toLowerCase().includes("housing") ||
       s.tag.en.toLowerCase().includes("awas")
     );
   }
+
+  // Tag keywords used to match state schemes, which can't use s.match()
+  // (state schemes require a.state === "X", so match() always returns false with state:"")
+  const STATE_TAG_KEYWORDS = {
+    farmer:   ["farmer", "kisan", "rythu", "shetkari", "kalia", "krishi"],
+    student:  ["student", "education", "scholarship", "merit"],
+    women:    ["women", "girl", "widow", "maternity", "shg", "naari", "marriage"],
+    senior:   ["senior", "pension", "old age"],
+    business: ["business", "artisan", "vendor", "entrepreneur"],
+  };
+  const stateKeywords = STATE_TAG_KEYWORDS[filterKey] || [];
+
   if (filterKey === "senior") {
-    return SCHEME_DB.filter(s => s.match({ who: "senior", income: "below1", age: "above60", area: "rural", house: "yes", state: "" }));
+    return SCHEME_DB.filter(s => {
+      if (s.scope === "national") {
+        return s.match({ who: "senior", income: "below1", age: "above60", area: "rural", house: "yes", state: "" });
+      }
+      const tagLower = s.tag.en.toLowerCase();
+      return stateKeywords.some(kw => tagLower.includes(kw));
+    });
   }
-  return SCHEME_DB.filter(s =>
-    s.match({ who: filterKey, income: "below1", age: "18to35", area: "rural", house: "yes", state: "" })
-  );
+
+  return SCHEME_DB.filter(s => {
+    if (s.scope === "national") {
+      return s.match({ who: filterKey, income: "below1", age: "18to35", area: "rural", house: "yes", state: "" });
+    }
+    // State schemes: match by tag keyword instead of s.match()
+    const tagLower = s.tag.en.toLowerCase();
+    return stateKeywords.some(kw => tagLower.includes(kw));
+  });
 }
 
 
