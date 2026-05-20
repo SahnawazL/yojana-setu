@@ -340,7 +340,7 @@ function FollowUpChips({ chips, onTap, lang, dark }) {
   return (
     <div className="chips-container" style={{
       display:"flex", flexWrap:"wrap", gap:8,
-      paddingLeft:40, marginTop:-6, marginBottom:14,
+      paddingLeft:34, marginTop:-6, marginBottom:14,
     }}>
       {chips.map((chip, i) => (
         <div key={i} onClick={() => handleChipTap(chip, i)}
@@ -374,16 +374,16 @@ function ChatBubble({ msg, lang, dark }) {
   const isUser = msg.role === "user";
   return (
     <div className={isUser ? "ai-msg-bubble-user" : "ai-msg-bubble-ai"}
-      style={{ display:"flex", flexDirection:isUser?"row-reverse":"row", alignItems:"flex-end", gap:8, marginBottom:14 }}>
+      style={{ display:"flex", flexDirection:isUser?"row-reverse":"row", alignItems:"flex-end", gap:6, marginBottom:14 }}>
       {!isUser && (
         <div style={{
-          width:32, height:32, borderRadius:"50%", flexShrink:0,
+          width:28, height:28, borderRadius:"50%", flexShrink:0,
           background:"linear-gradient(135deg,#FF9933 0%,#003580 100%)",
-          display:"flex", alignItems:"center", justifyContent:"center", fontSize:14,
+          display:"flex", alignItems:"center", justifyContent:"center", fontSize:13,
         }}>🤖</div>
       )}
       <div style={{
-        maxWidth:"76%",
+        maxWidth:"88%",
         background: isUser ? "linear-gradient(135deg,#003580,#1a56db)" : th.card,
         color: isUser ? "#fff" : th.text,
         borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
@@ -645,7 +645,7 @@ export default function AIChat({ lang="en", dark=false }) {
       </div>
 
       {/* MESSAGES AREA */}
-      <div style={{ flex:1, overflowY:"auto", padding:"18px 16px 6px", WebkitOverflowScrolling:"touch" }}>
+      <div style={{ flex:1, overflowY:"auto", padding:"18px 10px 6px", WebkitOverflowScrolling:"touch" }}>
         {messages.length === 0 && !loading && (
           <WelcomeScreen lang={lang} dark={dark} onSuggest={handleSend} />
         )}
