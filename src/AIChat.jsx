@@ -40,47 +40,8 @@ const SUGGESTED = {
   ],
 };
 
-// ─── FOLLOW-UP CHIPS ───────────────────────────────────────────────────────────
-const FOLLOWUPS = {
-  en: {
-    farmer:   ["How to apply for PM Kisan?", "Documents needed?", "Check payment status?"],
-    housing:  ["How to apply for PMAY?",     "Documents needed?", "Am I eligible?"],
-    women:    ["How to apply for Ujjwala?",  "Documents needed?", "Beti Bachao eligibility?"],
-    student:  ["How to apply for scholarship?", "Documents needed?", "Last date to apply?"],
-    business: ["How to apply for Mudra loan?",  "Documents needed?", "How much loan can I get?"],
-    health:   ["How to get Ayushman card?",  "Which hospitals covered?", "Documents needed?"],
-    senior:   ["How to apply for pension?",  "Documents needed?",  "How much pension per month?"],
-    default:  ["How to check eligibility?",  "Documents needed?",  "How to apply online?"],
-  },
-  hi: {
-    farmer:   ["पीएम किसान के लिए आवेदन?", "जरूरी दस्तावेज?",    "पेमेंट स्टेटस कैसे देखें?"],
-    housing:  ["पीएम आवास के लिए आवेदन?", "जरूरी दस्तावेज?",    "क्या मैं पात्र हूं?"],
-    women:    ["उज्ज्वला योजना आवेदन?",    "जरूरी दस्तावेज?",    "बेटी बचाओ पात्रता?"],
-    student:  ["छात्रवृत्ति के लिए आवेदन?", "जरूरी दस्तावेज?",   "आवेदन की अंतिम तिथि?"],
-    business: ["मुद्रा लोन के लिए आवेदन?", "जरूरी दस्तावेज?",    "कितना लोन मिलेगा?"],
-    health:   ["आयुष्मान कार्ड कैसे बनाएं?", "कौन से अस्पताल?",  "जरूरी दस्तावेज?"],
-    senior:   ["पेंशन के लिए आवेदन?",      "जरूरी दस्तावेज?",    "कितनी पेंशन मिलेगी?"],
-    default:  ["पात्रता कैसे जांचें?",      "जरूरी दस्तावेज?",    "ऑनलाइन आवेदन कैसे करें?"],
-  },
-};
-
-const TOPIC_KEYWORDS = {
-  farmer:   ["farmer","kisan","kheti","krishi","pm kisan","pmkisan"],
-  housing:  ["house","housing","awas","ghar","pmay","makaan"],
-  women:    ["women","woman","mahila","beti","ujjwala","ladki"],
-  student:  ["student","scholarship","education","padhai","shiksha"],
-  business: ["business","loan","mudra","vyapar","udyog","rozgar"],
-  health:   ["health","hospital","ayushman","swasthya","ilaaj"],
-  senior:   ["senior","pension","old age","budhapa","vridh","bujurg"],
-};
-
-function getFollowUps(query, lang) {
-  const q = query.toLowerCase();
-  const topic = Object.keys(TOPIC_KEYWORDS).find(t =>
-    TOPIC_KEYWORDS[t].some(kw => q.includes(kw))
-  ) || "default";
-  return FOLLOWUPS[lang]?.[topic] || FOLLOWUPS["en"][topic];
-}
+// Follow-up chips are now AI-generated per response (see groqClient.js → parseResponse)
+// No static chip tables needed here anymore.
 
 const GLOBAL_CSS = `
 @keyframes bubble-in {
@@ -392,9 +353,9 @@ export default function AIChat({ lang="en", dark=false }) {
 
     setInput("");
     setError("");
-    setFollowUps([]);  // clear chips on new message
+    setFollowUps([]);  // clear chips while AI thinks
 
-    // If triggered by a chip tap, mark it used so it never reappears
+    // Track chips the user has already tapped so they don't reappear
     const nextUsedChips = overrideText
       ? new Set([...usedChips, overrideText])
       : usedChips;
@@ -406,18 +367,16 @@ export default function AIChat({ lang="en", dark=false }) {
     setLoading(true);
 
     try {
-      const reply = await sendMessage(
+      // sendMessage now returns { reply, followUps } — chips are AI-generated
+      const { reply, followUps: aiChips } = await sendMessage(
         nextMessages.map(m => ({ role:m.role, content:m.content })),
         query,
-        lang,  // ✅ forces AI to respond in app's selected language
+        lang,
       );
       setMessages(prev => [...prev, { role:"assistant", content:reply }]);
-      // Filter out chips the user has already tapped
-      const allChips = getFollowUps(query, lang);
-      const freshChips = allChips.filter(c => !nextUsedChips.has(c));
-      setFollowUps(freshChips);
+      // Filter out any chip the user has already tapped in this session
+      setFollowUps(aiChips.filter(c => !nextUsedChips.has(c)));
     } catch (err) {
-      // ✅ Show the ACTUAL error so you can see what's really going wrong
       setError(`❌ ${err.message || (isHindi ? "जवाब नहीं मिला। दोबारा कोशिश करें।" : "Could not get response. Please try again.")}`);
     } finally {
       setLoading(false);

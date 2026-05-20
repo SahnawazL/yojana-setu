@@ -113,9 +113,19 @@ function buildSystemPrompt(lang) {
     ? "- ALWAYS reply in Hindi (हिंदी) only. No exceptions, even if user writes in English."
     : "- ALWAYS reply in English only. No exceptions, even if user writes in Hindi.";
 
-  const followUp = lang === "hi"
-    ? "- अंत में पूछें: \"कोई और सवाल?\""
-    : "- End with: \"Want to know how to apply?\"";
+  const chipsRule = lang === "hi"
+    ? `- अपने जवाब के एकदम अंत में, एक नई लाइन पर, यह लिखें (JSON array, हिंदी में):
+CHIPS:["सवाल 1","सवाल 2","सवाल 3"]
+- ये 3 chips वही होने चाहिए जो user सबसे ज्यादा पूछना चाहेगा — आपके जवाब के context में
+- हर chip 4-6 शब्दों में छोटी और सटीक हो
+- अगर सवाल योजनाओं से बिल्कुल असंबंधित था (जैसे "हाय", "कैसे हो"), तो chips इस तरह दें:
+CHIPS:["किसान योजनाएं बताएं","छात्रवृत्ति कैसे मिलेगी?","आयुष्मान कार्ड कैसे बनाएं?"]`
+    : `- At the very END of your response, on a new line, append (valid JSON array):
+CHIPS:["question 1","question 2","question 3"]
+- These 3 chips must be the most useful follow-up questions a user would naturally ask next, based on YOUR answer's content
+- Keep each chip short: 4–7 words, specific and actionable
+- If the user's message was off-topic (e.g. "hi", "where are you"), return helpful starter chips:
+CHIPS:["Schemes for farmers","Check my eligibility","How to apply online?"]`;
 
   return `You are YojanaSetu AI — a friendly assistant for Indian government schemes.
 
@@ -129,13 +139,38 @@ ${langRule}
 - Do NOT use markdown — no ** asterisks**, no # headers, no backticks
 - For scheme names use plain text only
 - For steps, use numbered list (1. 2. 3.)
-${followUp}
+${chipsRule}
 
 RELEVANT SCHEMES FOR THIS QUERY:
 `;
 }
 
+// ─── PARSE AI RESPONSE → { reply, followUps } ────────────────────────────────
+function parseResponse(raw) {
+  // Extract CHIPS:[...] from the end of the response
+  const chipsMatch = raw.match(/CHIPS:\s*(\[[\s\S]*?\])\s*$/m);
+  let followUps = [];
+  let reply = raw;
+
+  if (chipsMatch) {
+    try {
+      followUps = JSON.parse(chipsMatch[1]);
+      // Remove the CHIPS line from the visible reply
+      reply = raw.slice(0, chipsMatch.index).trim();
+    } catch {
+      // JSON parse failed — just strip the CHIPS line and show no chips
+      reply = raw.replace(/CHIPS:\s*\[[\s\S]*?\]\s*$/m, "").trim();
+    }
+  }
+
+  // Sanitise: keep only strings, dedupe, max 3
+  followUps = [...new Set(followUps.filter(c => typeof c === "string" && c.trim()))].slice(0, 3);
+
+  return { reply, followUps };
+}
+
 // ─── MAIN EXPORT: sendMessage ─────────────────────────────────────────────────
+// Returns { reply: string, followUps: string[] }
 export async function sendMessage(conversationHistory, userQuery, lang = "en") {
   // Build context with ONLY relevant schemes for this query
   const smartContext = buildSmartContext(userQuery, lang);
@@ -145,7 +180,7 @@ export async function sendMessage(conversationHistory, userQuery, lang = "en") {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model:       MODEL,
-      max_tokens:  400,        // Enough for mobile-friendly answers
+      max_tokens:  450,        // +50 tokens to accommodate the CHIPS line
       temperature: 0.6,
       messages: [
         { role: "system", content: buildSystemPrompt(lang) + smartContext },
@@ -160,5 +195,5 @@ export async function sendMessage(conversationHistory, userQuery, lang = "en") {
   }
 
   const data = await res.json();
-  return data.choices[0].message.content.trim();
+  return parseResponse(data.choices[0].message.content.trim());
 }
