@@ -87,27 +87,62 @@ const GLOBAL_CSS = `
   from { opacity:0; transform:translateY(10px); }
   to   { opacity:1; transform:translateY(0); }
 }
-@keyframes dot-bounce {
-  0%,80%,100% { transform:scale(0.55); opacity:0.35; }
-  40%          { transform:scale(1);    opacity:1; }
+@keyframes bubble-in-user {
+  from { opacity:0; transform:translateX(12px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+@keyframes bubble-in-ai {
+  from { opacity:0; transform:translateX(-12px); }
+  to   { opacity:1; transform:translateX(0); }
 }
 @keyframes fade-in {
   from { opacity:0; }
   to   { opacity:1; }
 }
-.ai-msg-bubble { animation: bubble-in 0.22s ease-out; }
+@keyframes chip-out {
+  0%   { opacity:1;   transform:scale(1); }
+  55%  { opacity:0.2; transform:scale(0.82); }
+  100% { opacity:0;   transform:scale(0.68); }
+}
+@keyframes chip-in {
+  from { opacity:0; transform:translateX(-10px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -300% center; }
+  100% { background-position:  300% center; }
+}
+@keyframes focus-glow {
+  0%,100% { box-shadow: 0 0 0 3px rgba(255,153,51,0.15); }
+  50%      { box-shadow: 0 0 0 4px rgba(255,153,51,0.28); }
+}
+@keyframes avatar-pulse {
+  0%,100% { transform: scale(1); }
+  50%      { transform: scale(1.12); }
+}
+.ai-msg-bubble      { animation: bubble-in 0.22s ease-out; }
+.ai-msg-bubble-user { animation: bubble-in-user 0.22s ease-out; }
+.ai-msg-bubble-ai   { animation: bubble-in-ai 0.22s ease-out; }
 .ai-suggested:active { opacity:0.7; transform:scale(0.98); }
 .ai-send-btn:active  { opacity:0.85; transform:scale(0.95); }
-.ai-textarea:focus   { outline:none; }
+.ai-textarea:focus   { outline:none; box-shadow: 0 0 0 3px rgba(255,153,51,0.2); animation: focus-glow 2s ease-in-out infinite; }
+.ai-avatar-pulse     { animation: avatar-pulse 1.4s ease-in-out infinite; }
 `;
 
 function TypingIndicator({ dark }) {
   const th = THEME[dark ? "dark" : "light"];
+  const shimmerBg = dark
+    ? "linear-gradient(90deg, #2c2c2e 25%, #3a3a3c 50%, #2c2c2e 75%)"
+    : "linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)";
+  const shimmerBase = {
+    backgroundSize: "300% 100%",
+    animation: "shimmer 1.6s ease-in-out infinite",
+    borderRadius: 6,
+  };
   return (
     <div className="ai-msg-bubble"
       style={{ display:"flex", alignItems:"flex-end", gap:8, marginBottom:14 }}>
-      <style>{GLOBAL_CSS}</style>
-      <div style={{
+      <div className="ai-avatar-pulse" style={{
         width:32, height:32, borderRadius:"50%", flexShrink:0,
         background:"linear-gradient(135deg,#FF9933 0%,#003580 100%)",
         display:"flex", alignItems:"center", justifyContent:"center", fontSize:14,
@@ -116,17 +151,14 @@ function TypingIndicator({ dark }) {
         background: th.card,
         border:`1.5px solid ${th.border2}`,
         borderRadius:"18px 18px 18px 4px",
-        padding:"13px 18px",
+        padding:"14px 18px",
         boxShadow: dark ? "0 2px 10px rgba(0,0,0,0.3)" : "0 2px 10px rgba(0,0,0,0.07)",
-        display:"flex", gap:5, alignItems:"center",
+        display:"flex", flexDirection:"column", gap:9,
+        minWidth:160,
       }}>
-        {[0,1,2].map(i => (
-          <div key={i} style={{
-            width:7, height:7, borderRadius:"50%",
-            background:"#FF9933",
-            animation:`dot-bounce 1.3s ease-in-out ${i*0.18}s infinite`,
-          }}/>
-        ))}
+        <div style={{ height:11, width:"72%", background:shimmerBg, ...shimmerBase }} />
+        <div style={{ height:11, width:"45%", background:shimmerBg, ...shimmerBase,
+          animationDelay:"0.2s" }} />
       </div>
     </div>
   );
@@ -185,6 +217,14 @@ function renderContent(text, isUser, th) {
 function FollowUpChips({ chips, onTap, lang, dark }) {
   const th = THEME[dark ? "dark" : "light"];
   const bf = fontFamily(lang);
+  const [exitingIdx, setExitingIdx] = useState(null);
+
+  const handleChipTap = (chip, i) => {
+    if (exitingIdx !== null) return; // ignore taps while one is animating out
+    setExitingIdx(i);
+    setTimeout(() => onTap(chip), 270); // fire after animation completes
+  };
+
   return (
     <div style={{
       display:"flex", flexWrap:"wrap", gap:8,
@@ -192,19 +232,24 @@ function FollowUpChips({ chips, onTap, lang, dark }) {
       animation:"bubble-in 0.25s ease-out",
     }}>
       {chips.map((chip, i) => (
-        <div key={i} onClick={() => onTap(chip)}
+        <div key={i} onClick={() => handleChipTap(chip, i)}
           style={{
             background: th.card,
             border:`1.5px solid #FF9933`,
             borderRadius:20,
             padding:"7px 13px",
             fontSize:12, fontFamily:bf, color:"#FF9933",
-            cursor:"pointer", fontWeight:600,
+            cursor: exitingIdx !== null ? "default" : "pointer",
+            fontWeight:600,
             boxShadow:"0 1px 4px rgba(255,153,51,0.15)",
-            transition:"opacity 0.15s, transform 0.15s",
+            animation: exitingIdx === i
+              ? "chip-out 0.27s ease-in forwards"
+              : `chip-in 0.25s ease-out ${i * 0.07}s both`,
+            opacity: exitingIdx !== null && exitingIdx !== i ? 0.35 : 1,
+            transition: exitingIdx !== null && exitingIdx !== i
+              ? "opacity 0.22s ease-out"
+              : "opacity 0.15s, transform 0.15s",
           }}
-          onTouchStart={e => e.currentTarget.style.opacity="0.7"}
-          onTouchEnd={e => e.currentTarget.style.opacity="1"}
         >
           {chip}
         </div>
@@ -218,7 +263,7 @@ function ChatBubble({ msg, lang, dark }) {
   const bf  = fontFamily(lang);
   const isUser = msg.role === "user";
   return (
-    <div className="ai-msg-bubble"
+    <div className={isUser ? "ai-msg-bubble-user" : "ai-msg-bubble-ai"}
       style={{
         display:"flex",
         flexDirection: isUser ? "row-reverse" : "row",
@@ -263,7 +308,6 @@ function WelcomeScreen({ lang, dark, onSuggest }) {
   const isHindi = lang === "hi";
   return (
     <div style={{ animation:"fade-in 0.3s ease-out", paddingBottom:8 }}>
-      <style>{GLOBAL_CSS}</style>
       <div style={{ display:"flex", alignItems:"flex-end", gap:8, marginBottom:20 }}>
         <div style={{
           width:32, height:32, borderRadius:"50%", flexShrink:0,
@@ -316,7 +360,7 @@ function WelcomeScreen({ lang, dark, onSuggest }) {
   );
 }
 
-export default function AIChat({ lang="en", dark=false, profile=null }) {
+export default function AIChat({ lang="en", dark=false }) {
   const th      = THEME[dark ? "dark" : "light"];
   const bf      = fontFamily(lang);
   const isHindi = lang === "hi";
@@ -378,14 +422,14 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
     } finally {
       setLoading(false);
     }
-  }, [input, messages, loading, isHindi, usedChips]);
+  }, [input, messages, loading, isHindi, lang, usedChips]);
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = useCallback((e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
-  };
+  }, [handleSend]);
 
   const canSend = input.trim().length > 0 && !loading;
 
@@ -399,10 +443,13 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
 
       {/* HEADER */}
       <div style={{
-        background:"linear-gradient(135deg,#FF9933 0%,#FF8000 35%,#003580 100%)",
+        background:"linear-gradient(135deg,rgba(255,153,51,0.82) 0%,rgba(255,128,0,0.78) 35%,rgba(0,53,128,0.85) 100%)",
+        backdropFilter:"blur(20px)",
+        WebkitBackdropFilter:"blur(20px)",
         padding:"18px 20px 22px",
         flexShrink:0,
-        boxShadow:"0 4px 20px rgba(0,53,128,0.2)",
+        boxShadow:"0 4px 24px rgba(0,53,128,0.22)",
+        borderBottom:"1px solid rgba(255,255,255,0.12)",
       }}>
         <div style={{ display:"flex", alignItems:"center", gap:13 }}>
           <div style={{
@@ -486,7 +533,7 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
             ref={textareaRef}
             className="ai-textarea"
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={e => { setInput(e.target.value); if (error) setError(""); }}
             onKeyDown={handleKeyDown}
             placeholder={isHindi ? "कोई भी सवाल पूछें..." : "Ask anything about schemes..."}
             rows={1}
@@ -500,7 +547,7 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
               outline:"none", resize:"none",
               lineHeight:1.5,
               maxHeight:100, overflowY:"auto",
-              transition:"border-color 0.2s",
+              transition:"border-color 0.2s, box-shadow 0.2s",
               display:"block",
             }}
           />
