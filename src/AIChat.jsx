@@ -599,16 +599,31 @@ function ChatBubble({ msg, lang, dark, isNew }) {
         {isDone
           ? renderContent(msg.content, isUser, th)
           : (
-            <>
-              {stripMd(displayed)}
-              {/* Blinking cursor while typing */}
-              <span style={{
-                display:"inline-block", width:2, height:"1em",
-                background:"#FF9933", marginLeft:2, borderRadius:1,
-                animation:"typing-cursor 0.7s step-end infinite",
-                verticalAlign:"text-bottom",
-              }} />
-            </>
+            // ── Smooth typewriter: bubble size is fixed from the start ─────────
+            // The hidden spacer renders the FULL final content immediately so the
+            // bubble claims its final height. The visible overlay then types the
+            // text on top. No layout shifts → no jarking at all.
+            <div style={{ position: "relative" }}>
+              {/* Hidden full content — locks the bubble to its final size */}
+              <div style={{ visibility:"hidden", userSelect:"none", pointerEvents:"none" }}
+                aria-hidden="true">
+                {renderContent(msg.content, isUser, th)}
+              </div>
+
+              {/* Visible typewriter layer — absolutely overlaid, never affects layout */}
+              <div style={{
+                position:"absolute", top:0, left:0, right:0,
+                whiteSpace:"pre-wrap", wordBreak:"break-word",
+              }}>
+                {stripMd(displayed)}
+                <span style={{
+                  display:"inline-block", width:2, height:"1em",
+                  background:"#FF9933", marginLeft:2, borderRadius:1,
+                  animation:"typing-cursor 0.7s step-end infinite",
+                  verticalAlign:"text-bottom",
+                }} />
+              </div>
+            </div>
           )
         }
 
