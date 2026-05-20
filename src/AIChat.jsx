@@ -90,6 +90,56 @@ function TypingIndicator({ dark }) {
   );
 }
 
+// Renders message text: bold (**text**) and clickable links
+function renderContent(text, isUser, th) {
+  const lines = text.split("\n");
+  return lines.map((line, li) => {
+    const parts = [];
+    // Match **bold** or domain/URL patterns
+    const regex = /\*\*(.*?)\*\*|(https?:\/\/[^\s]+|[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
+    let last = 0;
+    let match;
+    while ((match = regex.exec(line)) !== null) {
+      if (match.index > last) parts.push(line.slice(last, match.index));
+      if (match[1] !== undefined) {
+        // Bold text
+        parts.push(
+          <strong key={`b-${li}-${match.index}`} style={{ fontWeight: 700 }}>
+            {match[1]}
+          </strong>
+        );
+      } else {
+        // Clickable link
+        const raw = match[2];
+        const href = raw.startsWith("http") ? raw : `https://${raw}`;
+        parts.push(
+          <a
+            key={`l-${li}-${match.index}`}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: isUser ? "#ffe0a0" : "#FF9933",
+              textDecoration: "underline",
+              wordBreak: "break-all",
+            }}
+          >
+            {raw}
+          </a>
+        );
+      }
+      last = match.index + match[0].length;
+    }
+    if (last < line.length) parts.push(line.slice(last));
+    return (
+      <span key={`line-${li}`}>
+        {parts}
+        {li < lines.length - 1 ? "\n" : ""}
+      </span>
+    );
+  });
+}
+
 function ChatBubble({ msg, lang, dark }) {
   const th  = THEME[dark ? "dark" : "light"];
   const bf  = fontFamily(lang);
@@ -128,7 +178,7 @@ function ChatBubble({ msg, lang, dark }) {
         whiteSpace:"pre-wrap",
         wordBreak:"break-word",
       }}>
-        {msg.content}
+        {renderContent(msg.content, isUser, th)}
       </div>
     </div>
   );

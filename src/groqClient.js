@@ -83,13 +83,14 @@ function getRelevantSchemes(query) {
 }
 
 // ─── BUILD COMPACT CONTEXT (only relevant schemes) ────────────────────────────
-function buildSmartContext(query) {
+function buildSmartContext(query, lang = "en") {
   const schemes = getRelevantSchemes(query);
+  const l = lang === "hi" ? "hi" : "en";
 
   const format = (s) =>
-    `• [${s.id}] ${s.name.en} | ${s.name.hi}\n` +
-    `  Benefit: ${s.benefit.en}\n` +
-    `  Tag: ${s.tag.en} | Apply: ${s.apply.en}`;
+    `• [${s.id}] ${s.name[l]}\n` +
+    `  Benefit: ${s.benefit[l]}\n` +
+    `  Tag: ${s.tag[l]} | Apply: ${s.apply[l]}`;
 
   const stateSchemes    = schemes.filter(s => s.scope === "state");
   const nationalSchemes = schemes.filter(s => s.scope === "national");
@@ -125,7 +126,8 @@ ${langRule}
 - Use emojis occasionally to be warm and friendly
 - Only answer about Indian government schemes, eligibility, documents, application
 - If asked unrelated questions, politely redirect to schemes
-- Use ONLY the scheme data provided — never make up scheme details
+- Do NOT use markdown — no ** asterisks**, no # headers, no backticks
+- For scheme names use plain text only
 - For steps, use numbered list (1. 2. 3.)
 ${followUp}
 
@@ -136,7 +138,7 @@ RELEVANT SCHEMES FOR THIS QUERY:
 // ─── MAIN EXPORT: sendMessage ─────────────────────────────────────────────────
 export async function sendMessage(conversationHistory, userQuery, lang = "en") {
   // Build context with ONLY relevant schemes for this query
-  const smartContext = buildSmartContext(userQuery);
+  const smartContext = buildSmartContext(userQuery, lang);
 
   const res = await fetch("/api/chat", {
     method: "POST",
