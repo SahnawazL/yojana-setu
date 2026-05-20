@@ -113,19 +113,22 @@ function buildSystemPrompt(lang) {
     ? "- ALWAYS reply in Hindi (हिंदी) only. No exceptions, even if user writes in English."
     : "- ALWAYS reply in English only. No exceptions, even if user writes in Hindi.";
 
+  // KEY CHANGE: off-topic messages now return CHIPS:[] (empty array = no chips shown)
   const chipsRule = lang === "hi"
     ? `- अपने जवाब के एकदम अंत में, एक नई लाइन पर, यह लिखें (JSON array, हिंदी में):
 CHIPS:["सवाल 1","सवाल 2","सवाल 3"]
 - ये 3 chips वही होने चाहिए जो user सबसे ज्यादा पूछना चाहेगा — आपके जवाब के context में
 - हर chip 4-6 शब्दों में छोटी और सटीक हो
-- अगर सवाल योजनाओं से बिल्कुल असंबंधित था (जैसे "हाय", "कैसे हो"), तो chips इस तरह दें:
-CHIPS:["किसान योजनाएं बताएं","छात्रवृत्ति कैसे मिलेगी?","आयुष्मान कार्ड कैसे बनाएं?"]`
+- Chips सिर्फ तभी दें जब user का सवाल किसी सरकारी योजना के बारे में था
+- अगर सवाल योजनाओं से बिल्कुल असंबंधित था (जैसे "हाय", "कैसे हो", "मौसम कैसा है"), तो chips खाली रखें:
+CHIPS:[]`
     : `- At the very END of your response, on a new line, append (valid JSON array):
 CHIPS:["question 1","question 2","question 3"]
-- These 3 chips must be the most useful follow-up questions a user would naturally ask next, based on YOUR answer's content
+- These 3 chips must be the most useful follow-up questions a user would naturally ask next, based SPECIFICALLY on YOUR answer's scheme content
 - Keep each chip short: 4–7 words, specific and actionable
-- If the user's message was off-topic (e.g. "hi", "where are you"), return helpful starter chips:
-CHIPS:["Schemes for farmers","Check my eligibility","How to apply online?"]`;
+- ONLY provide chips if the user's question was about Indian government schemes
+- If the user's message was off-topic or unrelated to government schemes (e.g. "hi", "how are you", jokes, weather, general questions), return an empty chips array:
+CHIPS:[]`;
 
   return `You are YojanaSetu AI — a friendly assistant for Indian government schemes.
 

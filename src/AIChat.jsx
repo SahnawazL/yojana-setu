@@ -1,4 +1,6 @@
 // AIChat.jsx — YojanaSetu AI Assistant Chat Screen
+// UPDATED: unified "Reading Time" cooldown gates both input + chips together
+// FIXED (5 bugs): anti-pattern in updater, memory leaks, dead state, stale closure
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { sendMessage } from "./groqClient.js";
@@ -40,8 +42,13 @@ const SUGGESTED = {
   ],
 };
 
-// Follow-up chips are now AI-generated per response (see groqClient.js → parseResponse)
-// No static chip tables needed here anymore.
+// ─── READING TIME: dynamic cooldown based on reply length ─────────────────────
+// Slower rural readers → ~2.5 words/sec. Min 10s, Max 15s.
+function calcReadingTime(replyText) {
+  const words = replyText.trim().split(/\s+/).length;
+  const secs  = Math.round(words / 2.5);
+  return Math.max(10, Math.min(15, secs));
+}
 
 const GLOBAL_CSS = `
 @keyframes bubble-in {
@@ -81,6 +88,16 @@ const GLOBAL_CSS = `
   0%,100% { transform: scale(1); }
   50%      { transform: scale(1.12); }
 }
+@keyframes chips-reveal {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes unlock-bounce {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.18); }
+  70%  { transform: scale(0.93); }
+  100% { transform: scale(1); }
+}
 .ai-msg-bubble      { animation: bubble-in 0.22s ease-out; }
 .ai-msg-bubble-user { animation: bubble-in-user 0.22s ease-out; }
 .ai-msg-bubble-ai   { animation: bubble-in-ai 0.22s ease-out; }
@@ -88,6 +105,8 @@ const GLOBAL_CSS = `
 .ai-send-btn:active  { opacity:0.85; transform:scale(0.95); }
 .ai-textarea:focus   { outline:none; box-shadow: 0 0 0 3px rgba(255,153,51,0.2); animation: focus-glow 2s ease-in-out infinite; }
 .ai-avatar-pulse     { animation: avatar-pulse 1.4s ease-in-out infinite; }
+.chips-container     { animation: chips-reveal 0.3s ease-out; }
+.unlock-bounce       { animation: unlock-bounce 0.4s ease-out; }
 `;
 
 function TypingIndicator({ dark }) {
@@ -125,40 +144,177 @@ function TypingIndicator({ dark }) {
   );
 }
 
+// ─── READING TIME BAR ─────────────────────────────────────────────────────────
+// Replaces the normal input UI while cooldown is active
+function ReadingTimeBar({ secondsLeft, totalSeconds, dark, lang }) {
+  const th      = THEME[dark ? "dark" : "light"];
+  const bf      = fontFamily(lang);
+  const isHindi = lang === "hi";
+  // pct goes from 100 → 0 as secondsLeft decreases
+  const pct = (secondsLeft / totalSeconds) * 100;
+
+  // Colour shifts orange → green as it nears completion
+  const r  = Math.round(255 * (pct / 100));
+  const g  = Math.round(200 * (1 - pct / 100)) + 55;
+  const barColor = `rgb(${r},${g},51)`;
+
+  const label = isHindi
+    ? `📖 जवाब पढ़ें — ${secondsLeft}s बाद टाइप कर सकते हैं`
+    : `📖 Read the answer — you can type in ${secondsLeft}s`;
+
+  return (
+    <div style={{
+      background: th.navBg,
+      borderTop:`1.5px solid ${th.border}`,
+      padding:"10px 14px 16px",
+      flexShrink:0,
+      boxShadow: dark
+        ? "0 -4px 20px rgba(0,0,0,0.3)"
+        : "0 -4px 20px rgba(0,0,0,0.07)",
+    }}>
+      {/* Label row */}
+      <div style={{
+        display:"flex", alignItems:"center", justifyContent:"space-between",
+        marginBottom:9,
+      }}>
+        <span style={{
+          fontSize:12, fontFamily:bf, color:th.textMid,
+          fontWeight:500,
+        }}>
+          {label}
+        </span>
+        {/* Big countdown ring */}
+        <div style={{
+          width:38, height:38, borderRadius:"50%", flexShrink:0,
+          border:`3px solid ${th.border2}`,
+          display:"flex", alignItems:"center", justifyContent:"center",
+          fontSize:13, fontWeight:800,
+          color: secondsLeft <= 3 ? "#22c55e" : "#FF9933",
+          background: th.card,
+          boxShadow: secondsLeft <= 3
+            ? "0 0 0 2px rgba(34,197,94,0.25)"
+            : "0 0 0 2px rgba(255,153,51,0.15)",
+          transition:"color 0.4s, box-shadow 0.4s",
+          fontFamily: "monospace",
+        }}>
+          {secondsLeft}
+        </div>
+      </div>
+
+      {/* Draining progress bar */}
+      <div style={{
+        height:5, background:th.border2, borderRadius:6, overflow:"hidden",
+      }}>
+        <div style={{
+          height:"100%",
+          width:`${pct}%`,
+          background:`linear-gradient(90deg, ${barColor}, #FF9933)`,
+          borderRadius:6,
+          transition:"width 0.95s linear, background 0.5s",
+        }} />
+      </div>
+
+      <div style={{
+        fontSize:10, color:th.textSub, textAlign:"center",
+        marginTop:7, fontFamily:bf, lineHeight:1.5,
+      }}>
+        {isHindi
+          ? "AI गलती कर सकता है · हमेशा सरकारी वेबसाइट से पुष्टि करें"
+          : "AI may make mistakes · Always verify on official government websites"}
+      </div>
+    </div>
+  );
+}
+
+// ─── NORMAL INPUT BAR ─────────────────────────────────────────────────────────
+function InputBar({ input, setInput, onSend, onKeyDown, loading, dark, lang, textareaRef, justUnlocked }) {
+  const th      = THEME[dark ? "dark" : "light"];
+  const bf      = fontFamily(lang);
+  const isHindi = lang === "hi";
+  const canSend = input.trim().length > 0 && !loading;
+
+  return (
+    <div style={{
+      background: th.navBg,
+      borderTop:`1.5px solid ${th.border}`,
+      padding:"10px 14px 16px",
+      flexShrink:0,
+      boxShadow: dark
+        ? "0 -4px 20px rgba(0,0,0,0.3)"
+        : "0 -4px 20px rgba(0,0,0,0.07)",
+    }}>
+      <div style={{ display:"flex", gap:10, alignItems:"flex-end" }}>
+        <textarea
+          ref={textareaRef}
+          className="ai-textarea"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={onKeyDown}
+          placeholder={isHindi ? "कोई भी सवाल पूछें..." : "Ask anything about schemes..."}
+          rows={1}
+          style={{
+            flex:1,
+            border:`1.5px solid ${input ? "#FF9933" : th.border2}`,
+            borderRadius:14,
+            padding:"11px 14px",
+            fontSize:14, fontFamily:bf, color:th.text,
+            background:th.inputBg,
+            outline:"none", resize:"none",
+            lineHeight:1.5,
+            maxHeight:100, overflowY:"auto",
+            transition:"border-color 0.2s, box-shadow 0.2s",
+            display:"block",
+          }}
+        />
+        <div
+          className={`ai-send-btn${justUnlocked ? " unlock-bounce" : ""}`}
+          onClick={onSend}
+          style={{
+            width:46, height:46, borderRadius:14, flexShrink:0,
+            background: canSend
+              ? "linear-gradient(135deg,#FF9933,#FF8000)"
+              : th.border2,
+            display:"flex", alignItems:"center", justifyContent:"center",
+            cursor: canSend ? "pointer" : "default",
+            boxShadow: canSend ? "0 4px 16px rgba(255,153,51,0.45)" : "none",
+            transition:"all 0.2s",
+            fontSize:18,
+          }}>
+          {loading
+            ? <span style={{ fontSize:14 }}>⏳</span>
+            : <span style={{ color: canSend ? "#fff" : th.textSub, fontWeight:700 }}>➤</span>
+          }
+        </div>
+      </div>
+      <div style={{
+        fontSize:10, color:th.textSub, textAlign:"center",
+        marginTop:7, fontFamily:bf, lineHeight:1.5,
+      }}>
+        {isHindi
+          ? "AI गलती कर सकता है · हमेशा सरकारी वेबसाइट से पुष्टि करें"
+          : "AI may make mistakes · Always verify on official government websites"}
+      </div>
+    </div>
+  );
+}
+
 // Renders message text: bold (**text**) and clickable links
 function renderContent(text, isUser, th) {
   const lines = text.split("\n");
   return lines.map((line, li) => {
     const parts = [];
-    // Match **bold** or domain/URL patterns
     const regex = /\*\*(.*?)\*\*|(https?:\/\/[^\s]+|[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
-    let last = 0;
-    let match;
+    let last = 0; let match;
     while ((match = regex.exec(line)) !== null) {
       if (match.index > last) parts.push(line.slice(last, match.index));
       if (match[1] !== undefined) {
-        // Bold text
-        parts.push(
-          <strong key={`b-${li}-${match.index}`} style={{ fontWeight: 700 }}>
-            {match[1]}
-          </strong>
-        );
+        parts.push(<strong key={`b-${li}-${match.index}`} style={{ fontWeight:700 }}>{match[1]}</strong>);
       } else {
-        // Clickable link
-        const raw = match[2];
+        const raw  = match[2];
         const href = raw.startsWith("http") ? raw : `https://${raw}`;
         parts.push(
-          <a
-            key={`l-${li}-${match.index}`}
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              color: isUser ? "#ffe0a0" : "#FF9933",
-              textDecoration: "underline",
-              wordBreak: "break-all",
-            }}
-          >
+          <a key={`l-${li}-${match.index}`} href={href} target="_blank" rel="noopener noreferrer"
+            style={{ color: isUser ? "#ffe0a0" : "#FF9933", textDecoration:"underline", wordBreak:"break-all" }}>
             {raw}
           </a>
         );
@@ -166,12 +322,7 @@ function renderContent(text, isUser, th) {
       last = match.index + match[0].length;
     }
     if (last < line.length) parts.push(line.slice(last));
-    return (
-      <span key={`line-${li}`}>
-        {parts}
-        {li < lines.length - 1 ? "\n" : ""}
-      </span>
-    );
+    return <span key={`line-${li}`}>{parts}{li < lines.length - 1 ? "\n" : ""}</span>;
   });
 }
 
@@ -181,16 +332,15 @@ function FollowUpChips({ chips, onTap, lang, dark }) {
   const [exitingIdx, setExitingIdx] = useState(null);
 
   const handleChipTap = (chip, i) => {
-    if (exitingIdx !== null) return; // ignore taps while one is animating out
+    if (exitingIdx !== null) return;
     setExitingIdx(i);
-    setTimeout(() => onTap(chip), 270); // fire after animation completes
+    setTimeout(() => onTap(chip), 270);
   };
 
   return (
-    <div style={{
+    <div className="chips-container" style={{
       display:"flex", flexWrap:"wrap", gap:8,
       paddingLeft:40, marginTop:-6, marginBottom:14,
-      animation:"bubble-in 0.25s ease-out",
     }}>
       {chips.map((chip, i) => (
         <div key={i} onClick={() => handleChipTap(chip, i)}
@@ -205,13 +355,12 @@ function FollowUpChips({ chips, onTap, lang, dark }) {
             boxShadow:"0 1px 4px rgba(255,153,51,0.15)",
             animation: exitingIdx === i
               ? "chip-out 0.27s ease-in forwards"
-              : `chip-in 0.25s ease-out ${i * 0.07}s both`,
+              : `chip-in 0.25s ease-out ${i * 0.09}s both`,
             opacity: exitingIdx !== null && exitingIdx !== i ? 0.35 : 1,
             transition: exitingIdx !== null && exitingIdx !== i
               ? "opacity 0.22s ease-out"
               : "opacity 0.15s, transform 0.15s",
-          }}
-        >
+          }}>
           {chip}
         </div>
       ))}
@@ -220,18 +369,12 @@ function FollowUpChips({ chips, onTap, lang, dark }) {
 }
 
 function ChatBubble({ msg, lang, dark }) {
-  const th  = THEME[dark ? "dark" : "light"];
-  const bf  = fontFamily(lang);
+  const th     = THEME[dark ? "dark" : "light"];
+  const bf     = fontFamily(lang);
   const isUser = msg.role === "user";
   return (
     <div className={isUser ? "ai-msg-bubble-user" : "ai-msg-bubble-ai"}
-      style={{
-        display:"flex",
-        flexDirection: isUser ? "row-reverse" : "row",
-        alignItems:"flex-end",
-        gap:8,
-        marginBottom:14,
-      }}>
+      style={{ display:"flex", flexDirection:isUser?"row-reverse":"row", alignItems:"flex-end", gap:8, marginBottom:14 }}>
       {!isUser && (
         <div style={{
           width:32, height:32, borderRadius:"50%", flexShrink:0,
@@ -241,21 +384,15 @@ function ChatBubble({ msg, lang, dark }) {
       )}
       <div style={{
         maxWidth:"76%",
-        background: isUser
-          ? "linear-gradient(135deg,#003580,#1a56db)"
-          : th.card,
+        background: isUser ? "linear-gradient(135deg,#003580,#1a56db)" : th.card,
         color: isUser ? "#fff" : th.text,
         borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-        padding:"11px 15px",
-        fontSize:13.5,
-        lineHeight:1.65,
-        fontFamily:bf,
+        padding:"11px 15px", fontSize:13.5, lineHeight:1.65, fontFamily:bf,
         boxShadow: isUser
           ? "0 4px 16px rgba(0,53,128,0.28)"
           : dark ? "0 2px 10px rgba(0,0,0,0.3)" : "0 2px 10px rgba(0,0,0,0.07)",
         border: isUser ? "none" : `1.5px solid ${th.border2}`,
-        whiteSpace:"pre-wrap",
-        wordBreak:"break-word",
+        whiteSpace:"pre-wrap", wordBreak:"break-word",
       }}>
         {renderContent(msg.content, isUser, th)}
       </div>
@@ -264,8 +401,8 @@ function ChatBubble({ msg, lang, dark }) {
 }
 
 function WelcomeScreen({ lang, dark, onSuggest }) {
-  const th = THEME[dark ? "dark" : "light"];
-  const bf = fontFamily(lang);
+  const th      = THEME[dark ? "dark" : "light"];
+  const bf      = fontFamily(lang);
   const isHindi = lang === "hi";
   return (
     <div style={{ animation:"fade-in 0.3s ease-out", paddingBottom:8 }}>
@@ -276,10 +413,8 @@ function WelcomeScreen({ lang, dark, onSuggest }) {
           display:"flex", alignItems:"center", justifyContent:"center", fontSize:14,
         }}>🤖</div>
         <div style={{
-          background: th.card,
-          border:`1.5px solid ${th.border2}`,
-          borderRadius:"18px 18px 18px 4px",
-          padding:"13px 15px",
+          background:th.card, border:`1.5px solid ${th.border2}`,
+          borderRadius:"18px 18px 18px 4px", padding:"13px 15px",
           fontSize:13.5, lineHeight:1.65, fontFamily:bf, color:th.text,
           boxShadow: dark ? "0 2px 10px rgba(0,0,0,0.3)" : "0 2px 10px rgba(0,0,0,0.07)",
           maxWidth:"80%",
@@ -289,25 +424,16 @@ function WelcomeScreen({ lang, dark, onSuggest }) {
             : "Namaste! 🙏 I'm YojanaSetu's AI Assistant.\nI'll help you find and understand government schemes.\nAsk me anything in Hindi or English!"}
         </div>
       </div>
-      <div style={{
-        fontSize:10, fontWeight:700, color:th.textSub,
-        letterSpacing:0.8, textTransform:"uppercase",
-        marginBottom:10, paddingLeft:40, fontFamily:bf,
-      }}>
+      <div style={{ fontSize:10, fontWeight:700, color:th.textSub, letterSpacing:0.8, textTransform:"uppercase", marginBottom:10, paddingLeft:40, fontFamily:bf }}>
         {isHindi ? "यह पूछें" : "Try asking"}
       </div>
       <div style={{ display:"flex", flexDirection:"column", gap:8, paddingLeft:40 }}>
         {SUGGESTED[lang].map((s, i) => (
-          <div key={i} className="ai-suggested"
-            onClick={() => onSuggest(s.text)}
+          <div key={i} className="ai-suggested" onClick={() => onSuggest(s.text)}
             style={{
-              background: th.card,
-              border:`1.5px solid ${th.border2}`,
-              borderRadius:13,
-              padding:"10px 14px",
-              fontSize:13, fontFamily:bf, color:th.text,
-              cursor:"pointer",
-              display:"flex", alignItems:"center", gap:9,
+              background:th.card, border:`1.5px solid ${th.border2}`, borderRadius:13,
+              padding:"10px 14px", fontSize:13, fontFamily:bf, color:th.text,
+              cursor:"pointer", display:"flex", alignItems:"center", gap:9,
               boxShadow: dark ? "0 1px 5px rgba(0,0,0,0.2)" : "0 1px 5px rgba(0,0,0,0.05)",
               transition:"opacity 0.15s, transform 0.15s",
             }}>
@@ -321,25 +447,46 @@ function WelcomeScreen({ lang, dark, onSuggest }) {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
 export default function AIChat({ lang="en", dark=false }) {
   const th      = THEME[dark ? "dark" : "light"];
   const bf      = fontFamily(lang);
   const isHindi = lang === "hi";
 
-  const [messages, setMessages] = useState([]);
-  const [input,    setInput]    = useState("");
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState("");
-  const [followUps, setFollowUps] = useState([]);
-  const [usedChips, setUsedChips] = useState(new Set());
+  const [messages,     setMessages]     = useState([]);
+  const [input,        setInput]        = useState("");
+  const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState("");
+  const [chips,        setChips]        = useState([]);
+  const [usedChips,    setUsedChips]    = useState(new Set());
 
-  const bottomRef   = useRef(null);
-  const textareaRef = useRef(null);
+  // ── Unified Reading-Time cooldown ────────────────────────────────────────────
+  const [secondsLeft,  setSecondsLeft]  = useState(0);
+  const [totalSeconds, setTotalSeconds] = useState(0);
+  const [justUnlocked, setJustUnlocked] = useState(false);
 
+  const cooldownRef          = useRef(null);
+  const bottomRef            = useRef(null);
+  const textareaRef          = useRef(null);
+
+  // FIX Bug 4: pendingChips was state but never read in JSX → convert to ref
+  // to avoid unnecessary re-renders on every startCooldown call.
+  const pendingChipsRef      = useRef([]);
+
+  // FIX Bug 5: secondsLeft in handleSend's dep array caused it (and handleKeyDown)
+  // to be recreated every second as the countdown ticks. Use a ref instead.
+  const secondsLeftRef       = useRef(0);
+
+  // FIX Bug 3: store the justUnlocked setTimeout handle so it can be cleared on
+  // unmount, preventing "setState on unmounted component" errors.
+  const justUnlockedTimerRef = useRef(null);
+
+  // ── Scroll to bottom ─────────────────────────────────────────────────────────
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior:"smooth" });
-  }, [messages, loading]);
+  }, [messages, loading, chips, secondsLeft]);
 
+  // ── Auto-resize textarea ─────────────────────────────────────────────────────
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -347,15 +494,71 @@ export default function AIChat({ lang="en", dark=false }) {
     el.style.height = Math.min(el.scrollHeight, 100) + "px";
   }, [input]);
 
+  // FIX Bug 2: cleanup the interval (and the setTimeout) when the component
+  // unmounts, preventing the interval from firing after navigation away.
+  useEffect(() => {
+    return () => {
+      clearInterval(cooldownRef.current);
+      clearTimeout(justUnlockedTimerRef.current);
+    };
+  }, []);
+
+  // FIX Bug 5: keep the ref in sync so handleSend can read it without being
+  // listed as a dependency that changes every second.
+  useEffect(() => {
+    secondsLeftRef.current = secondsLeft;
+  }, [secondsLeft]);
+
+  // FIX Bug 1: unlock side-effects (setChips, setJustUnlocked, setTimeout) were
+  // previously called INSIDE the setSecondsLeft updater function. React's
+  // StrictMode / Concurrent Mode can invoke updaters multiple times, so chips
+  // could have appeared twice and justUnlocked could have fired erratically.
+  // Moving them into a useEffect that watches secondsLeft is the correct pattern.
+  useEffect(() => {
+    if (secondsLeft === 0 && pendingChipsRef.current.length > 0) {
+      setChips(pendingChipsRef.current);
+      pendingChipsRef.current = [];
+      setJustUnlocked(true);
+      clearTimeout(justUnlockedTimerRef.current);           // FIX Bug 3
+      justUnlockedTimerRef.current = setTimeout(
+        () => setJustUnlocked(false), 500
+      );
+    }
+  }, [secondsLeft]);
+
+  // ── Start reading-time cooldown ──────────────────────────────────────────────
+  const startCooldown = useCallback((replyText, incomingChips) => {
+    clearInterval(cooldownRef.current);
+    const secs = calcReadingTime(replyText);
+    setTotalSeconds(secs);
+    setSecondsLeft(secs);
+    pendingChipsRef.current = incomingChips;  // FIX Bug 4: ref instead of state
+    setChips([]);                             // hide any previous chips immediately
+
+    cooldownRef.current = setInterval(() => {
+      setSecondsLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(cooldownRef.current);
+          // FIX Bug 1: NO side-effects here — the useEffect above handles unlock.
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
   const handleSend = useCallback(async (overrideText) => {
     const query = (overrideText ?? input).trim();
-    if (!query || loading) return;
+    // FIX Bug 5: read from ref — no longer a dep that changes every second
+    if (!query || loading || secondsLeftRef.current > 0) return;
 
     setInput("");
     setError("");
-    setFollowUps([]);  // clear chips while AI thinks
+    setChips([]);
+    pendingChipsRef.current = [];             // FIX Bug 4: ref instead of state
+    setSecondsLeft(0);
+    clearInterval(cooldownRef.current);
 
-    // Track chips the user has already tapped so they don't reappear
     const nextUsedChips = overrideText
       ? new Set([...usedChips, overrideText])
       : usedChips;
@@ -367,21 +570,21 @@ export default function AIChat({ lang="en", dark=false }) {
     setLoading(true);
 
     try {
-      // sendMessage now returns { reply, followUps } — chips are AI-generated
       const { reply, followUps: aiChips } = await sendMessage(
         nextMessages.map(m => ({ role:m.role, content:m.content })),
         query,
         lang,
       );
       setMessages(prev => [...prev, { role:"assistant", content:reply }]);
-      // Filter out any chip the user has already tapped in this session
-      setFollowUps(aiChips.filter(c => !nextUsedChips.has(c)));
+      const freshChips = aiChips.filter(c => !nextUsedChips.has(c));
+      startCooldown(reply, freshChips);
     } catch (err) {
       setError(`❌ ${err.message || (isHindi ? "जवाब नहीं मिला। दोबारा कोशिश करें।" : "Could not get response. Please try again.")}`);
     } finally {
       setLoading(false);
     }
-  }, [input, messages, loading, isHindi, lang, usedChips]);
+  // FIX Bug 5: secondsLeft removed from deps — secondsLeftRef.current is used instead
+  }, [input, messages, loading, isHindi, lang, usedChips, startCooldown]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -390,31 +593,27 @@ export default function AIChat({ lang="en", dark=false }) {
     }
   }, [handleSend]);
 
-  const canSend = input.trim().length > 0 && !loading;
+  const isLocked = secondsLeft > 0;
 
   return (
     <div style={{
       flex:1, display:"flex", flexDirection:"column",
-      background:th.appBg, overflow:"hidden",
-      fontFamily:bf,
+      background:th.appBg, overflow:"hidden", fontFamily:bf,
     }}>
       <style>{GLOBAL_CSS}</style>
 
       {/* HEADER */}
       <div style={{
         background:"linear-gradient(135deg,rgba(255,153,51,0.82) 0%,rgba(255,128,0,0.78) 35%,rgba(0,53,128,0.85) 100%)",
-        backdropFilter:"blur(20px)",
-        WebkitBackdropFilter:"blur(20px)",
-        padding:"18px 20px 22px",
-        flexShrink:0,
+        backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)",
+        padding:"18px 20px 22px", flexShrink:0,
         boxShadow:"0 4px 24px rgba(0,53,128,0.22)",
         borderBottom:"1px solid rgba(255,255,255,0.12)",
       }}>
         <div style={{ display:"flex", alignItems:"center", gap:13 }}>
           <div style={{
             width:46, height:46, borderRadius:14, flexShrink:0,
-            background:"rgba(255,255,255,0.18)",
-            border:"1.5px solid rgba(255,255,255,0.35)",
+            background:"rgba(255,255,255,0.18)", border:"1.5px solid rgba(255,255,255,0.35)",
             display:"flex", alignItems:"center", justifyContent:"center",
             fontSize:22, boxShadow:"0 4px 12px rgba(0,0,0,0.15)",
           }}>🤖</div>
@@ -427,14 +626,17 @@ export default function AIChat({ lang="en", dark=false }) {
             </div>
           </div>
           {messages.length > 0 && (
-            <div
-              onClick={() => { setMessages([]); setError(""); setFollowUps([]); setUsedChips(new Set()); }}
+            <div onClick={() => {
+                setMessages([]); setError(""); setChips([]);
+                pendingChipsRef.current = [];              // FIX Bug 4
+                setUsedChips(new Set()); setSecondsLeft(0);
+                clearInterval(cooldownRef.current);
+                clearTimeout(justUnlockedTimerRef.current); // FIX Bug 3
+              }}
               style={{
-                background:"rgba(255,255,255,0.18)",
-                border:"1px solid rgba(255,255,255,0.3)",
+                background:"rgba(255,255,255,0.18)", border:"1px solid rgba(255,255,255,0.3)",
                 borderRadius:10, padding:"5px 11px",
-                color:"rgba(255,255,255,0.9)", fontSize:11, fontWeight:600,
-                cursor:"pointer",
+                color:"rgba(255,255,255,0.9)", fontSize:11, fontWeight:600, cursor:"pointer",
               }}>
               {isHindi ? "साफ करें" : "Clear"}
             </div>
@@ -443,25 +645,19 @@ export default function AIChat({ lang="en", dark=false }) {
       </div>
 
       {/* MESSAGES AREA */}
-      <div style={{
-        flex:1, overflowY:"auto",
-        padding:"18px 16px 6px",
-        WebkitOverflowScrolling:"touch",
-      }}>
+      <div style={{ flex:1, overflowY:"auto", padding:"18px 16px 6px", WebkitOverflowScrolling:"touch" }}>
         {messages.length === 0 && !loading && (
           <WelcomeScreen lang={lang} dark={dark} onSuggest={handleSend} />
         )}
         {messages.map((msg, i) => (
           <ChatBubble key={i} msg={msg} lang={lang} dark={dark} />
         ))}
-        {!loading && followUps.length > 0 && (
-          <FollowUpChips
-            chips={followUps}
-            onTap={handleSend}
-            lang={lang}
-            dark={dark}
-          />
+
+        {/* Chips — only shown after cooldown ends */}
+        {!loading && chips.length > 0 && (
+          <FollowUpChips chips={chips} onTap={handleSend} lang={lang} dark={dark} />
         )}
+
         {loading && <TypingIndicator dark={dark} />}
         {error && (
           <div style={{
@@ -477,68 +673,27 @@ export default function AIChat({ lang="en", dark=false }) {
         <div ref={bottomRef} style={{ height:4 }} />
       </div>
 
-      {/* INPUT AREA */}
-      <div style={{
-        background: th.navBg,
-        borderTop:`1.5px solid ${th.border}`,
-        padding:"10px 14px 16px",
-        flexShrink:0,
-        boxShadow: dark
-          ? "0 -4px 20px rgba(0,0,0,0.3)"
-          : "0 -4px 20px rgba(0,0,0,0.07)",
-      }}>
-        <div style={{ display:"flex", gap:10, alignItems:"flex-end" }}>
-          <textarea
-            ref={textareaRef}
-            className="ai-textarea"
-            value={input}
-            onChange={e => { setInput(e.target.value); if (error) setError(""); }}
-            onKeyDown={handleKeyDown}
-            placeholder={isHindi ? "कोई भी सवाल पूछें..." : "Ask anything about schemes..."}
-            rows={1}
-            style={{
-              flex:1,
-              border:`1.5px solid ${input ? "#FF9933" : th.border2}`,
-              borderRadius:14,
-              padding:"11px 14px",
-              fontSize:14, fontFamily:bf, color:th.text,
-              background:th.inputBg,
-              outline:"none", resize:"none",
-              lineHeight:1.5,
-              maxHeight:100, overflowY:"auto",
-              transition:"border-color 0.2s, box-shadow 0.2s",
-              display:"block",
-            }}
-          />
-          <div
-            className="ai-send-btn"
-            onClick={() => handleSend()}
-            style={{
-              width:46, height:46, borderRadius:14, flexShrink:0,
-              background: canSend
-                ? "linear-gradient(135deg,#FF9933,#FF8000)"
-                : th.border2,
-              display:"flex", alignItems:"center", justifyContent:"center",
-              cursor: canSend ? "pointer" : "default",
-              boxShadow: canSend ? "0 4px 16px rgba(255,153,51,0.45)" : "none",
-              transition:"all 0.2s",
-              fontSize:18,
-            }}>
-            {loading
-              ? <span style={{ fontSize:14 }}>⏳</span>
-              : <span style={{ color: canSend ? "#fff" : th.textSub, fontWeight:700 }}>➤</span>
-            }
-          </div>
-        </div>
-        <div style={{
-          fontSize:10, color:th.textSub, textAlign:"center",
-          marginTop:7, fontFamily:bf, lineHeight:1.5,
-        }}>
-          {isHindi
-            ? "AI गलती कर सकता है · हमेशा सरकारी वेबसाइट से पुष्टि करें"
-            : "AI may make mistakes · Always verify on official government websites"}
-        </div>
-      </div>
+      {/* BOTTOM BAR — swaps between reading-time and normal input */}
+      {isLocked ? (
+        <ReadingTimeBar
+          secondsLeft={secondsLeft}
+          totalSeconds={totalSeconds}
+          dark={dark}
+          lang={lang}
+        />
+      ) : (
+        <InputBar
+          input={input}
+          setInput={(v) => { setInput(v); if (error) setError(""); }}
+          onSend={handleSend}
+          onKeyDown={handleKeyDown}
+          loading={loading}
+          dark={dark}
+          lang={lang}
+          textareaRef={textareaRef}
+          justUnlocked={justUnlocked}
+        />
+      )}
     </div>
   );
 }
