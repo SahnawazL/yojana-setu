@@ -56,12 +56,16 @@ const GLOBAL_CSS = `
   to   { opacity:1; transform:translateY(0); }
 }
 @keyframes bubble-in-user {
-  from { opacity:0; transform:translateX(12px); }
-  to   { opacity:1; transform:translateX(0); }
+  0%   { opacity:0; transform:translateX(16px) scale(0.91); }
+  55%  { opacity:1; transform:translateX(-4px) scale(1.025); }
+  78%  { transform:translateX(2px) scale(0.988); }
+  100% { opacity:1; transform:translateX(0) scale(1); }
 }
 @keyframes bubble-in-ai {
-  from { opacity:0; transform:translateX(-12px); }
-  to   { opacity:1; transform:translateX(0); }
+  0%   { opacity:0; transform:translateX(-16px) scale(0.91); }
+  55%  { opacity:1; transform:translateX(4px) scale(1.025); }
+  78%  { transform:translateX(-2px) scale(0.988); }
+  100% { opacity:1; transform:translateX(0) scale(1); }
 }
 @keyframes fade-in {
   from { opacity:0; }
@@ -98,9 +102,26 @@ const GLOBAL_CSS = `
   70%  { transform: scale(0.93); }
   100% { transform: scale(1); }
 }
+@keyframes typing-cursor {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+@keyframes gradient-border-breathe {
+  0%,100% { opacity: 0.75; }
+  50%      { opacity: 1; }
+}
+@keyframes badge-pop {
+  0%   { opacity:0; transform:scale(0.7) translateY(3px); }
+  65%  { opacity:1; transform:scale(1.08) translateY(-1px); }
+  100% { opacity:1; transform:scale(1) translateY(0); }
+}
+@keyframes header-fade {
+  from { opacity:0; transform:translateY(-4px); }
+  to   { opacity:1; transform:translateY(0); }
+}
 .ai-msg-bubble      { animation: bubble-in 0.22s ease-out; }
-.ai-msg-bubble-user { animation: bubble-in-user 0.22s ease-out; }
-.ai-msg-bubble-ai   { animation: bubble-in-ai 0.22s ease-out; }
+.ai-msg-bubble-user { animation: bubble-in-user 0.38s ease-out; }
+.ai-msg-bubble-ai   { animation: bubble-in-ai 0.38s ease-out; }
 .ai-suggested:active { opacity:0.7; transform:scale(0.98); }
 .ai-send-btn:active  { opacity:0.85; transform:scale(0.95); }
 .ai-textarea:focus   { outline:none; box-shadow: 0 0 0 3px rgba(255,153,51,0.2); animation: focus-glow 2s ease-in-out infinite; }
@@ -368,10 +389,53 @@ function FollowUpChips({ chips, onTap, lang, dark }) {
   );
 }
 
-function ChatBubble({ msg, lang, dark }) {
+function ChatBubble({ msg, lang, dark, isNew }) {
   const th     = THEME[dark ? "dark" : "light"];
   const bf     = fontFamily(lang);
   const isUser = msg.role === "user";
+
+  // ── Feature 2: Typewriter animation for new AI messages ───────────────────
+  const shouldAnimate = isNew && !isUser;
+  const [displayed, setDisplayed] = useState(shouldAnimate ? "" : msg.content);
+  const [isDone,    setIsDone]    = useState(!shouldAnimate);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (!shouldAnimate) return;
+    const text = msg.content;
+    let i = 0;
+    // ~18ms/char ≈ 55 chars/sec — fast & premium feeling
+    timerRef.current = setInterval(() => {
+      i++;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) {
+        clearInterval(timerRef.current);
+        setIsDone(true);
+      }
+    }, 18);
+    return () => clearInterval(timerRef.current);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Strip **bold** markers so partial markdown doesn't flash during animation
+  const stripMd = (t) => t.replace(/\*\*(.*?)\*\*/g, "$1");
+
+  // ── Feature 1 + 6: Gradient border + Glassmorphism on AI bubbles ─────────
+  // Semi-transparent glass card so the app background bleeds through the bubble.
+  // The padding-box / border-box trick still carries the gradient border on top.
+  const glassCard = dark
+    ? "rgba(28,28,30,0.68)"
+    : "rgba(255,255,255,0.68)";
+  const aiBubbleStyle = !isUser ? {
+    border: "1.5px solid transparent",
+    background: `linear-gradient(${glassCard}, ${glassCard}) padding-box,
+                 linear-gradient(135deg, #FF9933 0%, #6366f1 50%, #003580 100%) border-box`,
+    backdropFilter: "blur(18px)",
+    WebkitBackdropFilter: "blur(18px)",
+    boxShadow: dark
+      ? "0 4px 20px rgba(255,153,51,0.14), 0 1px 8px rgba(0,0,0,0.45)"
+      : "0 4px 20px rgba(255,153,51,0.11), 0 1px 8px rgba(0,0,0,0.09)",
+  } : {};
+
   return (
     <div className={isUser ? "ai-msg-bubble-user" : "ai-msg-bubble-ai"}
       style={{ display:"flex", flexDirection:isUser?"row-reverse":"row", alignItems:"flex-end", gap:6, marginBottom:14 }}>
@@ -388,13 +452,84 @@ function ChatBubble({ msg, lang, dark }) {
         color: isUser ? "#fff" : th.text,
         borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
         padding:"11px 15px", fontSize:13.5, lineHeight:1.65, fontFamily:bf,
-        boxShadow: isUser
-          ? "0 4px 16px rgba(0,53,128,0.28)"
-          : dark ? "0 2px 10px rgba(0,0,0,0.3)" : "0 2px 10px rgba(0,0,0,0.07)",
-        border: isUser ? "none" : `1.5px solid ${th.border2}`,
+        boxShadow: isUser ? "0 4px 16px rgba(0,53,128,0.28)" : undefined,
+        border: isUser ? "none" : undefined,
         whiteSpace:"pre-wrap", wordBreak:"break-word",
+        transition:"box-shadow 0.3s",
+        ...aiBubbleStyle,
       }}>
-        {renderContent(msg.content, isUser, th)}
+        {/* ── Feature 5: AI bubble sender header ───────────────────────── */}
+        {!isUser && (
+          <div style={{
+            display:"flex", alignItems:"center", gap:5, marginBottom:7,
+            animation:"header-fade 0.22s ease-out",
+          }}>
+            <span style={{
+              fontSize:9.5, fontWeight:800, letterSpacing:0.55,
+              textTransform:"uppercase",
+              color: dark ? "rgba(255,153,51,0.9)" : "#FF8000",
+              fontFamily:"'Noto Sans',sans-serif",
+            }}>
+              YojanaSetu AI
+            </span>
+            {/* Verified checkmark badge */}
+            <div style={{
+              display:"flex", alignItems:"center", justifyContent:"center",
+              width:14, height:14, borderRadius:"50%",
+              background:"#22c55e",
+              flexShrink:0,
+            }}>
+              <span style={{ fontSize:8, color:"#fff", fontWeight:900, lineHeight:1 }}>✓</span>
+            </div>
+          </div>
+        )}
+
+        {isDone
+          ? renderContent(msg.content, isUser, th)
+          : (
+            <>
+              {stripMd(displayed)}
+              {/* Blinking cursor while typing */}
+              <span style={{
+                display:"inline-block", width:2, height:"1em",
+                background:"#FF9933", marginLeft:2, borderRadius:1,
+                animation:"typing-cursor 0.7s step-end infinite",
+                verticalAlign:"text-bottom",
+              }} />
+            </>
+          )
+        }
+
+        {/* ── Feature 3: Verified source badge ─────────────────────────── */}
+        {!isUser && isDone && (
+          <div style={{
+            display:"flex", alignItems:"center", gap:5,
+            marginTop:8, paddingTop:7,
+            borderTop: dark
+              ? "1px solid rgba(255,255,255,0.07)"
+              : "1px solid rgba(0,0,0,0.06)",
+            animation:"badge-pop 0.32s ease-out",
+          }}>
+            {/* Checkmark pill */}
+            <div style={{
+              display:"flex", alignItems:"center", gap:3,
+              background: dark ? "rgba(34,197,94,0.12)" : "rgba(34,197,94,0.1)",
+              border:"1px solid rgba(34,197,94,0.3)",
+              borderRadius:20, padding:"2px 7px",
+            }}>
+              <span style={{ fontSize:9, color:"#22c55e", fontWeight:900, lineHeight:1 }}>✓</span>
+              <span style={{ fontSize:9, color:"#22c55e", fontWeight:700, letterSpacing:0.2 }}>
+                {lang === "hi" ? "सत्यापित" : "Verified"}
+              </span>
+            </div>
+            {/* Source label */}
+            <span style={{
+              fontSize:9.5, color:th.textSub, fontWeight:500, letterSpacing:0.2,
+            }}>
+              YojanaSetu AI
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -650,7 +785,13 @@ export default function AIChat({ lang="en", dark=false }) {
           <WelcomeScreen lang={lang} dark={dark} onSuggest={handleSend} />
         )}
         {messages.map((msg, i) => (
-          <ChatBubble key={i} msg={msg} lang={lang} dark={dark} />
+          <ChatBubble
+            key={i}
+            msg={msg}
+            lang={lang}
+            dark={dark}
+            isNew={msg.role === "assistant" && i === messages.length - 1}
+          />
         ))}
 
         {/* Chips — only shown after cooldown ends */}
