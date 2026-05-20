@@ -40,6 +40,48 @@ const SUGGESTED = {
   ],
 };
 
+// ─── FOLLOW-UP CHIPS ───────────────────────────────────────────────────────────
+const FOLLOWUPS = {
+  en: {
+    farmer:   ["How to apply for PM Kisan?", "Documents needed?", "Check payment status?"],
+    housing:  ["How to apply for PMAY?",     "Documents needed?", "Am I eligible?"],
+    women:    ["How to apply for Ujjwala?",  "Documents needed?", "Beti Bachao eligibility?"],
+    student:  ["How to apply for scholarship?", "Documents needed?", "Last date to apply?"],
+    business: ["How to apply for Mudra loan?",  "Documents needed?", "How much loan can I get?"],
+    health:   ["How to get Ayushman card?",  "Which hospitals covered?", "Documents needed?"],
+    senior:   ["How to apply for pension?",  "Documents needed?",  "How much pension per month?"],
+    default:  ["How to check eligibility?",  "Documents needed?",  "How to apply online?"],
+  },
+  hi: {
+    farmer:   ["पीएम किसान के लिए आवेदन?", "जरूरी दस्तावेज?",    "पेमेंट स्टेटस कैसे देखें?"],
+    housing:  ["पीएम आवास के लिए आवेदन?", "जरूरी दस्तावेज?",    "क्या मैं पात्र हूं?"],
+    women:    ["उज्ज्वला योजना आवेदन?",    "जरूरी दस्तावेज?",    "बेटी बचाओ पात्रता?"],
+    student:  ["छात्रवृत्ति के लिए आवेदन?", "जरूरी दस्तावेज?",   "आवेदन की अंतिम तिथि?"],
+    business: ["मुद्रा लोन के लिए आवेदन?", "जरूरी दस्तावेज?",    "कितना लोन मिलेगा?"],
+    health:   ["आयुष्मान कार्ड कैसे बनाएं?", "कौन से अस्पताल?",  "जरूरी दस्तावेज?"],
+    senior:   ["पेंशन के लिए आवेदन?",      "जरूरी दस्तावेज?",    "कितनी पेंशन मिलेगी?"],
+    default:  ["पात्रता कैसे जांचें?",      "जरूरी दस्तावेज?",    "ऑनलाइन आवेदन कैसे करें?"],
+  },
+};
+
+const TOPIC_KEYWORDS = {
+  farmer:   ["farmer","kisan","kheti","krishi","pm kisan","pmkisan"],
+  housing:  ["house","housing","awas","ghar","pmay","makaan"],
+  women:    ["women","woman","mahila","beti","ujjwala","ladki"],
+  student:  ["student","scholarship","education","padhai","shiksha"],
+  business: ["business","loan","mudra","vyapar","udyog","rozgar"],
+  health:   ["health","hospital","ayushman","swasthya","ilaaj"],
+  senior:   ["senior","pension","old age","budhapa","vridh","bujurg"],
+};
+
+function getFollowUps(query, lang) {
+  const q = query.toLowerCase();
+  const topic = Object.keys(TOPIC_KEYWORDS).find(t =>
+    TOPIC_KEYWORDS[t].some(kw => q.includes(kw))
+  ) || "default";
+  return FOLLOWUPS[lang]?.[topic] || FOLLOWUPS["en"][topic];
+}
+
 const GLOBAL_CSS = `
 @keyframes bubble-in {
   from { opacity:0; transform:translateY(10px); }
@@ -138,6 +180,37 @@ function renderContent(text, isUser, th) {
       </span>
     );
   });
+}
+
+function FollowUpChips({ chips, onTap, lang, dark }) {
+  const th = THEME[dark ? "dark" : "light"];
+  const bf = fontFamily(lang);
+  return (
+    <div style={{
+      display:"flex", flexWrap:"wrap", gap:8,
+      paddingLeft:40, marginTop:-6, marginBottom:14,
+      animation:"bubble-in 0.25s ease-out",
+    }}>
+      {chips.map((chip, i) => (
+        <div key={i} onClick={() => onTap(chip)}
+          style={{
+            background: th.card,
+            border:`1.5px solid #FF9933`,
+            borderRadius:20,
+            padding:"7px 13px",
+            fontSize:12, fontFamily:bf, color:"#FF9933",
+            cursor:"pointer", fontWeight:600,
+            boxShadow:"0 1px 4px rgba(255,153,51,0.15)",
+            transition:"opacity 0.15s, transform 0.15s",
+          }}
+          onTouchStart={e => e.currentTarget.style.opacity="0.7"}
+          onTouchEnd={e => e.currentTarget.style.opacity="1"}
+        >
+          {chip}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function ChatBubble({ msg, lang, dark }) {
@@ -252,6 +325,7 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
   const [input,    setInput]    = useState("");
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
+  const [followUps, setFollowUps] = useState([]);
 
   const bottomRef   = useRef(null);
   const textareaRef = useRef(null);
@@ -273,6 +347,7 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
 
     setInput("");
     setError("");
+    setFollowUps([]);  // clear chips on new message
 
     const userMsg      = { role:"user", content:query };
     const nextMessages = [...messages, userMsg];
@@ -286,6 +361,7 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
         lang,  // ✅ forces AI to respond in app's selected language
       );
       setMessages(prev => [...prev, { role:"assistant", content:reply }]);
+      setFollowUps(getFollowUps(query, lang));  // show relevant chips
     } catch (err) {
       // ✅ Show the ACTUAL error so you can see what's really going wrong
       setError(`❌ ${err.message || (isHindi ? "जवाब नहीं मिला। दोबारा कोशिश करें।" : "Could not get response. Please try again.")}`);
@@ -336,7 +412,7 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
           </div>
           {messages.length > 0 && (
             <div
-              onClick={() => { setMessages([]); setError(""); }}
+              onClick={() => { setMessages([]); setError(""); setFollowUps([]); }}
               style={{
                 background:"rgba(255,255,255,0.18)",
                 border:"1px solid rgba(255,255,255,0.3)",
@@ -362,6 +438,14 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
         {messages.map((msg, i) => (
           <ChatBubble key={i} msg={msg} lang={lang} dark={dark} />
         ))}
+        {!loading && followUps.length > 0 && (
+          <FollowUpChips
+            chips={followUps}
+            onTap={handleSend}
+            lang={lang}
+            dark={dark}
+          />
+        )}
         {loading && <TypingIndicator dark={dark} />}
         {error && (
           <div style={{
