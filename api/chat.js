@@ -1,39 +1,51 @@
-// api/chat.js — Vercel Serverless Function
-// Proxies Groq API calls server-side so the key is NEVER exposed in the browser bundle.
-// Deploy this file at the root of your project as: /api/chat.js
+// api/chat.js — Vercel Serverless Function (CommonJS)
+const https = require("https");
 
-export default async function handler(req, res) {
-  // ── Only allow POST ────────────────────────────────────────────────────────
+module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: { message: "Method not allowed" } });
   }
 
-  const apiKey = process.env.GROQ_API_KEY; // ← server-side only, never exposed
-
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    console.error("[YojanaSetu] GROQ_API_KEY is not set in Vercel env variables.");
-    return res.status(500).json({ error: { message: "Server configuration error: API key missing." } });
+    return res.status(500).json({ error: { message: "GROQ_API_KEY not set on server." } });
   }
 
   const { messages, model, max_tokens, temperature } = req.body;
+  const payload = JSON.stringify({ messages, model, max_tokens, temperature });
 
-  try {
-    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
+  return new Promise((resolve) => {
+    const options = {
+      hostname: "api.groq.com",
+      path:     "/openai/v1/chat/completions",
+      method:   "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type":  "application/json",
         "Authorization": `Bearer ${apiKey}`,
+        "Content-Length": Buffer.byteLength(payload),
       },
-      body: JSON.stringify({ messages, model, max_tokens, temperature }),
+    };
+
+    const request = https.request(options, (groqRes) => {
+      let data = "";
+      groqRes.on("data", chunk => { data += chunk; });
+      groqRes.on("end", () => {
+        try {
+          const parsed = JSON.parse(data);
+          res.status(groqRes.statusCode).json(parsed);
+        } catch {
+          res.status(502).json({ error: { message: "Invalid response from Groq." } });
+        }
+        resolve();
+      });
     });
 
-    const data = await groqRes.json();
+    request.on("error", (err) => {
+      res.status(502).json({ error: { message: err.message } });
+      resolve();
+    });
 
-    // Forward Groq's status code (401, 429, 500, etc.) back to client
-    return res.status(groqRes.status).json(data);
-
-  } catch (err) {
-    console.error("[YojanaSetu] Groq proxy error:", err.message);
-    return res.status(502).json({ error: { message: "Failed to reach Groq API. Try again." } });
-  }
-}
+    request.write(payload);
+    request.end();
+  });
+};
