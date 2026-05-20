@@ -1,10 +1,8 @@
 // AIChat.jsx — YojanaSetu AI Assistant Chat Screen
-// Professional chat UI · Groq powered · Hindi + English · Dark/Light mode
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { sendMessage } from "./groqClient.js";
 
-// ─── THEME (mirrors YojanaSetu.jsx) ───────────────────────────────────────────
 const THEME = {
   light: {
     appBg:"#f5f5f0", card:"#fff",
@@ -23,7 +21,6 @@ const THEME = {
 const fontFamily = (lang) =>
   lang === "hi" ? "'Noto Sans Devanagari',sans-serif" : "'Noto Sans',sans-serif";
 
-// ─── SUGGESTED QUESTIONS ──────────────────────────────────────────────────────
 const SUGGESTED = {
   en: [
     { icon:"🌾", text:"Schemes for farmers" },
@@ -43,7 +40,6 @@ const SUGGESTED = {
   ],
 };
 
-// ─── GLOBAL STYLES ─────────────────────────────────────────────────────────────
 const GLOBAL_CSS = `
 @keyframes bubble-in {
   from { opacity:0; transform:translateY(10px); }
@@ -63,20 +59,17 @@ const GLOBAL_CSS = `
 .ai-textarea:focus   { outline:none; }
 `;
 
-// ─── TYPING INDICATOR ─────────────────────────────────────────────────────────
 function TypingIndicator({ dark }) {
   const th = THEME[dark ? "dark" : "light"];
   return (
     <div className="ai-msg-bubble"
       style={{ display:"flex", alignItems:"flex-end", gap:8, marginBottom:14 }}>
       <style>{GLOBAL_CSS}</style>
-      {/* Avatar */}
       <div style={{
         width:32, height:32, borderRadius:"50%", flexShrink:0,
         background:"linear-gradient(135deg,#FF9933 0%,#003580 100%)",
         display:"flex", alignItems:"center", justifyContent:"center", fontSize:14,
       }}>🤖</div>
-      {/* Dots bubble */}
       <div style={{
         background: th.card,
         border:`1.5px solid ${th.border2}`,
@@ -97,12 +90,10 @@ function TypingIndicator({ dark }) {
   );
 }
 
-// ─── SINGLE CHAT BUBBLE ───────────────────────────────────────────────────────
 function ChatBubble({ msg, lang, dark }) {
   const th  = THEME[dark ? "dark" : "light"];
   const bf  = fontFamily(lang);
   const isUser = msg.role === "user";
-
   return (
     <div className="ai-msg-bubble"
       style={{
@@ -112,8 +103,6 @@ function ChatBubble({ msg, lang, dark }) {
         gap:8,
         marginBottom:14,
       }}>
-
-      {/* AI avatar — only for assistant */}
       {!isUser && (
         <div style={{
           width:32, height:32, borderRadius:"50%", flexShrink:0,
@@ -121,8 +110,6 @@ function ChatBubble({ msg, lang, dark }) {
           display:"flex", alignItems:"center", justifyContent:"center", fontSize:14,
         }}>🤖</div>
       )}
-
-      {/* Bubble */}
       <div style={{
         maxWidth:"76%",
         background: isUser
@@ -147,17 +134,13 @@ function ChatBubble({ msg, lang, dark }) {
   );
 }
 
-// ─── WELCOME SCREEN (shown when no messages yet) ──────────────────────────────
 function WelcomeScreen({ lang, dark, onSuggest }) {
   const th = THEME[dark ? "dark" : "light"];
   const bf = fontFamily(lang);
   const isHindi = lang === "hi";
-
   return (
     <div style={{ animation:"fade-in 0.3s ease-out", paddingBottom:8 }}>
       <style>{GLOBAL_CSS}</style>
-
-      {/* AI greeting bubble */}
       <div style={{ display:"flex", alignItems:"flex-end", gap:8, marginBottom:20 }}>
         <div style={{
           width:32, height:32, borderRadius:"50%", flexShrink:0,
@@ -178,8 +161,6 @@ function WelcomeScreen({ lang, dark, onSuggest }) {
             : "Namaste! 🙏 I'm YojanaSetu's AI Assistant.\nI'll help you find and understand government schemes.\nAsk me anything in Hindi or English!"}
         </div>
       </div>
-
-      {/* Suggested questions label */}
       <div style={{
         fontSize:10, fontWeight:700, color:th.textSub,
         letterSpacing:0.8, textTransform:"uppercase",
@@ -187,8 +168,6 @@ function WelcomeScreen({ lang, dark, onSuggest }) {
       }}>
         {isHindi ? "यह पूछें" : "Try asking"}
       </div>
-
-      {/* Suggested chips */}
       <div style={{ display:"flex", flexDirection:"column", gap:8, paddingLeft:40 }}>
         {SUGGESTED[lang].map((s, i) => (
           <div key={i} className="ai-suggested"
@@ -214,7 +193,6 @@ function WelcomeScreen({ lang, dark, onSuggest }) {
   );
 }
 
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function AIChat({ lang="en", dark=false, profile=null }) {
   const th      = THEME[dark ? "dark" : "light"];
   const bf      = fontFamily(lang);
@@ -225,15 +203,13 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
 
-  const bottomRef  = useRef(null);
+  const bottomRef   = useRef(null);
   const textareaRef = useRef(null);
 
-  // Auto-scroll to bottom on new message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior:"smooth" });
   }, [messages, loading]);
 
-  // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -241,7 +217,6 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
     el.style.height = Math.min(el.scrollHeight, 100) + "px";
   }, [input]);
 
-  // ── Send message ─────────────────────────────────────────────────────────────
   const handleSend = useCallback(async (overrideText) => {
     const query = (overrideText ?? input).trim();
     if (!query || loading) return;
@@ -260,12 +235,9 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
         query,
       );
       setMessages(prev => [...prev, { role:"assistant", content:reply }]);
-    } catch {
-      setError(
-        isHindi
-          ? "❌ जवाब नहीं मिला। कृपया दोबारा कोशिश करें।"
-          : "❌ Could not get response. Please try again."
-      );
+    } catch (err) {
+      // ✅ Show the ACTUAL error so you can see what's really going wrong
+      setError(`❌ ${err.message || (isHindi ? "जवाब नहीं मिला। दोबारा कोशिश करें।" : "Could not get response. Please try again.")}`);
     } finally {
       setLoading(false);
     }
@@ -288,7 +260,7 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
     }}>
       <style>{GLOBAL_CSS}</style>
 
-      {/* ── HEADER ─────────────────────────────────────────────────────────── */}
+      {/* HEADER */}
       <div style={{
         background:"linear-gradient(135deg,#FF9933 0%,#FF8000 35%,#003580 100%)",
         padding:"18px 20px 22px",
@@ -296,7 +268,6 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
         boxShadow:"0 4px 20px rgba(0,53,128,0.2)",
       }}>
         <div style={{ display:"flex", alignItems:"center", gap:13 }}>
-          {/* Icon */}
           <div style={{
             width:46, height:46, borderRadius:14, flexShrink:0,
             background:"rgba(255,255,255,0.18)",
@@ -304,8 +275,6 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
             display:"flex", alignItems:"center", justifyContent:"center",
             fontSize:22, boxShadow:"0 4px 12px rgba(0,0,0,0.15)",
           }}>🤖</div>
-
-          {/* Title */}
           <div style={{ flex:1 }}>
             <div style={{ color:"#fff", fontSize:17, fontWeight:800, lineHeight:1.2 }}>
               {isHindi ? "AI सहायक" : "AI Assistant"}
@@ -314,8 +283,6 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
               🟢 {isHindi ? "ऑनलाइन · हिंदी / English" : "Online · Hindi / English"}
             </div>
           </div>
-
-          {/* Clear chat button */}
           {messages.length > 0 && (
             <div
               onClick={() => { setMessages([]); setError(""); }}
@@ -332,27 +299,19 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
         </div>
       </div>
 
-      {/* ── MESSAGES AREA ──────────────────────────────────────────────────── */}
+      {/* MESSAGES AREA */}
       <div style={{
         flex:1, overflowY:"auto",
         padding:"18px 16px 6px",
         WebkitOverflowScrolling:"touch",
       }}>
-
-        {/* Welcome screen */}
         {messages.length === 0 && !loading && (
           <WelcomeScreen lang={lang} dark={dark} onSuggest={handleSend} />
         )}
-
-        {/* Chat bubbles */}
         {messages.map((msg, i) => (
           <ChatBubble key={i} msg={msg} lang={lang} dark={dark} />
         ))}
-
-        {/* Typing indicator */}
         {loading && <TypingIndicator dark={dark} />}
-
-        {/* Error message */}
         {error && (
           <div style={{
             textAlign:"center", marginBottom:12,
@@ -364,12 +323,10 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
             {error}
           </div>
         )}
-
-        {/* Scroll anchor */}
         <div ref={bottomRef} style={{ height:4 }} />
       </div>
 
-      {/* ── INPUT AREA ─────────────────────────────────────────────────────── */}
+      {/* INPUT AREA */}
       <div style={{
         background: th.navBg,
         borderTop:`1.5px solid ${th.border}`,
@@ -380,8 +337,6 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
           : "0 -4px 20px rgba(0,0,0,0.07)",
       }}>
         <div style={{ display:"flex", gap:10, alignItems:"flex-end" }}>
-
-          {/* Textarea */}
           <textarea
             ref={textareaRef}
             className="ai-textarea"
@@ -404,8 +359,6 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
               display:"block",
             }}
           />
-
-          {/* Send button */}
           <div
             className="ai-send-btn"
             onClick={() => handleSend()}
@@ -426,8 +379,6 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
             }
           </div>
         </div>
-
-        {/* Disclaimer */}
         <div style={{
           fontSize:10, color:th.textSub, textAlign:"center",
           marginTop:7, fontFamily:bf, lineHeight:1.5,

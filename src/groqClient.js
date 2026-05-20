@@ -1,50 +1,25 @@
 // groqClient.js — YojanaSetu AI · Groq API handler
-// ✅ API key is now handled server-side via /api/chat (Vercel serverless function)
-// ✅ No API key exposed in the browser bundle
+// Sends ALL scheme data to AI so it can answer any question from the database
 
 import { SCHEME_DB } from "./schemesData.js";
 
-const MODEL = "llama3-8b-8192"; // fast + free tier
+const MODEL = "llama3-8b-8192";
 
-// ─── KEYWORD → CATEGORY MAP ───────────────────────────────────────────────────
-const KEYWORD_MAP = {
-  farmer:   ["farmer","kisan","किसान","agriculture","fasal","crop","khet","kheti","pm kisan","rythu","shetkari","krishi"],
-  student:  ["student","scholarship","education","छात्र","study","padhai","college","school","nsp","merit","tuition"],
-  women:    ["women","mahila","महिला","girl","beti","widow","maternity","ladies","shg","naari","stree"],
-  senior:   ["senior","old age","pension","वरिष्ठ","बुजुर्ग","elderly","aged","60 year","retire"],
-  business: ["business","mudra","loan","व्यापार","entrepreneur","startup","shop","msme","small business","self employ"],
-  housing:  ["house","awas","housing","ghar","घर","मकान","home","flat","construction","shelter","makaan"],
-  health:   ["health","hospital","ayushman","स्वास्थ्य","treatment","medical","doctor","insurance","illness","bimari"],
-};
+// ─── BUILD FULL SCHEME CONTEXT (ALL schemes, compact format) ──────────────────
+// Gives the AI knowledge of every scheme in the database
+function buildFullSchemeContext() {
+  const national = SCHEME_DB.filter(s => s.scope === "national");
+  const state    = SCHEME_DB.filter(s => s.scope === "state");
 
-// ─── SMART SCHEME FILTER ──────────────────────────────────────────────────────
-function getRelevantSchemes(query) {
-  const q = query.toLowerCase();
-  let matched = [];
+  const format = (s) =>
+    `• ${s.name.en} | ${s.name.hi} | ${s.tag.en} | ${s.benefit.en} | Apply: ${s.apply.en}`;
 
-  for (const [cat, words] of Object.entries(KEYWORD_MAP)) {
-    if (words.some(w => q.includes(w))) {
-      const filtered = SCHEME_DB.filter(s => {
-        if (cat === "health")  return s.tag.en.toLowerCase().includes("health");
-        if (cat === "housing") return ["housing","awas"].some(k => s.tag.en.toLowerCase().includes(k));
-        return s.match({
-          who: cat, income: "below1", age: "18to35",
-          area: "rural", house: "no", state: "",
-        });
-      });
-      matched = [...matched, ...filtered];
-    }
-  }
-
-  if (matched.length === 0) {
-    matched = SCHEME_DB.filter(s => s.scope === "national").slice(0, 4);
-  }
-
-  const unique = [...new Map(matched.map(s => [s.id, s])).values()].slice(0, 5);
-
-  return unique
-    .map(s => `• ${s.name.en} (${s.name.hi}): ${s.benefit.en} — Apply: ${s.apply.en}`)
-    .join("\n");
+  return (
+    "=== NATIONAL SCHEMES ===\n" +
+    national.map(format).join("\n") +
+    "\n\n=== STATE SCHEMES ===\n" +
+    state.map(s => `[${s.state}] ${format(s)}`).join("\n")
+  );
 }
 
 // ─── SYSTEM PROMPT ────────────────────────────────────────────────────────────
@@ -57,23 +32,23 @@ Rules:
 - Use emojis occasionally to stay warm and friendly
 - Only answer questions about Indian government schemes, eligibility, documents, and application process
 - If asked unrelated questions, politely redirect to schemes topic
-- Never make up scheme details — use only the scheme data provided below
+- Use ONLY the scheme data provided below — never make up scheme details
 - For step-by-step guides, use numbered steps (1. 2. 3.)
-- Always end with a helpful follow-up offer like "Want to know how to apply?" or "कोई और सवाल?"`;
+- Always end with a helpful follow-up offer like "Want to know how to apply?" or "कोई और सवाल?"
+
+COMPLETE SCHEME DATABASE (use this to answer any question):
+`;
 
 // ─── MAIN EXPORT: sendMessage ─────────────────────────────────────────────────
 export async function sendMessage(conversationHistory, userQuery) {
-  const schemes       = getRelevantSchemes(userQuery);
-  const schemeContext = schemes
-    ? `\n\nRelevant schemes for this query:\n${schemes}`
-    : "";
+  const schemeContext = buildFullSchemeContext();
 
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model:       MODEL,       // ✅ Fixed: was incorrectly lowercase "model" before
-      max_tokens:  400,
+      model:       MODEL,
+      max_tokens:  500,
       temperature: 0.65,
       messages: [
         { role: "system", content: SYSTEM_PROMPT + schemeContext },
