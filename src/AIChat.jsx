@@ -77,8 +77,10 @@ const GLOBAL_CSS = `
   100% { opacity:0;   transform:scale(0.68); }
 }
 @keyframes chip-in {
-  from { opacity:0; transform:translateX(-10px); }
-  to   { opacity:1; transform:translateX(0); }
+  0%   { opacity:0;   transform:translateY(20px) scale(0.75); }
+  55%  { opacity:1;   transform:translateY(-6px) scale(1.07); }
+  75%  { opacity:1;   transform:translateY(2px)  scale(0.97); }
+  100% { opacity:1;   transform:translateY(0)    scale(1);    }
 }
 @keyframes shimmer {
   0%   { background-position: -300% center; }
@@ -458,6 +460,12 @@ function FollowUpChips({ chips, onTap, lang, dark }) {
   const bf = fontFamily(lang);
   const [exitingIdx, setExitingIdx] = useState(null);
 
+  // Match the same glass surface used by AI bubbles so chips
+  // blend with appBg instead of popping out as solid white cards.
+  const glassCard = dark
+    ? "rgba(28,28,30,0.72)"
+    : "rgba(255,255,255,0.72)";
+
   const handleChipTap = (chip, i) => {
     if (exitingIdx !== null) return;
     setExitingIdx(i);
@@ -472,17 +480,33 @@ function FollowUpChips({ chips, onTap, lang, dark }) {
       {chips.map((chip, i) => (
         <div key={i} onClick={() => handleChipTap(chip, i)}
           style={{
-            background: th.card,
-            border:`1.5px solid #FF9933`,
-            borderRadius:20,
-            padding:"7px 13px",
-            fontSize:12, fontFamily:bf, color:"#FF9933",
+            // FIX 1: Match AI bubble gradient border (orange → purple → navy)
+            // instead of the previous plain solid #FF9933 border.
+            background: `linear-gradient(${glassCard}, ${glassCard}) padding-box,
+                         linear-gradient(135deg,#FF9933 0%,#6366f1 50%,#003580 100%) border-box`,
+            border: "1.5px solid transparent",
+
+            // FIX 2: Glass blur so the chip surface matches the bubble's
+            // glassmorphism and sits naturally on the cream appBg (#f5f5f0).
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+
+            borderRadius: 20,
+            padding: "7px 13px",
+            fontSize: 12, fontFamily: bf,
+
+            // FIX 2: Theme-aware color instead of hardcoded #FF9933,
+            // consistent with how the AI bubble header text is coloured.
+            color: dark ? "#FF9933" : "#FF8000",
+
             cursor: exitingIdx !== null ? "default" : "pointer",
-            fontWeight:600,
-            boxShadow:"0 1px 4px rgba(255,153,51,0.15)",
+            fontWeight: 600,
+            boxShadow: dark
+              ? "0 2px 10px rgba(255,153,51,0.18), 0 1px 4px rgba(0,0,0,0.35)"
+              : "0 2px 8px rgba(255,153,51,0.18), 0 1px 4px rgba(0,0,0,0.07)",
             animation: exitingIdx === i
               ? "chip-out 0.27s ease-in forwards"
-              : `chip-in 0.25s ease-out ${i * 0.09}s both`,
+              : `chip-in 0.52s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.22}s both`,
             opacity: exitingIdx !== null && exitingIdx !== i ? 0.35 : 1,
             transition: exitingIdx !== null && exitingIdx !== i
               ? "opacity 0.22s ease-out"
