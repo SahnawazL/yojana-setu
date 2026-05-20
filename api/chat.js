@@ -1,5 +1,5 @@
-// api/chat.js — Vercel Serverless Function (CommonJS)
-const https = require("https");
+// api/chat.js — Vercel Serverless Function
+// Node 24 supports native fetch — much simpler and more reliable than https module
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
@@ -8,44 +8,27 @@ module.exports = async function handler(req, res) {
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: { message: "GROQ_API_KEY not set on server." } });
+    console.error("[YojanaSetu] GROQ_API_KEY is not set in Vercel Environment Variables!");
+    return res.status(500).json({
+      error: { message: "GROQ_API_KEY is not configured on the server. Please add it in Vercel → Settings → Environment Variables." }
+    });
   }
 
-  const { messages, model, max_tokens, temperature } = req.body;
-  const payload = JSON.stringify({ messages, model, max_tokens, temperature });
-
-  return new Promise((resolve) => {
-    const options = {
-      hostname: "api.groq.com",
-      path:     "/openai/v1/chat/completions",
-      method:   "POST",
+  try {
+    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
       headers: {
-        "Content-Type":  "application/json",
+        "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`,
-        "Content-Length": Buffer.byteLength(payload),
       },
-    };
-
-    const request = https.request(options, (groqRes) => {
-      let data = "";
-      groqRes.on("data", chunk => { data += chunk; });
-      groqRes.on("end", () => {
-        try {
-          const parsed = JSON.parse(data);
-          res.status(groqRes.statusCode).json(parsed);
-        } catch {
-          res.status(502).json({ error: { message: "Invalid response from Groq." } });
-        }
-        resolve();
-      });
+      body: JSON.stringify(req.body), // Vercel auto-parses JSON body
     });
 
-    request.on("error", (err) => {
-      res.status(502).json({ error: { message: err.message } });
-      resolve();
-    });
+    const data = await groqRes.json();
+    return res.status(groqRes.status).json(data);
 
-    request.write(payload);
-    request.end();
-  });
+  } catch (err) {
+    console.error("[YojanaSetu] Groq fetch error:", err.message);
+    return res.status(502).json({ error: { message: `Could not reach Groq API: ${err.message}` } });
+  }
 };
