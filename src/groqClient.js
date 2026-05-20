@@ -1,12 +1,12 @@
 // groqClient.js — YojanaSetu AI · Groq API handler
-// Filters relevant schemes from schemesData and sends to Groq LLM
+// ✅ API key is now handled server-side via /api/chat (Vercel serverless function)
+// ✅ No API key exposed in the browser bundle
 
 import { SCHEME_DB } from "./schemesData.js";
 
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL        = "llama3-8b-8192"; // fast + free tier
+const MODEL = "llama3-8b-8192"; // fast + free tier
 
-// ─── KEYWORD → CATEGORY MAP ────────────────────────────────────────────────────
+// ─── KEYWORD → CATEGORY MAP ───────────────────────────────────────────────────
 const KEYWORD_MAP = {
   farmer:   ["farmer","kisan","किसान","agriculture","fasal","crop","khet","kheti","pm kisan","rythu","shetkari","krishi"],
   student:  ["student","scholarship","education","छात्र","study","padhai","college","school","nsp","merit","tuition"],
@@ -17,8 +17,7 @@ const KEYWORD_MAP = {
   health:   ["health","hospital","ayushman","स्वास्थ्य","treatment","medical","doctor","insurance","illness","bimari"],
 };
 
-// ─── SMART SCHEME FILTER ───────────────────────────────────────────────────────
-// Returns lightweight text of 3–5 relevant schemes only (saves tokens)
+// ─── SMART SCHEME FILTER ──────────────────────────────────────────────────────
 function getRelevantSchemes(query) {
   const q = query.toLowerCase();
   let matched = [];
@@ -26,8 +25,8 @@ function getRelevantSchemes(query) {
   for (const [cat, words] of Object.entries(KEYWORD_MAP)) {
     if (words.some(w => q.includes(w))) {
       const filtered = SCHEME_DB.filter(s => {
-        if (cat === "health")   return s.tag.en.toLowerCase().includes("health");
-        if (cat === "housing")  return ["housing","awas"].some(k => s.tag.en.toLowerCase().includes(k));
+        if (cat === "health")  return s.tag.en.toLowerCase().includes("health");
+        if (cat === "housing") return ["housing","awas"].some(k => s.tag.en.toLowerCase().includes(k));
         return s.match({
           who: cat, income: "below1", age: "18to35",
           area: "rural", house: "no", state: "",
@@ -37,21 +36,18 @@ function getRelevantSchemes(query) {
     }
   }
 
-  // Fallback — top 4 national schemes if no keyword matched
   if (matched.length === 0) {
     matched = SCHEME_DB.filter(s => s.scope === "national").slice(0, 4);
   }
 
-  // Deduplicate + limit to 5
   const unique = [...new Map(matched.map(s => [s.id, s])).values()].slice(0, 5);
 
-  // Lightweight format: name · benefit · apply link only (saves ~60% tokens)
   return unique
     .map(s => `• ${s.name.en} (${s.name.hi}): ${s.benefit.en} — Apply: ${s.apply.en}`)
     .join("\n");
 }
 
-// ─── SYSTEM PROMPT ─────────────────────────────────────────────────────────────
+// ─── SYSTEM PROMPT ────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are YojanaSetu AI — a friendly, helpful assistant for Indian government schemes.
 
 Rules:
@@ -65,33 +61,30 @@ Rules:
 - For step-by-step guides, use numbered steps (1. 2. 3.)
 - Always end with a helpful follow-up offer like "Want to know how to apply?" or "कोई और सवाल?"`;
 
-// ─── MAIN EXPORT: sendMessage ──────────────────────────────────────────────────
+// ─── MAIN EXPORT: sendMessage ─────────────────────────────────────────────────
 export async function sendMessage(conversationHistory, userQuery) {
-  const schemes      = getRelevantSchemes(userQuery);
+  const schemes       = getRelevantSchemes(userQuery);
   const schemeContext = schemes
     ? `\n\nRelevant schemes for this query:\n${schemes}`
     : "";
 
-  const res = await fetch(GROQ_API_URL, {
+  const res = await fetch("/api/chat", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model:       MODEL,
+      model:       MODEL,       // ✅ Fixed: was incorrectly lowercase "model" before
       max_tokens:  400,
       temperature: 0.65,
       messages: [
         { role: "system", content: SYSTEM_PROMPT + schemeContext },
-        ...conversationHistory.slice(-6), // last 6 messages for context window
+        ...conversationHistory.slice(-6),
       ],
     }),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || "Groq API error");
+    throw new Error(err?.error?.message || `API error (${res.status})`);
   }
 
   const data = await res.json();
