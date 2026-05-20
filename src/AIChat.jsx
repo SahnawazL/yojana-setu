@@ -130,7 +130,82 @@ const GLOBAL_CSS = `
 .ai-avatar-pulse     { animation: avatar-pulse 1.4s ease-in-out infinite; }
 .chips-container     { animation: chips-reveal 0.3s ease-out; }
 .unlock-bounce       { animation: unlock-bounce 0.4s ease-out; }
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
 `;
+
+// ─── ASHOK CHAKRA SVG ────────────────────────────────────────────────────────
+// Real 24-spoke Dharma Chakra with lens-shaped arrowheads between spokes.
+// Rendered as inline SVG so it's crisp at any DPR; spins via CSS.
+function AshokChakra({ size = 24, color = "rgba(255,255,255,0.9)", duration = "10s" }) {
+  const n   = 24;          // 24 spokes — canonical Ashoka Chakra
+  const cx  = 50, cy = 50; // SVG centre (viewBox 0 0 100 100)
+  const toRad = d => (d * Math.PI) / 180;
+
+  // Geometry — all values in SVG units (viewBox 100×100)
+  const rimOuter  = 46;  // outer edge of the thick rim ring
+  const rimInner  = 37;  // inner edge of the rim / tip of spokes
+  const hubR      = 7;   // solid hub circle
+  const spokeFrom = hubR + 2.5; // spokes start just outside hub
+
+  // 24 evenly spaced spokes
+  const spokes = Array.from({ length: n }, (_, i) => {
+    const a = toRad(i * (360 / n) - 90); // start from 12 o'clock
+    return {
+      x1: cx + spokeFrom * Math.cos(a),
+      y1: cy + spokeFrom * Math.sin(a),
+      x2: cx + rimInner  * Math.cos(a),
+      y2: cy + rimInner  * Math.sin(a),
+    };
+  });
+
+  // 24 lens/leaf arrowheads — one between each consecutive pair of spokes,
+  // sitting inside the rim band (between rimInner and rimOuter).
+  const leaves = Array.from({ length: n }, (_, i) => {
+    const angleDeg = i * (360 / n) + (360 / n / 2) - 90; // midpoint angle
+    const a  = toRad(angleDeg);
+    const tr = (rimInner + rimOuter) / 2; // ~41.5 — centre of rim band
+    return {
+      cx:  cx + tr * Math.cos(a),
+      cy:  cy + tr * Math.sin(a),
+      rot: angleDeg + 90, // rotate so leaf lies tangent to circle
+    };
+  });
+
+  return (
+    <div style={{
+      display:"inline-flex", flexShrink:0,
+      animation:`spin ${duration} linear infinite`,
+    }}>
+      <svg width={size} height={size} viewBox="0 0 100 100">
+        {/* Thick outer rim */}
+        <circle cx={cx} cy={cy} r={rimOuter}
+          fill="none" stroke={color} strokeWidth="7" />
+        {/* Thin inner rim line */}
+        <circle cx={cx} cy={cy} r={rimInner}
+          fill="none" stroke={color} strokeWidth="1.8" />
+        {/* Solid hub */}
+        <circle cx={cx} cy={cy} r={hubR} fill={color} />
+        {/* 24 spokes */}
+        {spokes.map((s, i) => (
+          <line key={i}
+            x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
+            stroke={color} strokeWidth="2.4" strokeLinecap="round"
+          />
+        ))}
+        {/* 24 lens-shaped arrowheads between spokes inside the rim band */}
+        {leaves.map((l, i) => (
+          <g key={i} transform={`translate(${l.cx},${l.cy}) rotate(${l.rot})`}>
+            {/* Symmetric lens: pointed top & bottom, curved left & right */}
+            <path d="M 0,-5.5 Q 4,0 0,5.5 Q -4,0 0,-5.5 Z" fill={color} />
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
 
 function TypingIndicator({ dark }) {
   const th = THEME[dark ? "dark" : "light"];
@@ -891,8 +966,10 @@ export default function AIChat({ lang="en", dark=false }) {
             fontSize:22, boxShadow:"0 4px 12px rgba(0,0,0,0.15)",
           }}>🤖</div>
           <div style={{ flex:1 }}>
-            <div style={{ color:"#fff", fontSize:17, fontWeight:800, lineHeight:1.2 }}>
+            <div style={{ color:"#fff", fontSize:17, fontWeight:800, lineHeight:1.2,
+              display:"flex", alignItems:"center", gap:8 }}>
               {isHindi ? "AI सहायक" : "AI Assistant"}
+              <AshokChakra size={22} color="rgba(255,255,255,0.88)" duration="10s" />
             </div>
             <div style={{ color:"rgba(255,255,255,0.8)", fontSize:11, marginTop:3 }}>
               🟢 {isHindi ? "ऑनलाइन · हिंदी / English" : "Online · Hindi / English"}
