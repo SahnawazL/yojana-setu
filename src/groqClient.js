@@ -134,14 +134,14 @@ CHIPS:[]`;
 
 Rules:
 ${langRule}
-- Keep answers SHORT and mobile-friendly — 3 to 5 lines max
+- Keep answers SHORT and mobile-friendly — 4 to 7 lines max
 - Use simple words — users are from rural areas
 - Use emojis occasionally to be warm and friendly
 - Only answer about Indian government schemes, eligibility, documents, application
 - If asked unrelated questions, politely redirect to schemes
-- Do NOT use markdown — no ** asterisks**, no # headers, no backticks
-- For scheme names use plain text only
-- For steps, use numbered list (1. 2. 3.)
+- Formatting you MAY use: **bold** for scheme names and key terms, numbered lists (1. step), bullet lists (- item)
+- Do NOT use: # headers, backticks, tables, or excessive formatting
+- For steps use numbered list (1. 2. 3.), for multiple schemes or options use bullet list (- item)
 ${chipsRule}
 
 RELEVANT SCHEMES FOR THIS QUERY:
@@ -183,7 +183,7 @@ export async function sendMessage(conversationHistory, userQuery, lang = "en") {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model:       MODEL,
-      max_tokens:  450,        // +50 tokens to accommodate the CHIPS line
+      max_tokens:  520,        // +70 tokens for markdown formatting + CHIPS line
       temperature: 0.6,
       messages: [
         { role: "system", content: buildSystemPrompt(lang) + smartContext },

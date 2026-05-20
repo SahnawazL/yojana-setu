@@ -319,32 +319,115 @@ function InputBar({ input, setInput, onSend, onKeyDown, loading, dark, lang, tex
   );
 }
 
-// Renders message text: bold (**text**) and clickable links
-function renderContent(text, isUser, th) {
-  const lines = text.split("\n");
-  return lines.map((line, li) => {
-    const parts = [];
-    const regex = /\*\*(.*?)\*\*|(https?:\/\/[^\s]+|[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
-    let last = 0; let match;
-    while ((match = regex.exec(line)) !== null) {
-      if (match.index > last) parts.push(line.slice(last, match.index));
-      if (match[1] !== undefined) {
-        parts.push(<strong key={`b-${li}-${match.index}`} style={{ fontWeight:700 }}>{match[1]}</strong>);
-      } else {
-        const raw  = match[2];
-        const href = raw.startsWith("http") ? raw : `https://${raw}`;
-        parts.push(
-          <a key={`l-${li}-${match.index}`} href={href} target="_blank" rel="noopener noreferrer"
-            style={{ color: isUser ? "#ffe0a0" : "#FF9933", textDecoration:"underline", wordBreak:"break-all" }}>
-            {raw}
-          </a>
-        );
-      }
-      last = match.index + match[0].length;
+// ─── Feature 10: Markdown renderer ───────────────────────────────────────────
+// renderInline handles bold (**text**) and clickable links within a single line.
+function renderInline(line, lineIdx, isUser, th) {
+  const parts = [];
+  const regex = /\*\*(.*?)\*\*|(https?:\/\/[^\s]+|[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
+  let last = 0; let match;
+  while ((match = regex.exec(line)) !== null) {
+    if (match.index > last) parts.push(line.slice(last, match.index));
+    if (match[1] !== undefined) {
+      parts.push(
+        <strong key={`b-${lineIdx}-${match.index}`} style={{ fontWeight:700 }}>
+          {match[1]}
+        </strong>
+      );
+    } else {
+      const raw  = match[2];
+      const href = raw.startsWith("http") ? raw : `https://${raw}`;
+      parts.push(
+        <a key={`l-${lineIdx}-${match.index}`} href={href} target="_blank" rel="noopener noreferrer"
+          style={{ color: isUser ? "#ffe0a0" : "#FF9933", textDecoration:"underline", wordBreak:"break-all" }}>
+          {raw}
+        </a>
+      );
     }
-    if (last < line.length) parts.push(line.slice(last));
-    return <span key={`line-${li}`}>{parts}{li < lines.length - 1 ? "\n" : ""}</span>;
+    last = match.index + match[0].length;
+  }
+  if (last < line.length) parts.push(line.slice(last));
+  return parts;
+}
+
+// renderContent handles block-level structure: numbered lists, bullet lists,
+// empty-line spacers, and falls back to inline rendering for regular text.
+function renderContent(text, isUser, th) {
+  const lines  = text.split("\n");
+  const result = [];
+
+  lines.forEach((line, li) => {
+    const numberedMatch = line.match(/^(\d+)\.\s+([\s\S]*)/);
+    const bulletMatch   = line.match(/^[-•*]\s+([\s\S]*)/);
+    const isLast        = li === lines.length - 1;
+
+    // ── Numbered list item ─────────────────────────────────────────────────
+    if (numberedMatch) {
+      const [, num, content] = numberedMatch;
+      result.push(
+        <div key={`line-${li}`} style={{
+          display:"flex", gap:9, alignItems:"flex-start",
+          marginTop: li === 0 ? 0 : 6,
+          marginBottom: isLast ? 0 : 1,
+        }}>
+          {/* Circle number badge */}
+          <span style={{
+            minWidth:20, height:20, borderRadius:"50%", flexShrink:0,
+            background: isUser ? "rgba(255,255,255,0.22)" : "rgba(255,153,51,0.15)",
+            color: isUser ? "#fff" : "#FF8000",
+            fontSize:10, fontWeight:800, lineHeight:1,
+            display:"flex", alignItems:"center", justifyContent:"center",
+            marginTop:3,
+          }}>
+            {num}
+          </span>
+          <span style={{ flex:1, lineHeight:1.65 }}>
+            {renderInline(content, li, isUser, th)}
+          </span>
+        </div>
+      );
+      return;
+    }
+
+    // ── Bullet list item ───────────────────────────────────────────────────
+    if (bulletMatch) {
+      const [, content] = bulletMatch;
+      result.push(
+        <div key={`line-${li}`} style={{
+          display:"flex", gap:9, alignItems:"flex-start",
+          marginTop: li === 0 ? 0 : 5,
+          marginBottom: isLast ? 0 : 1,
+        }}>
+          {/* Dot */}
+          <span style={{
+            color: isUser ? "rgba(255,255,255,0.65)" : "#FF9933",
+            fontSize:15, lineHeight:1, flexShrink:0, marginTop:4,
+          }}>
+            •
+          </span>
+          <span style={{ flex:1, lineHeight:1.65 }}>
+            {renderInline(content, li, isUser, th)}
+          </span>
+        </div>
+      );
+      return;
+    }
+
+    // ── Empty line → small spacer ──────────────────────────────────────────
+    if (line.trim() === "") {
+      result.push(<div key={`line-${li}`} style={{ height:5 }} />);
+      return;
+    }
+
+    // ── Regular text line ──────────────────────────────────────────────────
+    result.push(
+      <span key={`line-${li}`}>
+        {renderInline(line, li, isUser, th)}
+        {!isLast && "\n"}
+      </span>
+    );
   });
+
+  return result;
 }
 
 function FollowUpChips({ chips, onTap, lang, dark }) {
