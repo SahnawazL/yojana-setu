@@ -337,10 +337,33 @@ function renderInline(line, lineIdx, isUser, th) {
       const raw  = match[2];
       const href = raw.startsWith("http") ? raw : `https://${raw}`;
       parts.push(
-        <a key={`l-${lineIdx}-${match.index}`} href={href} target="_blank" rel="noopener noreferrer"
-          style={{ color: isUser ? "#ffe0a0" : "#FF9933", textDecoration:"underline", wordBreak:"break-all" }}>
-          {raw}
-        </a>
+        isUser ? (
+          // User bubble — light gold underline (on dark blue bg)
+          <a key={`l-${lineIdx}-${match.index}`} href={href} target="_blank" rel="noopener noreferrer"
+            style={{ color:"#ffe0a0", textDecoration:"underline", wordBreak:"break-all" }}>
+            {raw}
+          </a>
+        ) : (
+          // AI bubble — premium pill badge (readable on glassmorphism surface)
+          <a key={`l-${lineIdx}-${match.index}`} href={href} target="_blank" rel="noopener noreferrer"
+            style={{
+              display:"inline-flex", alignItems:"center", gap:3,
+              background:"rgba(0,53,128,0.08)",
+              border:"1px solid rgba(0,53,128,0.22)",
+              borderRadius:5,
+              padding:"1px 7px",
+              color:"#003580",
+              textDecoration:"none",
+              fontWeight:600,
+              fontSize:"0.88em",
+              wordBreak:"break-all",
+              verticalAlign:"middle",
+              lineHeight:1.5,
+            }}>
+            {raw}
+            <span style={{ fontSize:9, opacity:0.55, flexShrink:0 }}>↗</span>
+          </a>
+        )
       );
     }
     last = match.index + match[0].length;
@@ -499,8 +522,14 @@ function ChatBubble({ msg, lang, dark, isNew }) {
     return () => clearInterval(timerRef.current);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Strip **bold** markers so partial markdown doesn't flash during animation
-  const stripMd = (t) => t.replace(/\*\*(.*?)\*\*/g, "$1");
+  // Strip markdown so raw symbols never flash during typewriter animation:
+  // 1. Complete **bold** pairs → plain text
+  // 2. Orphaned ** (closing pair hasn't been typed yet) → remove
+  // 3. * bullet at line start → replace with • so list lines look clean mid-type
+  const stripMd = (t) => t
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*\*/g, "")
+    .replace(/^\* /gm, "• ");
 
   // ── Feature 1 + 6: Gradient border + Glassmorphism on AI bubbles ─────────
   // Semi-transparent glass card so the app background bleeds through the bubble.
