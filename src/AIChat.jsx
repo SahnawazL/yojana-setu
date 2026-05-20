@@ -326,6 +326,7 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
   const [followUps, setFollowUps] = useState([]);
+  const [usedChips, setUsedChips] = useState(new Set());
 
   const bottomRef   = useRef(null);
   const textareaRef = useRef(null);
@@ -349,6 +350,12 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
     setError("");
     setFollowUps([]);  // clear chips on new message
 
+    // If triggered by a chip tap, mark it used so it never reappears
+    const nextUsedChips = overrideText
+      ? new Set([...usedChips, overrideText])
+      : usedChips;
+    if (overrideText) setUsedChips(nextUsedChips);
+
     const userMsg      = { role:"user", content:query };
     const nextMessages = [...messages, userMsg];
     setMessages(nextMessages);
@@ -361,14 +368,17 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
         lang,  // ✅ forces AI to respond in app's selected language
       );
       setMessages(prev => [...prev, { role:"assistant", content:reply }]);
-      setFollowUps(getFollowUps(query, lang));  // show relevant chips
+      // Filter out chips the user has already tapped
+      const allChips = getFollowUps(query, lang);
+      const freshChips = allChips.filter(c => !nextUsedChips.has(c));
+      setFollowUps(freshChips);
     } catch (err) {
       // ✅ Show the ACTUAL error so you can see what's really going wrong
       setError(`❌ ${err.message || (isHindi ? "जवाब नहीं मिला। दोबारा कोशिश करें।" : "Could not get response. Please try again.")}`);
     } finally {
       setLoading(false);
     }
-  }, [input, messages, loading, isHindi]);
+  }, [input, messages, loading, isHindi, usedChips]);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -412,7 +422,7 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
           </div>
           {messages.length > 0 && (
             <div
-              onClick={() => { setMessages([]); setError(""); setFollowUps([]); }}
+              onClick={() => { setMessages([]); setError(""); setFollowUps([]); setUsedChips(new Set()); }}
               style={{
                 background:"rgba(255,255,255,0.18)",
                 border:"1px solid rgba(255,255,255,0.3)",
