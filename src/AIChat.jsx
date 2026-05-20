@@ -268,7 +268,7 @@ function InputBar({ input, setInput, onSend, onKeyDown, loading, dark, lang, tex
         />
         <div
           className={`ai-send-btn${justUnlocked ? " unlock-bounce" : ""}`}
-          onClick={onSend}
+          onClick={() => onSend()}
           style={{
             width:46, height:46, borderRadius:14, flexShrink:0,
             background: canSend
