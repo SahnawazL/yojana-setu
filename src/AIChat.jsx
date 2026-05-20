@@ -497,7 +497,9 @@ function FollowUpChips({ chips, onTap, lang, dark }) {
 
             // FIX 2: Theme-aware color instead of hardcoded #FF9933,
             // consistent with how the AI bubble header text is coloured.
-            color: dark ? "#FF9933" : "#FF8000",
+            // Deep navy in light (matches bubble gradient endpoint #003580),
+            // soft indigo in dark (readable against dark card surface).
+            color: dark ? "#a5b4fc" : "#003580",
 
             cursor: exitingIdx !== null ? "default" : "pointer",
             fontWeight: 600,
