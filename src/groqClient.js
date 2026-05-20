@@ -107,10 +107,19 @@ function buildSmartContext(query) {
 }
 
 // ─── SYSTEM PROMPT ────────────────────────────────────────────────────────────
-const SYSTEM_PROMPT = `You are YojanaSetu AI — a friendly assistant for Indian government schemes.
+function buildSystemPrompt(lang) {
+  const langRule = lang === "hi"
+    ? "- ALWAYS reply in Hindi (हिंदी) only. No exceptions, even if user writes in English."
+    : "- ALWAYS reply in English only. No exceptions, even if user writes in Hindi.";
+
+  const followUp = lang === "hi"
+    ? "- अंत में पूछें: \"कोई और सवाल?\""
+    : "- End with: \"Want to know how to apply?\"";
+
+  return `You are YojanaSetu AI — a friendly assistant for Indian government schemes.
 
 Rules:
-- Reply in the SAME language as the user (Hindi → Hindi, English → English)
+${langRule}
 - Keep answers SHORT and mobile-friendly — 3 to 5 lines max
 - Use simple words — users are from rural areas
 - Use emojis occasionally to be warm and friendly
@@ -118,13 +127,14 @@ Rules:
 - If asked unrelated questions, politely redirect to schemes
 - Use ONLY the scheme data provided — never make up scheme details
 - For steps, use numbered list (1. 2. 3.)
-- End with a helpful follow-up like "Want to know how to apply?" or "कोई और सवाल?"
+${followUp}
 
 RELEVANT SCHEMES FOR THIS QUERY:
 `;
+}
 
 // ─── MAIN EXPORT: sendMessage ─────────────────────────────────────────────────
-export async function sendMessage(conversationHistory, userQuery) {
+export async function sendMessage(conversationHistory, userQuery, lang = "en") {
   // Build context with ONLY relevant schemes for this query
   const smartContext = buildSmartContext(userQuery);
 
@@ -136,7 +146,7 @@ export async function sendMessage(conversationHistory, userQuery) {
       max_tokens:  400,        // Enough for mobile-friendly answers
       temperature: 0.6,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT + smartContext },
+        { role: "system", content: buildSystemPrompt(lang) + smartContext },
         ...conversationHistory.slice(-4), // Last 4 messages only (saves tokens)
       ],
     }),

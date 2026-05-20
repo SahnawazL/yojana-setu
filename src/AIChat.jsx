@@ -233,6 +233,7 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
       const reply = await sendMessage(
         nextMessages.map(m => ({ role:m.role, content:m.content })),
         query,
+        lang,  // ✅ forces AI to respond in app's selected language
       );
       setMessages(prev => [...prev, { role:"assistant", content:reply }]);
     } catch (err) {
