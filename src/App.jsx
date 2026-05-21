@@ -1886,18 +1886,26 @@ export default function YojanaSetu(){
         .c0{transition-delay:0.20s!important}.c1{transition-delay:0.28s!important}.c2{transition-delay:0.36s!important}
         .c3{transition-delay:0.44s!important}.c4{transition-delay:0.52s!important}.c5{transition-delay:0.60s!important}
         .c6{transition-delay:0.68s!important}.c7{transition-delay:0.76s!important}.c8{transition-delay:0.84s!important}
-        .bn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;cursor:pointer;border-radius:12px;transition:all 0.2s;flex:1;}
+        .bn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;cursor:pointer;border-radius:12px;transition:background 0.25s,transform 0.2s;flex:1;}
         .bn:active{transform:scale(0.93);}
         .cp{animation:cp 2.5s ease-in-out infinite;}
         @keyframes cp{0%,100%{box-shadow:0 6px 24px rgba(19,136,8,0.3)}50%{box-shadow:0 6px 32px rgba(19,136,8,0.55)}}
         .app-root{height:100vh;height:100dvh;}
         .bnav-wrap{flex-shrink:0;position:sticky;bottom:0;padding-bottom:max(20px,env(safe-area-inset-bottom,20px));}
         @keyframes fadeSlide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes tabEnter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes iconPop{0%{transform:scale(1)}45%{transform:scale(1.28)}100%{transform:scale(1)}}
+        .tab-enter{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;animation:tabEnter 0.28s cubic-bezier(0.22,1,0.36,1);}
+        .bn-icon{transition:transform 0.2s cubic-bezier(0.22,1,0.36,1);}
+        .bn-icon.active{animation:iconPop 0.35s cubic-bezier(0.22,1,0.36,1);}
       `}</style>
 
-      {/* ── HOME TAB ── */}
-      {activeTab==="home"&&(
-        <div style={{flex:1,overflowY:"auto"}}>
+      {/* ── TAB CONTENT — animated wrapper triggers fade+slide on every switch ── */}
+      {activeTab!=="ai"&&(
+        <div key={activeTab} className="tab-enter">
+          {/* HOME */}
+          {activeTab==="home"&&(
+            <div style={{flex:1,overflowY:"auto"}}>
           {/* Header */}
           <div style={{background:"linear-gradient(135deg,#FF9933 0%,#FF8C00 40%,#003580 100%)",padding:"0 0 24px",position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",right:-40,top:-40,width:180,height:180,borderRadius:"50%",border:"2px solid rgba(255,255,255,0.1)"}}>
@@ -2035,48 +2043,58 @@ export default function YojanaSetu(){
         </div>
       )}
 
-      {/* ── SEARCH TAB — fully working, searches all SCHEME_DB ── */}
-      {activeTab==="search"&&(
-        <SearchTab lang={lang} initialQuery={searchText} dark={dark}/>
-      )}
+          {/* ── SEARCH TAB ── */}
+          {activeTab==="search"&&(
+            <SearchTab lang={lang} initialQuery={searchText} dark={dark}/>
+          )}
 
-      {/* ── SCHEMES TAB — all schemes with category filter pills ── */}
-      {activeTab==="schemes"&&(
-        <SchemesTab lang={lang} dark={dark}/>
+          {/* ── SCHEMES TAB ── */}
+          {activeTab==="schemes"&&(
+            <SchemesTab lang={lang} dark={dark}/>
+          )}
+
+          {/* ── PROFILE TAB ── */}
+          {activeTab==="profile"&&(
+            <ProfileTab
+              lang={lang}
+              profile={profile}
+              setProfile={setProfile}
+              toggleLang={toggleLang}
+              onViewChecker={()=>setShowChecker(true)}
+              dark={dark}
+              toggleDark={toggleDark}
+            />
+          )}
+        </div>
       )}
 
       {/* ── AI TAB — always mounted so chat history survives tab switches.
-           Visibility toggled via display:none instead of unmounting. ── */}
+           Uses opacity transition instead of mount/unmount. ── */}
       <div style={{
         display:activeTab==="ai"?"flex":"none",
         flex:1,flexDirection:"column",minHeight:0,overflow:"hidden",
+        animation:activeTab==="ai"?"tabEnter 0.28s cubic-bezier(0.22,1,0.36,1)":"none",
       }}>
         <AIChat lang={lang} dark={dark} profile={profile}/>
       </div>
 
-      {/* ── PROFILE TAB ── */}
-      {activeTab==="profile"&&(
-        <ProfileTab
-          lang={lang}
-          profile={profile}
-          setProfile={setProfile}
-          toggleLang={toggleLang}
-          onViewChecker={()=>setShowChecker(true)}
-          dark={dark}
-          toggleDark={toggleDark}
-        />
-      )}
-
       {/* Bottom nav */}
-      <div className="bnav-wrap" style={{background:th.navBg,borderTop:`1.5px solid ${th.navBorder}`,paddingTop:"8px",paddingLeft:"4px",paddingRight:"4px",display:"flex",boxShadow:dark?"0 -4px 20px rgba(0,0,0,0.25)":"0 -4px 20px rgba(0,0,0,0.07)",zIndex:100}}>
+      <div className="bnav-wrap" style={{background:th.navBg,borderTop:`1.5px solid ${th.navBorder}`,paddingTop:"8px",paddingLeft:"4px",paddingRight:"4px",display:"flex",position:"relative",boxShadow:dark?"0 -4px 20px rgba(0,0,0,0.25)":"0 -4px 20px rgba(0,0,0,0.07)",zIndex:100}}>
+        {/* Sliding orange indicator — single element that glides between tabs */}
+        <div style={{
+          position:"absolute",top:0,height:3,width:"14%",borderRadius:"0 0 3px 3px",
+          background:"#FF9933",
+          left:`calc(${navItems.findIndex(i=>i.tab===activeTab)} * 20% + 3%)`,
+          transition:"left 0.32s cubic-bezier(0.22,1,0.36,1)",
+          boxShadow:"0 0 8px rgba(255,153,51,0.6)",
+        }}/>
         {navItems.map(item=>{
           const active=activeTab===item.tab;
           return(
             <div key={item.tab} className="bn" onClick={()=>{haptic();setActiveTab(item.tab);}}
               style={{position:"relative",background:active?"#EFF6FF":"transparent",borderRadius:12,padding:"6px 8px 7px"}}>
-              <div style={{fontSize:20,filter:active?"none":"grayscale(0.3)",transition:"filter 0.2s"}}>{item.icon}</div>
-              <div style={{fontSize:9,fontWeight:active?800:500,color:active?"#003580":th.textSub,fontFamily:bf,transition:"color 0.2s"}}>{item.label}</div>
-              {active&&<div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:20,height:3,borderRadius:"3px 3px 0 0",background:"#FF9933"}}/>}
+              <div className={`bn-icon${active?" active":""}`} style={{fontSize:20,filter:active?"none":"grayscale(0.3)"}}>{item.icon}</div>
+              <div style={{fontSize:9,fontWeight:active?800:500,color:active?"#003580":th.textSub,fontFamily:bf,transition:"color 0.22s,font-weight 0.22s"}}>{item.label}</div>
             </div>
           );
         })}
