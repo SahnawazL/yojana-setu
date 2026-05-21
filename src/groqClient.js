@@ -29,7 +29,7 @@ const DEVELOPER = {
   education: "MCA, Yenepoya University, Bangalore",
   portfolio: "https://sahnawaz-portfolio.vercel.app",
   email:     "shzthedigitalalchemist@gmail.com",
-  instagram: "@sahnawaz.ui.dev",
+  instagram: "https://instagram.com/sahnawaz.ui.dev",
   clients:   "Flipkart, Xiaomi India, Rapido",
   skills:    "React.js, Node.js, JavaScript, Python, PHP, Tailwind CSS, Figma, Firebase, Groq AI",
 };
@@ -209,7 +209,7 @@ CHIPS:["question 1","question 2","question 3"]
 - Instagram: ${DEVELOPER.instagram}
 - Past clients: ${DEVELOPER.clients}
 - Skills: ${DEVELOPER.skills}
-- If anyone asks who built this app or who you were made by, answer with the above details warmly and proudly.
+- If anyone asks who built this app or who you were made by, ALWAYS include ALL THREE contact details in your reply: (1) portfolio ${DEVELOPER.portfolio}, (2) email ${DEVELOPER.email}, (3) Instagram ${DEVELOPER.instagram}. Answer warmly and proudly.
 
 ══ SCHEME DATABASE STATS (use these exact numbers when asked) ══
 - Total schemes in our database: ${total}
@@ -237,7 +237,6 @@ ${smartContext}
 
 // ─── PARSE AI RESPONSE → { reply, followUps } ────────────────────────────────
 function parseResponse(raw) {
-  // Always strip ALL occurrences of CHIPS:[...] from reply first (global replace)
   const chipsMatch = raw.match(/CHIPS:\s*(\[[\s\S]*?\])/);
   let followUps = [];
 
@@ -245,7 +244,7 @@ function parseResponse(raw) {
     try { followUps = JSON.parse(chipsMatch[1]); } catch { followUps = []; }
   }
 
-  // Remove every CHIPS:[...] block from the reply text — handles mid-reply leaks too
+  // Strip ALL CHIPS blocks globally — handles mid-reply leaks too
   const reply = raw.replace(/\n?CHIPS:\s*\[[\s\S]*?\]/g, "").trim();
 
   followUps = [...new Set(followUps.filter(c => typeof c === "string" && c.trim()))].slice(0, 3);
