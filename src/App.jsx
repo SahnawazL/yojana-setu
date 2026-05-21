@@ -878,13 +878,27 @@ function SchemesTab({lang,dark=false}){
 
         {/* Active state chip — shown only when a state is selected */}
         {selectedState!=="all"&&(
-          <div style={{display:"flex",alignItems:"center",gap:6,paddingBottom:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,paddingBottom:10,flexWrap:"wrap"}}>
+            {/* State chip with X dismiss */}
             <div style={{display:"flex",alignItems:"center",gap:5,background:SAFFRON+"14",border:`1px solid ${SAFFRON}40`,borderRadius:20,padding:"4px 10px"}}>
               <span style={{fontSize:11}}>📍</span>
               <span style={{fontSize:11,fontWeight:600,color:SAFFRON,fontFamily:bf}}>{selectedState}</span>
               <span onClick={()=>setSelectedState("all")} style={{fontSize:14,color:SAFFRON,cursor:"pointer",marginLeft:2,lineHeight:1,fontWeight:700}}>✕</span>
             </div>
-            <span style={{fontSize:11,color:th.textSub,fontFamily:bf}}>{isHindi?"+ केंद्रीय योजनाएं":"+ All Central schemes"}</span>
+            {/* Central count pill */}
+            <div style={{display:"flex",alignItems:"center",gap:4,background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:20,padding:"4px 10px"}}>
+              <span style={{fontSize:11}}>🇮🇳</span>
+              <span style={{fontSize:11,fontWeight:700,color:"#1D4ED8",fontFamily:bf}}>
+                {isHindi?"केंद्रीय":"Central"} ({national.length})
+              </span>
+            </div>
+            {/* State count pill — only show when there are state schemes */}
+            <div style={{display:"flex",alignItems:"center",gap:4,background:stateSchemes.length>0?"#FEF9C3":"#f5f5f0",border:`1.5px solid ${stateSchemes.length>0?"#FEF08A":"#e0e0e0"}`,borderRadius:20,padding:"4px 10px",opacity:stateSchemes.length>0?1:0.6}}>
+              <span style={{fontSize:11}}>📍</span>
+              <span style={{fontSize:11,fontWeight:700,color:stateSchemes.length>0?"#854D0E":"#999",fontFamily:bf}}>
+                {isHindi?"राज्य":"State"} ({stateSchemes.length})
+              </span>
+            </div>
           </div>
         )}
       </div>
