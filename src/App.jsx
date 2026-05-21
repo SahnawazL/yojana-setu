@@ -595,62 +595,221 @@ function SearchTab({lang,initialQuery="",dark=false}){
 }
 
 // ─── STATE PICKER SHEET ────────────────────────────────────────────────────────
-// Bottom sheet to pick a state — searchable, 34 states from INDIA_STATES
+// Smart bottom sheet: alphabet sidebar, grouped sections, recently picked memory
+const RECENT_STATE_KEY = "yojana_recent_state";
+
 function StatePickerSheet({selectedState,onSelect,onClose,lang,dark=false}){
   const th=THEME[dark?"dark":"light"];
   const bf=fontFamily(lang);
   const isHindi=lang==="hi";
   const [search,setSearch]=useState("");
   const [visible,setVisible]=useState(false);
+  const [activeLetter,setActiveLetter]=useState(null);
+  const listRef=useRef(null);
+  const sectionRefs=useRef({});
+  const searchRef=useRef(null);
+
+  // Persist recently selected state across sessions
+  const [recentState,setRecentState]=useState(()=>{
+    try{ return localStorage.getItem(RECENT_STATE_KEY)||null; }catch{ return null; }
+  });
+
   useEffect(()=>{const id=setTimeout(()=>setVisible(true),30);return()=>clearTimeout(id);},[]);
 
+  const isSearching=search.trim().length>0;
+
+  // Flat filtered list (used when searching)
   const filteredStates=useMemo(()=>
     INDIA_STATES.filter(s=>s.toLowerCase().includes(search.toLowerCase()))
   ,[search]);
 
+  // Grouped by first letter (used when not searching)
+  const grouped=useMemo(()=>{
+    const map={};
+    INDIA_STATES.forEach(s=>{
+      const letter=s[0].toUpperCase();
+      if(!map[letter])map[letter]=[];
+      map[letter].push(s);
+    });
+    return map;
+  },[]);
+
+  const alphabet=useMemo(()=>Object.keys(grouped).sort(),[grouped]);
+
+  // Jump to letter section
+  const jumpTo=(letter)=>{
+    setActiveLetter(letter);
+    const el=sectionRefs.current[letter];
+    if(el&&listRef.current){
+      listRef.current.scrollTo({top:el.offsetTop-8,behavior:"smooth"});
+    }
+    setTimeout(()=>setActiveLetter(null),600);
+  };
+
+  const handleSelect=(st)=>{
+    try{ localStorage.setItem(RECENT_STATE_KEY,st); }catch{}
+    setRecentState(st);
+    onSelect(st);
+    onClose();
+  };
+
+  const StateRow=({st,icon="📍"})=>(
+    <div onClick={()=>handleSelect(st)}
+      style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",
+        background:selectedState===st?SAFFRON+"15":"transparent",
+        cursor:"pointer",borderBottom:`1px solid ${th.border}`,
+        transition:"background 0.15s"}}>
+      <span style={{fontSize:15}}>{icon}</span>
+      <span style={{flex:1,fontSize:14,fontWeight:selectedState===st?700:500,
+        color:selectedState===st?SAFFRON:th.text,fontFamily:bf}}>{st}</span>
+      {selectedState===st&&(
+        <span style={{width:20,height:20,borderRadius:"50%",background:SAFFRON,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          fontSize:10,color:"#fff",fontWeight:800,flexShrink:0}}>✓</span>
+      )}
+    </div>
+  );
+
   return(
     <div onClick={e=>{if(e.target===e.currentTarget)onClose();}}
-      style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,0.55)",display:"flex",alignItems:"flex-end",opacity:visible?1:0,transition:"opacity 0.25s"}}>
-      <div style={{width:"100%",maxWidth:420,margin:"0 auto",background:th.card,borderRadius:"24px 24px 0 0",maxHeight:"80vh",display:"flex",flexDirection:"column",transform:visible?"translateY(0)":"translateY(100%)",transition:"transform 0.35s cubic-bezier(0.32,0.72,0,1)"}}>
+      style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,0.55)",
+        display:"flex",alignItems:"flex-end",opacity:visible?1:0,transition:"opacity 0.25s"}}>
+      <div style={{width:"100%",maxWidth:420,margin:"0 auto",background:th.card,
+        borderRadius:"24px 24px 0 0",maxHeight:"82vh",display:"flex",flexDirection:"column",
+        transform:visible?"translateY(0)":"translateY(100%)",
+        transition:"transform 0.35s cubic-bezier(0.32,0.72,0,1)"}}>
+
         {/* Drag handle */}
-        <div style={{display:"flex",justifyContent:"center",padding:"12px 0 8px"}}>
+        <div style={{display:"flex",justifyContent:"center",padding:"12px 0 8px",flexShrink:0}}>
           <div style={{width:40,height:4,background:th.handle,borderRadius:2}}/>
         </div>
+
         {/* Title + search */}
-        <div style={{padding:"0 16px 12px",borderBottom:`1px solid ${th.border}`}}>
+        <div style={{padding:"0 16px 12px",borderBottom:`1px solid ${th.border}`,flexShrink:0}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-            <div style={{fontSize:15,fontWeight:800,color:th.text,fontFamily:bf}}>{isHindi?"राज्य चुनें":"Select State"}</div>
-            <div onClick={onClose} style={{width:28,height:28,borderRadius:"50%",background:th.pillBg,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:12,color:th.textMid}}>✕</div>
+            <div>
+              <div style={{fontSize:15,fontWeight:800,color:th.text,fontFamily:bf}}>
+                {isHindi?"राज्य चुनें":"Select State"}
+              </div>
+              <div style={{fontSize:11,color:th.textSub,marginTop:2}}>
+                {isHindi?"A–Z से जल्दी जाएं या खोजें":"Jump A–Z or search"}
+              </div>
+            </div>
+            <div onClick={onClose}
+              style={{width:30,height:30,borderRadius:"50%",background:th.pillBg,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                cursor:"pointer",fontSize:13,color:th.textMid}}>✕</div>
           </div>
-          <div style={{background:th.searchBg,borderRadius:12,display:"flex",alignItems:"center",gap:8,padding:"10px 14px",border:`1.5px solid ${th.border2}`}}>
-            <span>🔍</span>
-            <input value={search} onChange={e=>setSearch(e.target.value)}
+          {/* Search bar — NOT autofocused, user taps to open keyboard */}
+          <div style={{background:th.searchBg,borderRadius:12,display:"flex",
+            alignItems:"center",gap:8,padding:"10px 14px",border:`1.5px solid ${th.border2}`}}>
+            <span style={{fontSize:15}}>🔍</span>
+            <input ref={searchRef} value={search} onChange={e=>setSearch(e.target.value)}
               placeholder={isHindi?"राज्य खोजें...":"Search state..."}
-              autoFocus
-              style={{border:"none",outline:"none",fontSize:13,flex:1,background:"transparent",color:th.text,fontFamily:bf}}/>
-            {search&&<span onClick={()=>setSearch("")} style={{cursor:"pointer",color:"#aaa",fontSize:16}}>✕</span>}
+              style={{border:"none",outline:"none",fontSize:13,flex:1,
+                background:"transparent",color:th.text,fontFamily:bf}}/>
+            {search
+              ? <span onClick={()=>setSearch("")}
+                  style={{cursor:"pointer",color:"#aaa",fontSize:16,padding:"2px 4px"}}>✕</span>
+              : <span style={{fontSize:11,color:th.textLight,fontWeight:600}}>A–Z</span>
+            }
           </div>
         </div>
-        {/* State list */}
-        <div style={{overflowY:"auto",flex:1,padding:"6px 0 32px"}}>
-          {/* All States option */}
-          <div onClick={()=>{onSelect("all");onClose();}}
-            style={{display:"flex",alignItems:"center",gap:12,padding:"13px 20px",background:selectedState==="all"?ASHOKA_BLUE+"10":"transparent",cursor:"pointer",borderBottom:`1px solid ${th.border}`}}>
-            <span style={{fontSize:18}}>🇮🇳</span>
-            <span style={{flex:1,fontSize:14,fontWeight:selectedState==="all"?700:500,color:selectedState==="all"?ASHOKA_BLUE:th.text,fontFamily:bf}}>{isHindi?"सभी राज्य":"All States"}</span>
-            {selectedState==="all"&&<span style={{color:ASHOKA_BLUE,fontSize:16,fontWeight:700}}>✓</span>}
-          </div>
-          {filteredStates.map(st=>(
-            <div key={st} onClick={()=>{onSelect(st);onClose();}}
-              style={{display:"flex",alignItems:"center",gap:12,padding:"13px 20px",background:selectedState===st?SAFFRON+"12":"transparent",cursor:"pointer",borderBottom:`1px solid ${th.border}`}}>
-              <span style={{fontSize:16}}>📍</span>
-              <span style={{flex:1,fontSize:14,fontWeight:selectedState===st?700:500,color:selectedState===st?SAFFRON:th.text,fontFamily:bf}}>{st}</span>
-              {selectedState===st&&<span style={{color:SAFFRON,fontSize:16,fontWeight:700}}>✓</span>}
+
+        {/* Main body: list + alphabet sidebar side by side */}
+        <div style={{flex:1,display:"flex",overflow:"hidden",position:"relative"}}>
+
+          {/* Scrollable state list */}
+          <div ref={listRef} style={{flex:1,overflowY:"auto",paddingBottom:40,paddingRight:24}}>
+
+            {/* All States row — always on top */}
+            <div onClick={()=>{onSelect("all");onClose();}}
+              style={{display:"flex",alignItems:"center",gap:12,padding:"13px 20px",
+                background:selectedState==="all"?ASHOKA_BLUE+"10":"transparent",
+                cursor:"pointer",borderBottom:`1px solid ${th.border}`}}>
+              <span style={{fontSize:18}}>🇮🇳</span>
+              <span style={{flex:1,fontSize:14,fontWeight:selectedState==="all"?700:500,
+                color:selectedState==="all"?ASHOKA_BLUE:th.text,fontFamily:bf}}>
+                {isHindi?"सभी राज्य":"All States"}
+              </span>
+              {selectedState==="all"&&(
+                <span style={{width:20,height:20,borderRadius:"50%",background:ASHOKA_BLUE,
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:10,color:"#fff",fontWeight:800,flexShrink:0}}>✓</span>
+              )}
             </div>
-          ))}
-          {filteredStates.length===0&&(
-            <div style={{textAlign:"center",padding:"30px 20px",color:th.textSub,fontSize:13,fontFamily:bf}}>
-              {isHindi?"कोई राज्य नहीं मिला":"No state found"}
+
+            {/* Recently picked — shown only when not searching and a prior selection exists */}
+            {!isSearching&&recentState&&recentState!=="all"&&recentState!==selectedState&&(
+              <>
+                <div style={{padding:"8px 20px 4px",fontSize:10,fontWeight:700,
+                  color:th.textSub,letterSpacing:0.8,textTransform:"uppercase",
+                  background:th.card2}}>
+                  {isHindi?"हाल में चुना":"Recently Picked"} 🕐
+                </div>
+                <StateRow st={recentState} icon="🕐"/>
+              </>
+            )}
+
+            {/* Currently selected highlight — show at top when not "all" and not searching */}
+            {!isSearching&&selectedState&&selectedState!=="all"&&(
+              <>
+                <div style={{padding:"8px 20px 4px",fontSize:10,fontWeight:700,
+                  color:SAFFRON,letterSpacing:0.8,textTransform:"uppercase",
+                  background:SAFFRON+"08"}}>
+                  {isHindi?"चुना गया":"Selected"} ✓
+                </div>
+                <StateRow st={selectedState} icon="📍"/>
+              </>
+            )}
+
+            {/* ── SEARCH MODE: flat filtered list ── */}
+            {isSearching&&(
+              <>
+                {filteredStates.map(st=><StateRow key={st} st={st}/>)}
+                {filteredStates.length===0&&(
+                  <div style={{textAlign:"center",padding:"40px 20px",color:th.textSub,fontFamily:bf}}>
+                    <div style={{fontSize:32,marginBottom:8}}>🔍</div>
+                    <div style={{fontSize:13,fontWeight:600}}>
+                      {isHindi?"कोई राज्य नहीं मिला":"No state found"}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ── BROWSE MODE: grouped A–Z sections ── */}
+            {!isSearching&&alphabet.map(letter=>(
+              <div key={letter} ref={el=>sectionRefs.current[letter]=el}>
+                {/* Letter header */}
+                <div style={{padding:"6px 20px 4px",fontSize:11,fontWeight:800,
+                  color:activeLetter===letter?SAFFRON:th.textSub,
+                  background:activeLetter===letter?SAFFRON+"12":th.card2,
+                  letterSpacing:1,transition:"all 0.2s"}}>
+                  {letter}
+                </div>
+                {grouped[letter].map(st=><StateRow key={st} st={st}/>)}
+              </div>
+            ))}
+          </div>
+
+          {/* ── ALPHABET SIDEBAR ── */}
+          {!isSearching&&(
+            <div style={{position:"absolute",right:0,top:0,bottom:0,
+              width:24,display:"flex",flexDirection:"column",
+              alignItems:"center",justifyContent:"center",
+              paddingTop:4,paddingBottom:4,gap:1,zIndex:10}}>
+              {alphabet.map(letter=>(
+                <div key={letter} onClick={()=>jumpTo(letter)}
+                  style={{width:20,height:20,display:"flex",alignItems:"center",
+                    justifyContent:"center",borderRadius:6,cursor:"pointer",
+                    fontSize:10,fontWeight:700,
+                    background:activeLetter===letter?SAFFRON:"transparent",
+                    color:activeLetter===letter?"#fff":th.textSub,
+                    transition:"all 0.15s"}}>
+                  {letter}
+                </div>
+              ))}
             </div>
           )}
         </div>
