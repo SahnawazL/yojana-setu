@@ -304,52 +304,140 @@ function LangToggle({lang,onToggle}){
   );
 }
 
-// ─── SCHEME CARD (used in eligibility results & category sheet) ────────────────
+// ─── SCHEME CARD (used in eligibility results, schemes tab & category sheet) ─────
+// Smooth expand/collapse via CSS grid 0fr→1fr trick.
+// Content is ALWAYS mounted — animation works in both directions everywhere.
 function SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
   const th=THEME[dark?"dark":"light"];
   const t=T[lang];
   const bf=fontFamily(lang);
   const isNational=scheme.scope==="national";
   return(
-    <div style={{background:th.card,borderRadius:18,marginBottom:10,border:`1.5px solid ${scheme.color}28`,boxShadow:"0 2px 12px rgba(0,0,0,0.05)",overflow:"hidden"}}>
-      <div onClick={onToggle} style={{padding:"14px 16px",display:"flex",alignItems:"flex-start",gap:12,cursor:"pointer"}}>
-        <div style={{width:46,height:46,background:scheme.color+"15",borderRadius:13,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,border:`1.5px solid ${scheme.color}22`,marginTop:2}}>{scheme.icon}</div>
+    <div style={{
+      background:th.card,borderRadius:18,marginBottom:10,overflow:"hidden",
+      border:`1.5px solid ${expanded?scheme.color+"60":scheme.color+"28"}`,
+      boxShadow:expanded?`0 6px 24px ${scheme.color}22`:"0 2px 12px rgba(0,0,0,0.05)",
+      transition:"border-color 0.35s ease,box-shadow 0.35s ease",
+    }}>
+
+      {/* ── Tap header ── */}
+      <div onClick={onToggle} style={{
+        padding:"14px 16px",display:"flex",alignItems:"flex-start",gap:12,cursor:"pointer",
+        background:expanded?scheme.color+"07":"transparent",
+        transition:"background 0.35s ease",
+      }}>
+        <div style={{
+          width:46,height:46,borderRadius:13,flexShrink:0,marginTop:2,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          fontSize:22,border:`1.5px solid ${scheme.color}22`,
+          background:expanded?scheme.color+"25":scheme.color+"15",
+          transition:"background 0.35s ease",
+        }}>{scheme.icon}</div>
+
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:5}}>
-            <span style={{fontSize:9,fontWeight:700,background:isNational?"#EFF6FF":"#FEF9C3",color:isNational?"#1D4ED8":"#854D0E",borderRadius:6,padding:"2px 7px",border:`1px solid ${isNational?"#BFDBFE":"#FEF08A"}`}}>
+            <span style={{fontSize:9,fontWeight:700,
+              background:isNational?"#EFF6FF":"#FEF9C3",
+              color:isNational?"#1D4ED8":"#854D0E",
+              borderRadius:6,padding:"2px 7px",
+              border:`1px solid ${isNational?"#BFDBFE":"#FEF08A"}`}}>
               {isNational?t.centralLabel:t.stateLabel(scheme.state)}
             </span>
-            <span style={{fontSize:9,fontWeight:700,background:scheme.color+"18",color:scheme.color,borderRadius:6,padding:"2px 7px"}}>{scheme.tag[lang]}</span>
+            <span style={{fontSize:9,fontWeight:700,background:scheme.color+"18",color:scheme.color,borderRadius:6,padding:"2px 7px"}}>
+              {scheme.tag[lang]}
+            </span>
           </div>
-          <div style={{fontSize:13,fontWeight:700,color:th.text,lineHeight:1.35,fontFamily:bf,marginBottom:4}}>{scheme.name[lang]}</div>
+          <div style={{fontSize:13,fontWeight:700,color:th.text,lineHeight:1.35,fontFamily:bf,marginBottom:4}}>
+            {scheme.name[lang]}
+          </div>
           <div style={{fontSize:12,color:scheme.color,fontWeight:600}}>{scheme.benefit[lang]}</div>
           <div style={{fontSize:10,color:th.textLight,marginTop:3,fontFamily:bf}}>{scheme.ministry[lang]}</div>
         </div>
-        <div style={{fontSize:16,color:scheme.color,fontWeight:700,transform:expanded?"rotate(90deg)":"rotate(0)",transition:"transform 0.25s",marginTop:2,flexShrink:0}}>›</div>
+
+        {/* Animated chevron */}
+        <div style={{
+          width:26,height:26,borderRadius:8,flexShrink:0,marginTop:2,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          background:expanded?scheme.color+"18":"transparent",
+          transform:expanded?"rotate(90deg)":"rotate(0deg)",
+          transition:"background 0.3s ease,transform 0.35s cubic-bezier(0.4,0,0.2,1)",
+        }}>
+          <span style={{fontSize:17,color:scheme.color,fontWeight:700,lineHeight:1}}>›</span>
+        </div>
       </div>
-      {expanded&&(
-        <div style={{borderTop:`1px solid ${scheme.color}18`,background:scheme.color+"06"}}>
-          <div style={{padding:"14px 16px"}}>
-            <div style={{fontSize:11,fontWeight:700,color:th.textSub,letterSpacing:0.6,marginBottom:8,textTransform:"uppercase"}}>📄 {t.docsLabel}</div>
-            {scheme.docs[lang].map((d,i)=>(
-              <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 0",borderBottom:i<scheme.docs[lang].length-1?`1px solid ${th.border}`:"none",fontFamily:bf}}>
-                <div style={{width:20,height:20,borderRadius:"50%",background:scheme.color+"18",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <span style={{color:scheme.color,fontSize:10,fontWeight:800}}>✓</span>
-                </div>
-                <span style={{fontSize:12,color:th.text}}>{d}</span>
+
+      {/* ── Animated body: CSS grid 0fr→1fr, always mounted ── */}
+      <div style={{
+        display:"grid",
+        gridTemplateRows:expanded?"1fr":"0fr",
+        transition:"grid-template-rows 0.38s cubic-bezier(0.4,0,0.2,1)",
+      }}>
+        <div style={{overflow:"hidden"}}>
+          {/* Inner fades + slides up slightly after height opens */}
+          <div style={{
+            borderTop:`1px solid ${scheme.color}22`,
+            background:scheme.color+"07",
+            opacity:expanded?1:0,
+            transform:expanded?"translateY(0)":"translateY(-8px)",
+            transition:"opacity 0.28s ease 0.08s,transform 0.28s ease 0.08s",
+          }}>
+            {/* Documents */}
+            <div style={{padding:"14px 16px 10px"}}>
+              <div style={{
+                fontSize:10,fontWeight:700,color:th.textSub,
+                letterSpacing:0.7,marginBottom:10,textTransform:"uppercase",
+                display:"flex",alignItems:"center",gap:6,
+              }}>
+                <span style={{fontSize:14}}>📄</span>{t.docsLabel}
               </div>
-            ))}
-          </div>
-          <div onClick={()=>scheme.applyType==="online"&&window.open(`https://${scheme.apply.en}`,"_blank")}
-            style={{margin:"0 16px 14px",background:`linear-gradient(135deg,${scheme.color},${scheme.color}cc)`,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:scheme.applyType==="online"?"pointer":"default",boxShadow:`0 4px 14px ${scheme.color}33`}}>
-            <div>
-              <div style={{fontSize:12,fontWeight:700,color:"#fff",fontFamily:bf}}>{t.applyLabel}</div>
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.8)",marginTop:2}}>{scheme.applyType==="online"?"🌐 ":"🏢 "}{scheme.apply[lang]}</div>
+              {scheme.docs[lang].map((d,i)=>(
+                <div key={i} style={{
+                  display:"flex",alignItems:"center",gap:10,padding:"7px 0",
+                  borderBottom:i<scheme.docs[lang].length-1?`1px solid ${th.border}`:"none",
+                }}>
+                  <div style={{
+                    width:22,height:22,borderRadius:"50%",flexShrink:0,
+                    background:scheme.color+"20",
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                  }}>
+                    <span style={{color:scheme.color,fontSize:11,fontWeight:800}}>✓</span>
+                  </div>
+                  <span style={{fontSize:12,color:th.text,fontFamily:bf,lineHeight:1.4}}>{d}</span>
+                </div>
+              ))}
             </div>
-            <span style={{color:"#fff",fontSize:20,fontWeight:700}}>{scheme.applyType==="online"?"↗":"🏢"}</span>
+
+            {/* Apply CTA */}
+            <div style={{padding:"0 16px 16px"}}>
+              <div
+                onClick={()=>scheme.applyType==="online"&&window.open(`https://${scheme.apply.en}`,"_blank")}
+                style={{
+                  background:`linear-gradient(135deg,${scheme.color},${scheme.color}cc)`,
+                  borderRadius:14,padding:"13px 16px",
+                  display:"flex",alignItems:"center",justifyContent:"space-between",
+                  cursor:scheme.applyType==="online"?"pointer":"default",
+                  boxShadow:`0 4px 16px ${scheme.color}40`,
+                }}>
+                <div>
+                  <div style={{fontSize:12,fontWeight:800,color:"#fff",fontFamily:bf}}>{t.applyLabel}</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.85)",marginTop:3}}>
+                    {scheme.applyType==="online"?"🌐 ":"🏢 "}{scheme.apply[lang]}
+                  </div>
+                </div>
+                <div style={{
+                  width:36,height:36,borderRadius:10,fontSize:18,
+                  background:"rgba(255,255,255,0.22)",
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  border:"1.5px solid rgba(255,255,255,0.3)",
+                }}>
+                  {scheme.applyType==="online"?"↗":"🏢"}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      )}
+      </div>
+
     </div>
   );
 }
