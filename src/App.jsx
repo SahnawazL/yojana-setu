@@ -831,6 +831,11 @@ function SchemesTab({lang,dark=false}){
   const [showStatePicker,setShowStatePicker]=useState(false);
   const cats=useMemo(()=>CATEGORIES[lang],[lang]);
 
+  // Refs for smooth-scroll anchors
+  const scrollContainerRef=useRef(null);
+  const stateHeaderRef=useRef(null);
+  const centralHeaderRef=useRef(null);
+
   // Combined filter: category + state both applied together
   const filtered=useMemo(()=>{
     let base=filter==="all" ? SCHEME_DB : getSchemesForCategory(filter);
@@ -842,6 +847,18 @@ function SchemesTab({lang,dark=false}){
 
   const national=useMemo(()=>filtered.filter(s=>s.scope==="national"),[filtered]);
   const stateSchemes=useMemo(()=>filtered.filter(s=>s.scope==="state"),[filtered]);
+
+  // Smooth scroll a section header into view inside the scrollable container
+  const scrollToRef=(ref)=>{
+    if(!ref.current||!scrollContainerRef.current) return;
+    const container=scrollContainerRef.current;
+    const headerEl=ref.current;
+    // getBoundingClientRect is relative to viewport; we want offset inside container
+    const containerTop=container.getBoundingClientRect().top;
+    const elTop=headerEl.getBoundingClientRect().top;
+    const offset=elTop-containerTop+container.scrollTop-12; // 12px breathing room
+    container.scrollTo({top:offset,behavior:"smooth"});
+  };
 
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",overflowY:"auto",background:th.appBg}}>
@@ -876,56 +893,56 @@ function SchemesTab({lang,dark=false}){
           ))}
         </div>
 
-        {/* Active state chip — shown only when a state is selected */}
+        {/* Active state chip row — shown only when a state is selected */}
         {selectedState!=="all"&&(
           <div style={{display:"flex",alignItems:"center",gap:6,paddingBottom:10,flexWrap:"wrap"}}>
-            {/* State chip with X dismiss */}
+            {/* State name chip with X dismiss */}
             <div style={{display:"flex",alignItems:"center",gap:5,background:SAFFRON+"14",border:`1px solid ${SAFFRON}40`,borderRadius:20,padding:"4px 10px"}}>
               <span style={{fontSize:11}}>📍</span>
               <span style={{fontSize:11,fontWeight:600,color:SAFFRON,fontFamily:bf}}>{selectedState}</span>
               <span onClick={()=>setSelectedState("all")} style={{fontSize:14,color:SAFFRON,cursor:"pointer",marginLeft:2,lineHeight:1,fontWeight:700}}>✕</span>
             </div>
-            {/* Central count pill */}
-            <div style={{display:"flex",alignItems:"center",gap:4,background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:20,padding:"4px 10px"}}>
+            {/* State schemes count pill — clickable, scrolls to state section */}
+            <div
+              onClick={()=>stateSchemes.length>0&&scrollToRef(stateHeaderRef)}
+              style={{display:"flex",alignItems:"center",gap:4,background:stateSchemes.length>0?"#FEF9C3":"#f5f5f0",border:`1.5px solid ${stateSchemes.length>0?"#d97706":"#e0e0e0"}`,borderRadius:20,padding:"4px 10px",cursor:stateSchemes.length>0?"pointer":"default",opacity:stateSchemes.length>0?1:0.55,transition:"transform 0.15s,box-shadow 0.15s",boxShadow:stateSchemes.length>0?"0 1px 4px #d9770620":"none"}}
+              onMouseDown={e=>{if(stateSchemes.length>0)e.currentTarget.style.transform="scale(0.95)";}}
+              onMouseUp={e=>{e.currentTarget.style.transform="scale(1)";}}
+              onTouchStart={e=>{if(stateSchemes.length>0)e.currentTarget.style.transform="scale(0.95)";}}
+              onTouchEnd={e=>{e.currentTarget.style.transform="scale(1)";}}>
+              <span style={{fontSize:11}}>📍</span>
+              <span style={{fontSize:11,fontWeight:700,color:stateSchemes.length>0?"#92400e":"#999",fontFamily:bf}}>
+                {isHindi?"राज्य":"State"} ({stateSchemes.length})
+              </span>
+              {stateSchemes.length>0&&<span style={{fontSize:9,color:"#b45309",marginLeft:1}}>↓</span>}
+            </div>
+            {/* Central schemes count pill — clickable, scrolls to central section */}
+            <div
+              onClick={()=>national.length>0&&scrollToRef(centralHeaderRef)}
+              style={{display:"flex",alignItems:"center",gap:4,background:"#EFF6FF",border:"1.5px solid #3b82f6",borderRadius:20,padding:"4px 10px",cursor:national.length>0?"pointer":"default",transition:"transform 0.15s,box-shadow 0.15s",boxShadow:"0 1px 4px #3b82f620"}}
+              onMouseDown={e=>{e.currentTarget.style.transform="scale(0.95)";}}
+              onMouseUp={e=>{e.currentTarget.style.transform="scale(1)";}}
+              onTouchStart={e=>{e.currentTarget.style.transform="scale(0.95)";}}
+              onTouchEnd={e=>{e.currentTarget.style.transform="scale(1)";}}>
               <span style={{fontSize:11}}>🇮🇳</span>
               <span style={{fontSize:11,fontWeight:700,color:"#1D4ED8",fontFamily:bf}}>
                 {isHindi?"केंद्रीय":"Central"} ({national.length})
               </span>
-            </div>
-            {/* State count pill — only show when there are state schemes */}
-            <div style={{display:"flex",alignItems:"center",gap:4,background:stateSchemes.length>0?"#FEF9C3":"#f5f5f0",border:`1.5px solid ${stateSchemes.length>0?"#FEF08A":"#e0e0e0"}`,borderRadius:20,padding:"4px 10px",opacity:stateSchemes.length>0?1:0.6}}>
-              <span style={{fontSize:11}}>📍</span>
-              <span style={{fontSize:11,fontWeight:700,color:stateSchemes.length>0?"#854D0E":"#999",fontFamily:bf}}>
-                {isHindi?"राज्य":"State"} ({stateSchemes.length})
-              </span>
+              {national.length>0&&<span style={{fontSize:9,color:"#2563eb",marginLeft:1}}>↓</span>}
             </div>
           </div>
         )}
       </div>
 
-      {/* Scheme list */}
-      <div style={{padding:"12px 16px 80px"}}>
-        {national.length>0&&(
-          <>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-              <div style={{height:1,flex:1,background:th.border2}}/>
-              <span style={{fontSize:11,fontWeight:700,color:"#1D4ED8",background:"#EFF6FF",borderRadius:20,padding:"3px 10px",border:"1px solid #BFDBFE"}}>
-                🇮🇳 {t.centralSchemes} ({national.length})
-              </span>
-              <div style={{height:1,flex:1,background:th.border2}}/>
-            </div>
-            {national.map(s=>(
-              <SchemeCard key={s.id} scheme={s} lang={lang} dark={dark}
-                expanded={expandedId===s.id}
-                onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>
-            ))}
-          </>
-        )}
+      {/* Scheme list — State first, then Central */}
+      <div ref={scrollContainerRef} style={{padding:"12px 16px 80px",overflowY:"auto",flex:1}}>
+
+        {/* ── STATE SCHEMES (shown first) ── */}
         {stateSchemes.length>0&&(
           <>
-            <div style={{display:"flex",alignItems:"center",gap:8,margin:"14px 0 10px"}}>
+            <div ref={stateHeaderRef} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
               <div style={{height:1,flex:1,background:th.border2}}/>
-              <span style={{fontSize:11,fontWeight:700,color:"#854D0E",background:"#FEF9C3",borderRadius:20,padding:"3px 10px",border:"1px solid #FEF08A"}}>
+              <span style={{fontSize:11,fontWeight:700,color:"#92400e",background:"#FEF9C3",borderRadius:20,padding:"3px 10px",border:"1px solid #d97706"}}>
                 📍 {t.stateSchemes} ({stateSchemes.length})
               </span>
               <div style={{height:1,flex:1,background:th.border2}}/>
@@ -937,6 +954,25 @@ function SchemesTab({lang,dark=false}){
             ))}
           </>
         )}
+
+        {/* ── CENTRAL SCHEMES (shown after state) ── */}
+        {national.length>0&&(
+          <>
+            <div ref={centralHeaderRef} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,marginTop:stateSchemes.length>0?16:0}}>
+              <div style={{height:1,flex:1,background:th.border2}}/>
+              <span style={{fontSize:11,fontWeight:700,color:"#1D4ED8",background:"#EFF6FF",borderRadius:20,padding:"3px 10px",border:"1px solid #3b82f6"}}>
+                🇮🇳 {t.centralSchemes} ({national.length})
+              </span>
+              <div style={{height:1,flex:1,background:th.border2}}/>
+            </div>
+            {national.map(s=>(
+              <SchemeCard key={s.id} scheme={s} lang={lang} dark={dark}
+                expanded={expandedId===s.id}
+                onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>
+            ))}
+          </>
+        )}
+
         {filtered.length===0&&(
           <div style={{textAlign:"center",padding:"40px 20px",color:"#aaa"}}>
             <div style={{fontSize:44,marginBottom:12}}>🔍</div>
