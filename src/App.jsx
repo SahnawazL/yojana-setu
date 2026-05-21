@@ -2038,10 +2038,14 @@ export default function YojanaSetu(){
         <SchemesTab lang={lang} dark={dark}/>
       )}
 
-      {/* ── AI TAB — powered by Groq ── */}
-      {activeTab==="ai"&&(
+      {/* ── AI TAB — always mounted so chat history survives tab switches.
+           Visibility toggled via display:none instead of unmounting. ── */}
+      <div style={{
+        display:activeTab==="ai"?"flex":"none",
+        flex:1,flexDirection:"column",minHeight:0,overflow:"hidden",
+      }}>
         <AIChat lang={lang} dark={dark} profile={profile}/>
-      )}
+      </div>
 
       {/* ── PROFILE TAB ── */}
       {activeTab==="profile"&&(
