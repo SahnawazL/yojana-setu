@@ -2069,11 +2069,11 @@ export default function YojanaSetu(){
       )}
 
       {/* ── AI TAB — always mounted so chat history survives tab switches.
-           Uses opacity transition instead of mount/unmount. ── */}
+           No animation here — display:none→flex toggling + animation causes
+           a layout miscalculation that breaks the input size until keyboard focus. ── */}
       <div style={{
         display:activeTab==="ai"?"flex":"none",
         flex:1,flexDirection:"column",minHeight:0,overflow:"hidden",
-        animation:activeTab==="ai"?"tabEnter 0.28s cubic-bezier(0.22,1,0.36,1)":"none",
       }}>
         <AIChat lang={lang} dark={dark} profile={profile}/>
       </div>
