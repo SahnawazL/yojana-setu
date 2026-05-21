@@ -2069,11 +2069,15 @@ export default function YojanaSetu(){
       )}
 
       {/* ── AI TAB — always mounted so chat history survives tab switches.
-           No animation here — display:none→flex toggling + animation causes
-           a layout miscalculation that breaks the input size until keyboard focus. ── */}
+           IMPORTANT: never use display:none here — it makes scrollHeight=0,
+           which causes the auto-resize textarea to collapse to height:0px.
+           Instead we keep display:flex always and toggle flex/visibility. ── */}
       <div style={{
-        display:activeTab==="ai"?"flex":"none",
-        flex:1,flexDirection:"column",minHeight:0,overflow:"hidden",
+        display:"flex",
+        flex:activeTab==="ai"?1:0,
+        flexDirection:"column",minHeight:0,overflow:"hidden",
+        visibility:activeTab==="ai"?"visible":"hidden",
+        pointerEvents:activeTab==="ai"?"auto":"none",
       }}>
         <AIChat lang={lang} dark={dark} profile={profile}/>
       </div>
