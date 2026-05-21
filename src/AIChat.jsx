@@ -5,6 +5,89 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { sendMessage } from "./groqClient.js";
 
+// ─── SOUND EFFECTS (Web Audio API — no files, no loading) ────────────────────
+// Each function creates a one-shot AudioContext, plays a tone, then closes it.
+// Safe to call even if the browser blocks autoplay — errors are silently caught.
+
+function playSendSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    // Short ascending "whoosh" — iMessage-style send
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(520, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(820, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.18);
+    osc.onended = () => ctx.close();
+  } catch (_) {}
+}
+
+function playReceiveSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+
+    // Two-tone soft chime — pleasant "ding ding" descending
+    [[880, 0, 0.14], [660, 0.16, 0.3]].forEach(([freq, start, end]) => {
+      const osc = ctx.createOscillator();
+      osc.connect(gain);
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.13, ctx.currentTime + start);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + end);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + end);
+      osc.onended = () => { try { ctx.close(); } catch(_) {} };
+    });
+  } catch (_) {}
+}
+
+// C major arpeggio — 3 chips, 3 ascending notes (C5 → E5 → G5)
+// Timed to match each chip's animation delay (i * 0.22s) + pop peak (~0.15s in)
+const CHIP_FREQS = [523, 659, 784]; // C5, E5, G5
+
+function playChipSounds(count) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const masterGain = ctx.createGain();
+    masterGain.gain.value = 1;
+    masterGain.connect(ctx.destination);
+
+    Array.from({ length: count }).forEach((_, i) => {
+      const freq  = CHIP_FREQS[i] ?? CHIP_FREQS[CHIP_FREQS.length - 1];
+      const delay = i * 0.22 + 0.15; // sync with chip-in animation + pop peak
+
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(masterGain);
+
+      osc.type = "sine";
+      osc.frequency.value = freq;
+
+      // Quick soft bell: fade in → fade out
+      gain.gain.setValueAtTime(0.001, ctx.currentTime + delay);
+      gain.gain.linearRampToValueAtTime(0.11, ctx.currentTime + delay + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.22);
+
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + 0.25);
+    });
+
+    // Close context after all sounds finish
+    setTimeout(() => { try { ctx.close(); } catch(_) {} }, (count * 0.22 + 0.5) * 1000);
+  } catch (_) {}
+}
+
 const THEME = {
   light: {
     appBg:"#f5f5f0", card:"#fff",
@@ -552,6 +635,11 @@ function FollowUpChips({ chips, onTap, lang, dark }) {
   const bf = fontFamily(lang);
   const [exitingIdx, setExitingIdx] = useState(null);
 
+  // Play ascending arpeggio timed to each chip's pop-in animation
+  useEffect(() => {
+    if (chips.length > 0) playChipSounds(chips.length);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Match the same glass surface used by AI bubbles so chips
   // blend with appBg instead of popping out as solid white cards.
   const glassCard = dark
@@ -932,6 +1020,7 @@ export default function AIChat({ lang="en", dark=false }) {
     const userMsg      = { role:"user", content:query };
     const nextMessages = [...messages, userMsg];
     setMessages(nextMessages);
+    playSendSound();   // 🔊 send whoosh
     setLoading(true);
 
     try {
@@ -941,6 +1030,7 @@ export default function AIChat({ lang="en", dark=false }) {
         lang,
       );
       setMessages(prev => [...prev, { role:"assistant", content:reply }]);
+      playReceiveSound(); // 🔊 receive chime
       const freshChips = aiChips.filter(c => !nextUsedChips.has(c));
       startCooldown(reply, freshChips);
     } catch (err) {
