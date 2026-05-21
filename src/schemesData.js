@@ -570,6 +570,36 @@ export const SCHEME_DB = [
     match: (a) => ["18to35","35to60"].includes(a.age) && ["below1","1to3"].includes(a.income) && a.who === "general",
   },
 
+  {
+    id: "nmmss",
+    icon: "🎯", color: "#0369A1", scope: "national",
+    ministry: { en: "Ministry of Education", hi: "शिक्षा मंत्रालय" },
+    name:    { en: "National Means-cum-Merit Scholarship (NMMSS)", hi: "राष्ट्रीय साधन-सह-मेधा छात्रवृत्ति (NMMSS)" },
+    benefit: { en: "₹12,000/year (₹1,000/month) for Class 9 to 12 students", hi: "कक्षा 9 से 12 के छात्रों को ₹12,000/वर्ष (₹1,000/माह)" },
+    tag:     { en: "Student / Merit", hi: "छात्र / मेधा" },
+    annual: 12000,
+    apply:   { en: "scholarships.gov.in", hi: "scholarships.gov.in" }, applyType: "online",
+    docs:    { en: ["Aadhaar Card","Class 7/8 Mark Sheet (min. 55%)","Income Certificate (≤₹3.5L/year)","Caste Certificate (if SC/ST)","Passport Size Photos","Address Proof"],
+               hi: ["आधार कार्ड","कक्षा 7/8 की मार्कशीट (न्यूनतम 55%)","आय प्रमाण पत्र (≤₹3.5 लाख/वर्ष)","जाति प्रमाण पत्र (SC/ST के लिए)","पासपोर्ट साइज़ फोटो","पता प्रमाण"] },
+    // Eligibility: student in govt/govt-aided school, family income ≤ ₹3.5L, min 55% in Class 7/8
+    match: (a) => a.who === "student" && ["below1","1to3"].includes(a.income),
+  },
+
+  {
+    id: "pm_yasasvi",
+    icon: "🏅", color: "#7C3AED", scope: "national",
+    ministry: { en: "Ministry of Social Justice & Empowerment", hi: "सामाजिक न्याय और अधिकारिता मंत्रालय" },
+    name:    { en: "PM YASASVI Scholarship (OBC/EBC/DNT)",           hi: "पीएम यशस्वी छात्रवृत्ति (OBC/EBC/DNT)" },
+    benefit: { en: "₹75,000/year (Class 9) · ₹1,25,000/year (Class 11) via DBT", hi: "कक्षा 9: ₹75,000/वर्ष · कक्षा 11: ₹1,25,000/वर्ष · DBT से सीधे बैंक में" },
+    tag:     { en: "Student / OBC", hi: "छात्र / OBC" },
+    annual: 75000,
+    apply:   { en: "scholarships.gov.in", hi: "scholarships.gov.in" }, applyType: "online",
+    docs:    { en: ["Aadhaar Card","OBC/EBC/DNT Caste Certificate","Income Certificate (≤₹2.5L/year)","Previous Year Mark Sheet","School Enrollment Certificate","Bank Account (Aadhaar-linked)"],
+               hi: ["आधार कार्ड","OBC/EBC/DNT जाति प्रमाण पत्र","आय प्रमाण पत्र (≤₹2.5 लाख/वर्ष)","पिछले वर्ष की मार्कशीट","स्कूल नामांकन प्रमाण","बैंक खाता (आधार लिंक)"] },
+    // Eligibility: OBC/EBC/DNT student in Class 9 or 11, family income ≤ ₹2.5L, merit-based selection
+    match: (a) => a.who === "student" && ["below1","1to3"].includes(a.income),
+  },
+
   // ADD MORE NATIONAL SCHEMES HERE ↓
   // { id: "new_national_scheme", icon: "🆕", color: "#123456", scope: "national", ... }
 
@@ -1089,6 +1119,83 @@ export const SCHEME_DB = [
     docs:    { en: ["Aadhaar Card","College / Institute Enrollment Certificate","UP Domicile","Bank Account"],
                hi: ["आधार कार्ड","कॉलेज/संस्था नामांकन प्रमाण","UP अधिवास प्रमाण","बैंक खाता"] },
     match: (a) => a.state === "Uttar Pradesh" && a.who === "student",
+  },
+
+  // ══════════════════════ 5 NEW SCHEMES ══════════════════════════════════════
+
+  {
+    id: "pmkusum",
+    icon: "☀️", color: "#F59E0B", scope: "national",
+    ministry: { en: "Ministry of New & Renewable Energy", hi: "नवीन और नवीकरणीय ऊर्जा मंत्रालय" },
+    name:    { en: "PM Kusum Yojana",                                    hi: "पीएम कुसुम योजना" },
+    benefit: { en: "90% subsidy on solar pump for irrigation (up to 7.5 HP)", hi: "सिंचाई के लिए सोलर पंप पर 90% सब्सिडी (7.5 HP तक)" },
+    tag:     { en: "Farmer", hi: "किसान" },
+    annual: 0,
+    apply:   { en: "pmkusum.mnre.gov.in", hi: "pmkusum.mnre.gov.in" }, applyType: "online",
+    docs:    { en: ["Aadhaar Card","Land Records (Khasra/Khatauni)","Bank Passbook","Farmer Registration Certificate"],
+               hi: ["आधार कार्ड","जमीन के कागज़ (खसरा/खतौनी)","बैंक पासबुक","किसान पंजीकरण प्रमाण पत्र"] },
+    // Eligibility: farmer with agricultural land, applying for solar irrigation pump
+    match: (a) => a.who === "farmer",
+  },
+
+  {
+    id: "startup_india",
+    icon: "🚀", color: "#2563EB", scope: "national",
+    ministry: { en: "Ministry of Commerce & Industry (DPIIT)", hi: "वाणिज्य और उद्योग मंत्रालय (DPIIT)" },
+    name:    { en: "Startup India Scheme",                               hi: "स्टार्टअप इंडिया योजना" },
+    benefit: { en: "3-yr income tax exemption · ₹10,000 Cr Fund of Funds · Fast IP filing", hi: "3 साल आयकर छूट · ₹10,000 करोड़ फंड · IP पंजीकरण में प्राथमिकता" },
+    tag:     { en: "Business / Startup", hi: "व्यापार / स्टार्टअप" },
+    annual: 0,
+    apply:   { en: "startupindia.gov.in", hi: "startupindia.gov.in" }, applyType: "online",
+    docs:    { en: ["Aadhaar & PAN Card","Certificate of Incorporation / Registration","Business Plan / Pitch Deck","DPIIT Recognition Application"],
+               hi: ["आधार और पैन कार्ड","निगमन / पंजीकरण प्रमाण पत्र","व्यापार योजना / पिच डेक","DPIIT मान्यता आवेदन"] },
+    // Eligibility: entrepreneur / startup, age 18–60
+    match: (a) => a.who === "business" && ["18to35","35to60"].includes(a.age),
+  },
+
+  {
+    id: "jal_jeevan",
+    icon: "💧", color: "#0284C7", scope: "national",
+    ministry: { en: "Ministry of Jal Shakti", hi: "जल शक्ति मंत्रालय" },
+    name:    { en: "Jal Jeevan Mission – Har Ghar Jal",                 hi: "जल जीवन मिशन – हर घर जल" },
+    benefit: { en: "Free tap water connection to every rural household (Functional Household Tap Connection)", hi: "हर ग्रामीण घर में मुफ्त नल जल कनेक्शन (FHTC)" },
+    tag:     { en: "Water / Rural", hi: "जल / ग्रामीण" },
+    annual: 0,
+    apply:   { en: "jaljeevanmission.gov.in", hi: "jaljeevanmission.gov.in" }, applyType: "online",
+    docs:    { en: ["Aadhaar Card","Ration Card","Address Proof","No Water Connection Certificate (from Gram Panchayat)"],
+               hi: ["आधार कार्ड","राशन कार्ड","पता प्रमाण","जल कनेक्शन न होने का प्रमाण (ग्राम पंचायत से)"] },
+    // Eligibility: rural household without a piped tap water connection
+    match: (a) => a.area === "rural" && ["below1","1to3"].includes(a.income),
+  },
+
+  {
+    id: "pm_daksh",
+    icon: "🛠️", color: "#7C3AED", scope: "national",
+    ministry: { en: "Ministry of Social Justice & Empowerment", hi: "सामाजिक न्याय और अधिकारिता मंत्रालय" },
+    name:    { en: "PM DAKSH Yojana",                                    hi: "पीएम दक्ष योजना" },
+    benefit: { en: "Free skill training for SC/ST/OBC/minorities + ₹1,000–₹1,500/month stipend", hi: "SC/ST/OBC/अल्पसंख्यकों को मुफ्त कौशल प्रशिक्षण + ₹1,000–₹1,500/माह वजीफा" },
+    tag:     { en: "Skill / SC-ST-OBC", hi: "कौशल / SC-ST-OBC" },
+    annual: 15000,
+    apply:   { en: "pmdaksh.dosje.gov.in", hi: "pmdaksh.dosje.gov.in" }, applyType: "online",
+    docs:    { en: ["Aadhaar Card","Caste Certificate (SC/ST/OBC/Minority)","Income Certificate","Educational Proof","Bank Account"],
+               hi: ["आधार कार्ड","जाति प्रमाण पत्र (SC/ST/OBC/अल्पसंख्यक)","आय प्रमाण","शैक्षणिक प्रमाण","बैंक खाता"] },
+    // Eligibility: SC/ST/OBC/minority youth aged 18–45, income below ₹3 lakh/year
+    match: (a) => ["below1","1to3"].includes(a.income) && ["18to35","35to60"].includes(a.age),
+  },
+
+  {
+    id: "day_nrlm",
+    icon: "🌿", color: "#16A34A", scope: "national",
+    ministry: { en: "Ministry of Rural Development (DAY-NRLM)", hi: "ग्रामीण विकास मंत्रालय (DAY-NRLM)" },
+    name:    { en: "DAY-NRLM – Aajeevika (Rural Livelihoods Mission)", hi: "DAY-NRLM – आजीविका (ग्रामीण आजीविका मिशन)" },
+    benefit: { en: "₹15,000 revolving fund for SHGs · Interest subvention on loans · Livelihood grants", hi: "SHG को ₹15,000 रिवॉल्विंग फंड · ऋण पर ब्याज सब्सिडी · आजीविका अनुदान" },
+    tag:     { en: "Women / SHG", hi: "महिला / SHG" },
+    annual: 15000,
+    apply:   { en: "aajeevika.gov.in", hi: "aajeevika.gov.in" }, applyType: "online",
+    docs:    { en: ["Aadhaar Card","Ration Card","SHG Membership Certificate","Bank Account (SHG-linked)"],
+               hi: ["आधार कार्ड","राशन कार्ड","SHG सदस्यता प्रमाण पत्र","बैंक खाता (SHG से जुड़ा)"] },
+    // Eligibility: rural women from BPL/low-income households, Self-Help Group members
+    match: (a) => a.who === "women" && a.area === "rural" && ["below1","1to3"].includes(a.income),
   },
 
   // ADD MORE STATE SCHEMES HERE ↓
