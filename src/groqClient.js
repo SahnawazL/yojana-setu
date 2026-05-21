@@ -6,7 +6,18 @@
 
 import { SCHEME_DB } from "./schemesData.js";
 
-const MODEL = "llama-3.1-8b-instant"; // Free tier · 131K context · fastest on Groq
+// ─── MODEL SELECTION ─────────────────────────────────────────────────────────
+// llama-3.3-70b-versatile → 128K context · best quality on Groq free tier
+//   • Much better at multi-turn conversations, Hindi, and nuanced scheme answers
+//   • Same free-tier rate limits as 8b (30 RPM / 6K TPM / 1K RPD per key)
+//   • Groq LPU keeps it fast despite 70B size (~300 tok/s)
+//
+// Alternatives (swap MODEL string if needed):
+//   "llama-3.1-8b-instant"    → fastest, lowest quality, same limits
+//   "llama-3.3-70b-versatile" → best quality ← CURRENT CHOICE
+//   "llama-3.1-70b-versatile" → similar to 3.3-70b
+//
+const MODEL = "llama-3.3-70b-versatile";
 
 // ─── DEVELOPER & APP IDENTITY ────────────────────────────────────────────────
 // Single source of truth — update here to update AI knowledge everywhere.
@@ -253,11 +264,11 @@ export async function sendMessage(conversationHistory, userQuery, lang = "en") {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model:       MODEL,
-      max_tokens:  600,        // Slightly more room for richer answers
-      temperature: 0.55,       // Slightly more focused/factual
+      max_tokens:  800,        // 70b gives richer answers; 800 fits well within 6K TPM
+      temperature: 0.5,        // More factual accuracy for scheme data
       messages: [
         { role: "system", content: buildSystemPrompt(userQuery, lang) },
-        ...conversationHistory.slice(-4), // Last 4 turns for context
+        ...conversationHistory.slice(-8), // 70b + 128K context handles 8 turns (4 exchanges) well
       ],
     }),
   });
