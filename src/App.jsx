@@ -28,6 +28,9 @@ function useCountUp(targets, trigger, duration=1400){
   },[trigger]);
   return counts;
 }
+// ─── HAPTIC FEEDBACK ───────────────────────────────────────────────────────────
+const haptic = (pattern = 10) => { try { navigator.vibrate?.(pattern); } catch {} };
+
 // ─── STAT TARGETS (stable reference — prevents useCountUp from re-animating) ──
 const STAT_TARGETS = [3000, 28, 50];
 const STORAGE_KEY = "yojana_eligibility_answers";
@@ -296,7 +299,7 @@ const PT = {
 function LangToggle({lang,onToggle}){
   const isHindi=lang==="hi";
   return(
-    <button onClick={onToggle} style={{display:"flex",alignItems:"center",background:"rgba(255,255,255,0.15)",border:"1.5px solid rgba(255,255,255,0.35)",borderRadius:22,padding:"3px 4px",cursor:"pointer",height:34,width:72,position:"relative",overflow:"hidden",flexShrink:0}}>
+    <button onClick={()=>{haptic();onToggle();}} style={{display:"flex",alignItems:"center",background:"rgba(255,255,255,0.15)",border:"1.5px solid rgba(255,255,255,0.35)",borderRadius:22,padding:"3px 4px",cursor:"pointer",height:34,width:72,position:"relative",overflow:"hidden",flexShrink:0}}>
       <div style={{position:"absolute",top:3,left:isHindi?"calc(50% - 2px)":3,width:"calc(50% - 2px)",bottom:3,background:"#fff",borderRadius:16,transition:"left 0.28s",boxShadow:"0 1px 4px rgba(0,0,0,0.2)",zIndex:0}}/>
       <span style={{flex:1,textAlign:"center",fontSize:11,fontWeight:700,color:!isHindi?"#FF8C00":"rgba(255,255,255,0.7)",position:"relative",zIndex:1}}>EN</span>
       <span style={{flex:1,textAlign:"center",fontSize:11,fontWeight:700,color:isHindi?"#FF8C00":"rgba(255,255,255,0.7)",position:"relative",zIndex:1}}>हिं</span>
@@ -321,7 +324,7 @@ function SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
     }}>
 
       {/* ── Tap header ── */}
-      <div onClick={onToggle} style={{
+      <div onClick={()=>{haptic();onToggle();}} style={{
         padding:"14px 16px",display:"flex",alignItems:"flex-start",gap:12,cursor:"pointer",
         background:expanded?scheme.color+"07":"transparent",
         transition:"background 0.35s ease",
@@ -410,7 +413,7 @@ function SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
             {/* Apply CTA */}
             <div style={{padding:"0 16px 16px"}}>
               <div
-                onClick={()=>scheme.applyType==="online"&&window.open(`https://${scheme.apply.en}`,"_blank")}
+                onClick={()=>{haptic();scheme.applyType==="online"&&window.open(`https://${scheme.apply.en}`,"_blank");}}
                 style={{
                   background:`linear-gradient(135deg,${scheme.color},${scheme.color}cc)`,
                   borderRadius:14,padding:"13px 16px",
@@ -476,7 +479,7 @@ function CategorySheet({category,lang,onClose,dark=false}){
               <div style={{fontSize:17,fontWeight:800,color:th.text,fontFamily:bf}}>{category.label} {t.catSchemes}</div>
               <div style={{fontSize:12,color:th.textSub,marginTop:1}}>{schemes.length} {isHindi?"योजनाएं मिलीं":"schemes found"}</div>
             </div>
-            <div onClick={onClose} style={{width:32,height:32,borderRadius:"50%",background:th.pillBg,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:th.textMid}}>✕</div>
+            <div onClick={()=>{haptic();onClose();}} style={{width:32,height:32,borderRadius:"50%",background:th.pillBg,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:th.textMid}}>✕</div>
           </div>
           {/* Color bar */}
           <div style={{height:3,borderRadius:4,background:`linear-gradient(90deg,${category.color},${category.color}55)`,marginTop:14}}/>
@@ -491,28 +494,10 @@ function CategorySheet({category,lang,onClose,dark=false}){
             </div>
           )}
 
-          {/* National schemes */}
-          {nationalSchemes.length>0&&(
-            <>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-                <div style={{height:1,flex:1,background:th.border2}}/>
-                <span style={{fontSize:11,fontWeight:700,color:"#1D4ED8",background:"#EFF6FF",borderRadius:20,padding:"3px 10px",border:"1px solid #BFDBFE"}}>
-                  🇮🇳 {t.centralSchemes} ({nationalSchemes.length})
-                </span>
-                <div style={{height:1,flex:1,background:th.border2}}/>
-              </div>
-              {nationalSchemes.map(s=>(
-                <SchemeCard key={s.id} scheme={s} lang={lang} dark={dark}
-                  expanded={expandedId===s.id}
-                  onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>
-              ))}
-            </>
-          )}
-
           {/* State schemes */}
           {stateSchemes.length>0&&(
             <>
-              <div style={{display:"flex",alignItems:"center",gap:8,margin:"14px 0 10px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
                 <div style={{height:1,flex:1,background:th.border2}}/>
                 <span style={{fontSize:11,fontWeight:700,color:"#854D0E",background:"#FEF9C3",borderRadius:20,padding:"3px 10px",border:"1px solid #FEF08A"}}>
                   📍 {t.stateSchemes} ({stateSchemes.length})
@@ -520,6 +505,24 @@ function CategorySheet({category,lang,onClose,dark=false}){
                 <div style={{height:1,flex:1,background:th.border2}}/>
               </div>
               {stateSchemes.map(s=>(
+                <SchemeCard key={s.id} scheme={s} lang={lang} dark={dark}
+                  expanded={expandedId===s.id}
+                  onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>
+              ))}
+            </>
+          )}
+
+          {/* National schemes */}
+          {nationalSchemes.length>0&&(
+            <>
+              <div style={{display:"flex",alignItems:"center",gap:8,margin:"14px 0 10px"}}>
+                <div style={{height:1,flex:1,background:th.border2}}/>
+                <span style={{fontSize:11,fontWeight:700,color:"#1D4ED8",background:"#EFF6FF",borderRadius:20,padding:"3px 10px",border:"1px solid #BFDBFE"}}>
+                  🇮🇳 {t.centralSchemes} ({nationalSchemes.length})
+                </span>
+                <div style={{height:1,flex:1,background:th.border2}}/>
+              </div>
+              {nationalSchemes.map(s=>(
                 <SchemeCard key={s.id} scheme={s} lang={lang} dark={dark}
                   expanded={expandedId===s.id}
                   onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>
@@ -551,7 +554,7 @@ function SchemeDetailSheet({schemeId,lang,onClose,dark=false}){
           <div style={{width:40,height:4,background:th.handle,borderRadius:2}}/>
         </div>
         <div style={{background:`linear-gradient(135deg,${scheme.color}15,${scheme.color}05)`,margin:16,borderRadius:20,padding:20,border:`1.5px solid ${scheme.color}22`,position:"relative"}}>
-          <div onClick={onClose} style={{position:"absolute",top:12,right:12,width:30,height:30,borderRadius:"50%",background:dark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.07)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:th.textMid}}>✕</div>
+          <div onClick={()=>{haptic();onClose();}} style={{position:"absolute",top:12,right:12,width:30,height:30,borderRadius:"50%",background:dark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.07)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:th.textMid}}>✕</div>
           <div style={{fontSize:40,marginBottom:10}}>{scheme.icon}</div>
           <div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap"}}>
             <span style={{fontSize:10,fontWeight:700,background:scheme.scope==="national"?"#EFF6FF":"#FEF9C3",color:scheme.scope==="national"?"#1D4ED8":"#854D0E",borderRadius:8,padding:"3px 8px"}}>
@@ -578,7 +581,7 @@ function SchemeDetailSheet({schemeId,lang,onClose,dark=false}){
               </div>
             ))}
           </div>
-          <div onClick={()=>applyUrl&&window.open(applyUrl,"_blank")}
+          <div onClick={()=>{haptic();applyUrl&&window.open(applyUrl,"_blank");}}
             style={{background:applyUrl?`linear-gradient(135deg,${scheme.color},${scheme.color}cc)`:"#888",borderRadius:16,padding:18,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:applyUrl?"pointer":"default",boxShadow:applyUrl?`0 6px 20px ${scheme.color}40`:"none"}}>
             <div>
               <div style={{fontSize:14,fontWeight:800,color:"#fff",fontFamily:bf}}>{t.applyLabel}</div>
@@ -629,7 +632,7 @@ function SearchTab({lang,initialQuery="",dark=false}){
           <span style={{fontSize:18}}>🔍</span>
           <input value={query} onChange={e=>setQuery(e.target.value)} placeholder={t.searchPlaceholder} autoFocus
             style={{border:"none",outline:"none",fontSize:14,flex:1,background:"transparent",color:th.text,fontFamily:bf}}/>
-          {query&&<span onClick={()=>setQuery("")} style={{cursor:"pointer",color:"#aaa",fontSize:18}}>✕</span>}
+          {query&&<span onClick={()=>{haptic();setQuery("");}} style={{cursor:"pointer",color:"#aaa",fontSize:18}}>✕</span>}
         </div>
         <div style={{fontSize:12,color:th.textSub,marginTop:8,paddingLeft:2}}>
           {results.length} {isHindi?"योजनाएं":"schemes"} · {national.length} {isHindi?"केंद्रीय":"Central"} · {state.length} {isHindi?"राज्य":"State"}
@@ -742,7 +745,7 @@ function StatePickerSheet({selectedState,onSelect,onClose,lang,dark=false}){
   };
 
   const StateRow=({st,icon="📍"})=>(
-    <div onClick={()=>handleSelect(st)}
+    <div onClick={()=>{haptic();handleSelect(st);}}
       style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",
         background:selectedState===st?SAFFRON+"15":"transparent",
         cursor:"pointer",borderBottom:`1px solid ${th.border}`,
@@ -783,7 +786,7 @@ function StatePickerSheet({selectedState,onSelect,onClose,lang,dark=false}){
                 {isHindi?"A–Z से जल्दी जाएं या खोजें":"Jump A–Z or search"}
               </div>
             </div>
-            <div onClick={onClose}
+            <div onClick={()=>{haptic();onClose();}}
               style={{width:30,height:30,borderRadius:"50%",background:th.pillBg,
                 display:"flex",alignItems:"center",justifyContent:"center",
                 cursor:"pointer",fontSize:13,color:th.textMid}}>✕</div>
@@ -797,7 +800,7 @@ function StatePickerSheet({selectedState,onSelect,onClose,lang,dark=false}){
               style={{border:"none",outline:"none",fontSize:13,flex:1,
                 background:"transparent",color:th.text,fontFamily:bf}}/>
             {search
-              ? <span onClick={()=>setSearch("")}
+              ? <span onClick={()=>{haptic();setSearch("");}}
                   style={{cursor:"pointer",color:"#aaa",fontSize:16,padding:"2px 4px"}}>✕</span>
               : <span style={{fontSize:11,color:th.textLight,fontWeight:600}}>A–Z</span>
             }
@@ -811,7 +814,7 @@ function StatePickerSheet({selectedState,onSelect,onClose,lang,dark=false}){
           <div ref={listRef} style={{flex:1,overflowY:"auto",paddingBottom:40,paddingRight:24}}>
 
             {/* All States row — always on top */}
-            <div onClick={()=>{onSelect("all");onClose();}}
+            <div onClick={()=>{haptic();onSelect("all");onClose();}}
               style={{display:"flex",alignItems:"center",gap:12,padding:"13px 20px",
                 background:selectedState==="all"?ASHOKA_BLUE+"10":"transparent",
                 cursor:"pointer",borderBottom:`1px solid ${th.border}`}}>
@@ -888,7 +891,7 @@ function StatePickerSheet({selectedState,onSelect,onClose,lang,dark=false}){
               alignItems:"center",justifyContent:"center",
               paddingTop:4,paddingBottom:4,gap:1,zIndex:10}}>
               {alphabet.map(letter=>(
-                <div key={letter} onClick={()=>jumpTo(letter)}
+                <div key={letter} onClick={()=>{haptic(5);jumpTo(letter);}}
                   style={{width:20,height:20,display:"flex",alignItems:"center",
                     justifyContent:"center",borderRadius:6,cursor:"pointer",
                     fontSize:10,fontWeight:700,
@@ -957,7 +960,7 @@ function SchemesTab({lang,dark=false}){
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
           <div style={{fontSize:17,fontWeight:800,color:th.text,fontFamily:bf}}>{t.allSchemes||"All Schemes"}</div>
           {/* State pill button */}
-          <div onClick={()=>setShowStatePicker(true)}
+          <div onClick={()=>{haptic();setShowStatePicker(true);}}
             style={{display:"flex",alignItems:"center",gap:5,background:selectedState!=="all"?SAFFRON+"18":th.pillBg,border:`1.5px solid ${selectedState!=="all"?SAFFRON:th.border2}`,borderRadius:20,padding:"5px 11px",cursor:"pointer",flexShrink:0,transition:"background 0.2s"}}>
             <span style={{fontSize:13}}>{selectedState==="all"?"🇮🇳":"📍"}</span>
             <span style={{fontSize:11,fontWeight:700,color:selectedState!=="all"?SAFFRON:th.textMid,maxWidth:80,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:bf}}>
@@ -969,12 +972,12 @@ function SchemesTab({lang,dark=false}){
 
         {/* Category filter pills */}
         <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:12,scrollbarWidth:"none"}}>
-          <div onClick={()=>{setFilter("all");setExpandedId(null);}}
+          <div onClick={()=>{haptic();setFilter("all");setExpandedId(null);}}
             style={{flexShrink:0,padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:700,background:filter==="all"?"#003580":th.pillBg,color:filter==="all"?"#fff":th.textMid,cursor:"pointer",border:`1.5px solid ${filter==="all"?"#003580":th.border2}`}}>
             {isHindi?"सभी":"All"} ({filtered.length})
           </div>
           {cats.map(cat=>(
-            <div key={cat.filterKey} onClick={()=>{setFilter(cat.filterKey);setExpandedId(null);}}
+            <div key={cat.filterKey} onClick={()=>{haptic();setFilter(cat.filterKey);setExpandedId(null);}}
               style={{flexShrink:0,padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:700,background:filter===cat.filterKey?cat.color:th.pillBg,color:filter===cat.filterKey?"#fff":th.textMid,cursor:"pointer",border:`1.5px solid ${filter===cat.filterKey?cat.color:th.border2}`}}>
               {cat.icon} {cat.label}
             </div>
@@ -988,11 +991,11 @@ function SchemesTab({lang,dark=false}){
             <div style={{display:"flex",alignItems:"center",gap:5,background:SAFFRON+"14",border:`1px solid ${SAFFRON}40`,borderRadius:20,padding:"4px 10px"}}>
               <span style={{fontSize:11}}>📍</span>
               <span style={{fontSize:11,fontWeight:600,color:SAFFRON,fontFamily:bf}}>{selectedState}</span>
-              <span onClick={()=>setSelectedState("all")} style={{fontSize:14,color:SAFFRON,cursor:"pointer",marginLeft:2,lineHeight:1,fontWeight:700}}>✕</span>
+              <span onClick={()=>{haptic();setSelectedState("all");}} style={{fontSize:14,color:SAFFRON,cursor:"pointer",marginLeft:2,lineHeight:1,fontWeight:700}}>✕</span>
             </div>
             {/* State schemes count pill — clickable, scrolls to state section */}
             <div
-              onClick={()=>stateSchemes.length>0&&scrollToRef(stateHeaderRef)}
+              onClick={()=>{if(stateSchemes.length>0){haptic(5);scrollToRef(stateHeaderRef);}}}
               style={{display:"flex",alignItems:"center",gap:4,background:stateSchemes.length>0?"#FEF9C3":"#f5f5f0",border:`1.5px solid ${stateSchemes.length>0?"#d97706":"#e0e0e0"}`,borderRadius:20,padding:"4px 10px",cursor:stateSchemes.length>0?"pointer":"default",opacity:stateSchemes.length>0?1:0.55,transition:"transform 0.15s,box-shadow 0.15s",boxShadow:stateSchemes.length>0?"0 1px 4px #d9770620":"none"}}
               onMouseDown={e=>{if(stateSchemes.length>0)e.currentTarget.style.transform="scale(0.95)";}}
               onMouseUp={e=>{e.currentTarget.style.transform="scale(1)";}}
@@ -1006,7 +1009,7 @@ function SchemesTab({lang,dark=false}){
             </div>
             {/* Central schemes count pill — clickable, scrolls to central section */}
             <div
-              onClick={()=>national.length>0&&scrollToRef(centralHeaderRef)}
+              onClick={()=>{if(national.length>0){haptic(5);scrollToRef(centralHeaderRef);}}}
               style={{display:"flex",alignItems:"center",gap:4,background:"#EFF6FF",border:"1.5px solid #3b82f6",borderRadius:20,padding:"4px 10px",cursor:national.length>0?"pointer":"default",transition:"transform 0.15s,box-shadow 0.15s",boxShadow:"0 1px 4px #3b82f620"}}
               onMouseDown={e=>{e.currentTarget.style.transform="scale(0.95)";}}
               onMouseUp={e=>{e.currentTarget.style.transform="scale(1)";}}
@@ -1235,7 +1238,7 @@ function EligibilityChecker({lang,onClose,prefilledAnswers,dark=false}){
                   {(stateSearch?filteredStates:INDIA_STATES).map(state=>{
                     const sel=stateSearch===state;
                     return(
-                      <div key={state} onClick={()=>setStateSearch(state)}
+                      <div key={state} onClick={()=>{haptic();setStateSearch(state);}}
                         style={{padding:"12px 16px",borderBottom:`1px solid ${th.divider}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",background:sel?th.optionActive:th.card,transition:"background 0.15s"}}>
                         <span style={{fontSize:14,fontWeight:sel?700:400,color:sel?"#CC6600":th.text,fontFamily:bf}}>{state}</span>
                         {sel&&<span style={{color:"#FF9933",fontSize:16,fontWeight:700}}>✓</span>}
@@ -1250,7 +1253,7 @@ function EligibilityChecker({lang,onClose,prefilledAnswers,dark=false}){
                 {q.options.map(opt=>{
                   const active=activeVal===opt.value;
                   return(
-                    <div key={opt.value} onClick={()=>setSelected(opt.value)}
+                    <div key={opt.value} onClick={()=>{haptic();setSelected(opt.value);}}
                       style={{padding:"13px 16px",borderRadius:13,border:`2px solid ${active?"#FF9933":th.border}`,background:active?th.optionActive:th.optionBg,cursor:"pointer",display:"flex",alignItems:"center",gap:12,transition:"all 0.18s",boxShadow:active?"0 4px 14px rgba(255,153,51,0.18)":"none"}}>
                       <div style={{width:20,height:20,borderRadius:"50%",border:`2px solid ${active?"#FF9933":th.border3}`,background:active?"#FF9933":th.optionBg,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
                         {active&&<div style={{width:7,height:7,borderRadius:"50%",background:"#fff"}}/>}
@@ -1263,8 +1266,8 @@ function EligibilityChecker({lang,onClose,prefilledAnswers,dark=false}){
             )}
 
             <div style={{display:"flex",gap:10,marginTop:24}}>
-              <div onClick={goBack} style={{flex:1,padding:14,borderRadius:14,border:`1.5px solid ${th.border3}`,background:th.card,textAlign:"center",fontSize:14,fontWeight:600,color:th.textMid,cursor:"pointer",fontFamily:bf}}>{t.backBtn}</div>
-              <div onClick={goNext} style={{flex:2,padding:14,borderRadius:14,background:canProceed?"linear-gradient(135deg,#FF9933,#FF8C00)":"#e0e0e0",textAlign:"center",fontSize:14,fontWeight:700,color:"#fff",cursor:canProceed?"pointer":"default",fontFamily:bf,boxShadow:canProceed?"0 4px 16px rgba(255,153,51,0.35)":"none",transition:"all 0.2s"}}>
+              <div onClick={()=>{haptic();goBack();}} style={{flex:1,padding:14,borderRadius:14,border:`1.5px solid ${th.border3}`,background:th.card,textAlign:"center",fontSize:14,fontWeight:600,color:th.textMid,cursor:"pointer",fontFamily:bf}}>{t.backBtn}</div>
+              <div onClick={()=>{if(canProceed)haptic();goNext();}} style={{flex:2,padding:14,borderRadius:14,background:canProceed?"linear-gradient(135deg,#FF9933,#FF8C00)":"#e0e0e0",textAlign:"center",fontSize:14,fontWeight:700,color:"#fff",cursor:canProceed?"pointer":"default",fontFamily:bf,boxShadow:canProceed?"0 4px 16px rgba(255,153,51,0.35)":"none",transition:"all 0.2s"}}>
                 {step===TOTAL-1?t.checkBtn:t.nextBtn}
               </div>
             </div>
@@ -1302,24 +1305,24 @@ function EligibilityChecker({lang,onClose,prefilledAnswers,dark=false}){
                   </div>
                 </div>
 
-                {nationalResults.length>0&&(
-                  <>
-                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-                      <div style={{height:1,flex:1,background:th.border2}}/>
-                      <span style={{fontSize:11,fontWeight:700,color:"#1D4ED8",background:"#EFF6FF",borderRadius:20,padding:"3px 10px",border:"1px solid #BFDBFE"}}>🇮🇳 {t.centralSchemes} ({nationalResults.length})</span>
-                      <div style={{height:1,flex:1,background:th.border2}}/>
-                    </div>
-                    {nationalResults.map(s=><SchemeCard key={s.id} scheme={s} lang={lang} dark={dark} expanded={expandedId===s.id} onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>)}
-                  </>
-                )}
                 {stateResults.length>0&&(
                   <>
-                    <div style={{display:"flex",alignItems:"center",gap:8,margin:"14px 0 10px"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
                       <div style={{height:1,flex:1,background:th.border2}}/>
                       <span style={{fontSize:11,fontWeight:700,color:"#854D0E",background:"#FEF9C3",borderRadius:20,padding:"3px 10px",border:"1px solid #FEF08A"}}>📍 {t.stateSchemes} ({stateResults.length})</span>
                       <div style={{height:1,flex:1,background:th.border2}}/>
                     </div>
                     {stateResults.map(s=><SchemeCard key={s.id} scheme={s} lang={lang} dark={dark} expanded={expandedId===s.id} onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>)}
+                  </>
+                )}
+                {nationalResults.length>0&&(
+                  <>
+                    <div style={{display:"flex",alignItems:"center",gap:8,margin:"14px 0 10px"}}>
+                      <div style={{height:1,flex:1,background:th.border2}}/>
+                      <span style={{fontSize:11,fontWeight:700,color:"#1D4ED8",background:"#EFF6FF",borderRadius:20,padding:"3px 10px",border:"1px solid #BFDBFE"}}>🇮🇳 {t.centralSchemes} ({nationalResults.length})</span>
+                      <div style={{height:1,flex:1,background:th.border2}}/>
+                    </div>
+                    {nationalResults.map(s=><SchemeCard key={s.id} scheme={s} lang={lang} dark={dark} expanded={expandedId===s.id} onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>)}
                   </>
                 )}
               </>
@@ -1331,8 +1334,8 @@ function EligibilityChecker({lang,onClose,prefilledAnswers,dark=false}){
               </div>
             )}
             <div style={{display:"flex",gap:10,marginTop:16}}>
-              <div onClick={retake} style={{flex:1,padding:14,borderRadius:14,border:"1.5px solid #FF9933",background:th.card,textAlign:"center",fontSize:13,fontWeight:700,color:"#FF8C00",cursor:"pointer",fontFamily:bf}}>{t.retakeBtn}</div>
-              <div onClick={onClose} style={{flex:1,padding:14,borderRadius:14,background:"linear-gradient(135deg,#003580,#1a56db)",textAlign:"center",fontSize:13,fontWeight:700,color:"#fff",cursor:"pointer",fontFamily:bf}}>{t.doneBtn}</div>
+              <div onClick={()=>{haptic();retake();}} style={{flex:1,padding:14,borderRadius:14,border:"1.5px solid #FF9933",background:th.card,textAlign:"center",fontSize:13,fontWeight:700,color:"#FF8C00",cursor:"pointer",fontFamily:bf}}>{t.retakeBtn}</div>
+              <div onClick={()=>{haptic();onClose();}} style={{flex:1,padding:14,borderRadius:14,background:"linear-gradient(135deg,#003580,#1a56db)",textAlign:"center",fontSize:13,fontWeight:700,color:"#fff",cursor:"pointer",fontFamily:bf}}>{t.doneBtn}</div>
             </div>
           </div>
         )}
@@ -1400,7 +1403,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   useEffect(()=>{
     if(!timerOn)return;
     if(timer<=0){setTimerOn(false);return;}
-    const id=setTimeout(()=>setTimer(t=>t-1),1000);
+    const id=setTimeout(()=>setTimer(prev=>prev-1),1000);
     return()=>clearTimeout(id);
   },[timerOn,timer]);
 
@@ -1524,7 +1527,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
             style={{flex:1,border:"none",outline:"none",fontSize:15,padding:"14px 14px",background:"transparent",fontFamily:bf,color:th.text,letterSpacing:1.5}}/>
           {phone.length===10&&<div style={{paddingRight:14,fontSize:18,color:"#138808",fontWeight:700}}>✓</div>}
         </div>
-        <div onClick={!authLoading?handleGetOtp:undefined}
+        <div onClick={!authLoading?()=>{haptic();handleGetOtp();}:undefined}
           style={{background:phone.length===10&&!authLoading?"linear-gradient(135deg,#FF9933,#FF8C00)":"#ddd",borderRadius:14,padding:"15px",textAlign:"center",fontSize:15,fontWeight:700,color:"#fff",cursor:phone.length===10&&!authLoading?"pointer":"default",fontFamily:bf,boxShadow:phone.length===10&&!authLoading?"0 6px 22px rgba(255,153,51,0.42)":"none",transition:"all 0.22s"}}>
           {authLoading?(isHindi?"भेज रहे हैं...":"Sending OTP…"):pt.getOtpBtn}
         </div>
@@ -1543,7 +1546,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     return(
       <div style={{flex:1,display:"flex",flexDirection:"column",background:th.appBg,overflowY:"auto"}}>
         <TriHeader>
-          <div onClick={()=>setStage("phone")}
+          <div onClick={()=>{haptic();setStage("phone");}}
             style={{display:"inline-flex",alignItems:"center",gap:6,color:"rgba(255,255,255,0.82)",fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:18,background:"rgba(255,255,255,0.14)",borderRadius:20,padding:"5px 13px",border:"1px solid rgba(255,255,255,0.22)"}}>
             ← {isHindi?"वापस":"Back"}
           </div>
@@ -1564,7 +1567,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
             ))}
           </div>
 
-          <div onClick={!authLoading?handleVerify:undefined}
+          <div onClick={!authLoading?()=>{haptic();handleVerify();}:undefined}
             style={{background:otpFull&&!authLoading?"linear-gradient(135deg,#003580,#1a56db)":"#ddd",borderRadius:14,padding:15,textAlign:"center",fontSize:15,fontWeight:700,color:"#fff",cursor:otpFull&&!authLoading?"pointer":"default",fontFamily:bf,boxShadow:otpFull&&!authLoading?"0 6px 22px rgba(0,53,128,0.36)":"none",transition:"all 0.22s",marginBottom:16}}>
             {authLoading?(isHindi?"जाँच रहे हैं...":"Verifying…"):pt.verifyBtn}
           </div>
@@ -1572,7 +1575,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           <div style={{textAlign:"center"}}>
             {timerOn
               ?<div style={{fontSize:12,color:"#aaa",fontFamily:bf}}>{pt.resendIn(timer)}</div>
-              :<div onClick={()=>{startTimer();setOtp(["","","","","",""]);setTimeout(()=>otpRefs.current[0]?.focus(),0);}}
+              :<div onClick={()=>{haptic();handleGetOtp();setOtp(["","","","","",""]);setTimeout(()=>otpRefs.current[0]?.focus(),0);}}
                 style={{fontSize:13,fontWeight:700,color:"#FF8C00",cursor:"pointer",textDecoration:"underline",fontFamily:bf}}>{pt.resendBtn}</div>
             }
           </div>
@@ -1613,7 +1616,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
               {pt.genders.map(g=>{
                 const a=setupGender===g.v;
                 return(
-                  <div key={g.v} onClick={()=>setSetupGender(g.v)}
+                  <div key={g.v} onClick={()=>{haptic();setSetupGender(g.v);}}
                     style={{flex:1,padding:"12px 6px",borderRadius:13,border:`2px solid ${a?"#FF9933":th.border3}`,background:a?th.optionActive:th.optionBg,textAlign:"center",cursor:"pointer",fontSize:12,fontWeight:a?700:400,color:a?"#CC6600":th.textMid,fontFamily:bf,transition:"all 0.18s",boxShadow:a?"0 4px 14px rgba(255,153,51,0.22)":"none"}}>
                     {g.l}
                   </div>
@@ -1622,7 +1625,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
             </div>
           </div>
 
-          <div onClick={handleSetup1Next}
+          <div onClick={()=>{if(canNext)haptic();handleSetup1Next();}}
             style={{background:canNext?"linear-gradient(135deg,#FF9933,#FF8C00)":"#ddd",borderRadius:14,padding:15,textAlign:"center",fontSize:15,fontWeight:700,color:"#fff",cursor:canNext?"pointer":"default",fontFamily:bf,boxShadow:canNext?"0 6px 22px rgba(255,153,51,0.42)":"none",transition:"all 0.22s"}}>
             {pt.nextBtn}
           </div>
@@ -1658,7 +1661,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
             {!setupState&&(
               <div style={{background:th.card,borderRadius:13,border:`1.5px solid ${th.border}`,maxHeight:150,overflowY:"auto",boxShadow:"0 4px 16px rgba(0,0,0,0.09)",marginTop:5}}>
                 {(stateSearch?filteredStates:INDIA_STATES).slice(0,10).map(s=>(
-                  <div key={s} onClick={()=>{setSetupState(s);setStateSearch(s);}}
+                  <div key={s} onClick={()=>{haptic();setSetupState(s);setStateSearch(s);}}
                     style={{padding:"10px 14px",borderBottom:`1px solid ${th.divider}`,cursor:"pointer",fontSize:13,color:th.text,fontFamily:bf,background:th.card}}>
                     {s}
                   </div>
@@ -1676,7 +1679,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
               {pt.categories.map(c=>{
                 const a=setupCat===c.v;
                 return(
-                  <div key={c.v} onClick={()=>setSetupCat(c.v)}
+                  <div key={c.v} onClick={()=>{haptic();setSetupCat(c.v);}}
                     style={{padding:"11px 10px",borderRadius:13,border:`2px solid ${a?"#FF9933":th.border3}`,background:a?th.optionActive:th.optionBg,cursor:"pointer",fontSize:12,fontWeight:a?700:400,color:a?"#CC6600":th.text,fontFamily:bf,transition:"all 0.18s",boxShadow:a?"0 4px 14px rgba(255,153,51,0.22)":"none",textAlign:"center"}}>
                     {c.l}
                   </div>
@@ -1686,11 +1689,11 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           </div>
 
           <div style={{display:"flex",gap:8}}>
-            <div onClick={()=>setStage("setup1")}
+            <div onClick={()=>{haptic();setStage("setup1");}}
               style={{flex:1,padding:14,borderRadius:14,border:`1.5px solid ${th.border3}`,background:th.card,textAlign:"center",fontSize:13,fontWeight:600,color:th.textMid,cursor:"pointer",fontFamily:bf}}>
               {pt.backBtn}
             </div>
-            <div onClick={handleSetup2Save}
+            <div onClick={()=>{if(canSave)haptic([10,30,10]);handleSetup2Save();}}
               style={{flex:2,background:canSave?"linear-gradient(135deg,#138808,#16a34a)":"#ddd",borderRadius:14,padding:14,textAlign:"center",fontSize:14,fontWeight:700,color:"#fff",cursor:canSave?"pointer":"default",fontFamily:bf,boxShadow:canSave?"0 6px 22px rgba(19,136,8,0.38)":"none",transition:"all 0.22s"}}>
               {pt.saveBtn}
             </div>
@@ -1741,7 +1744,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
 
       <div style={{padding:"16px 16px 48px"}}>
         {/* View Matched Schemes CTA */}
-        <div onClick={onViewChecker}
+        <div onClick={()=>{haptic();onViewChecker();}}
           style={{background:"linear-gradient(135deg,#138808,#16a34a)",borderRadius:18,padding:"17px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",boxShadow:"0 6px 22px rgba(19,136,8,0.32)",marginBottom:16}}>
           <div>
             <div style={{color:"#fff",fontSize:14,fontWeight:700,fontFamily:bf}}>{pt.viewSchemes}</div>
@@ -1777,13 +1780,13 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                 <div style={{fontSize:11,color:th.textSub,marginTop:1}}>{pt.darkSub(dark)}</div>
               </div>
             </div>
-            <div onClick={toggleDark} style={{width:48,height:28,borderRadius:14,background:dark?"#003580":"#ddd",position:"relative",cursor:"pointer",transition:"background 0.25s",flexShrink:0}}>
+            <div onClick={()=>{haptic();toggleDark();}} style={{width:48,height:28,borderRadius:14,background:dark?"#003580":"#ddd",position:"relative",cursor:"pointer",transition:"background 0.25s",flexShrink:0}}>
               <div style={{position:"absolute",top:4,left:dark?"24px":"4px",width:20,height:20,borderRadius:"50%",background:"#fff",boxShadow:"0 1px 4px rgba(0,0,0,0.3)",transition:"left 0.25s"}}/>
             </div>
           </div>
 
           {/* Edit Profile */}
-          <div onClick={handleEdit}
+          <div onClick={()=>{haptic();handleEdit();}}
             style={{padding:"13px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <div style={{width:36,height:36,borderRadius:10,background:"#FFF7ED",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>✏️</div>
@@ -1793,7 +1796,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           </div>
 
           {/* Sign Out */}
-          <div onClick={handleSignOut}
+          <div onClick={()=>{haptic([10,50,10]);handleSignOut();}}
             style={{padding:"13px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <div style={{width:36,height:36,borderRadius:10,background:"#FEF2F2",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🚪</div>
@@ -1809,8 +1812,8 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
 
 // ─── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function YojanaSetu(){
-  const [lang,setLang]=useState("en");
-  const [dark,setDark]=useState(false);
+  const [lang,setLang]=useState(()=>localStorage.getItem("yojana_lang")||"en");
+  const [dark,setDark]=useState(()=>localStorage.getItem("yojana_dark")==="true");
   const [activeTab,setActiveTab]=useState("home");
   const [searchFocused,setSearchFocused]=useState(false);
   const [searchText,setSearchText]=useState("");
@@ -1822,6 +1825,8 @@ export default function YojanaSetu(){
   const [profile,setProfile]=useState(null);
   const toggleDark=()=>setDark(d=>!d);
 
+  useEffect(()=>{localStorage.setItem("yojana_lang",lang);},[lang]);
+  useEffect(()=>{localStorage.setItem("yojana_dark",dark);},[dark]);
   useEffect(()=>{const id=setTimeout(()=>setLoaded(true),100);return()=>clearTimeout(id);},[]);
 
   const th=THEME[dark?"dark":"light"];
@@ -1921,7 +1926,7 @@ export default function YojanaSetu(){
                   onKeyDown={e=>{if(e.key==="Enter"&&searchText.trim())setActiveTab("search");}}
                   placeholder={t.searchPlaceholder}
                   style={{border:"none",outline:"none",fontSize:14,flex:1,background:"transparent",color:th.text,fontFamily:bf}}/>
-                <div onClick={()=>{if(searchText.trim())setActiveTab("search");}}
+                <div onClick={()=>{if(searchText.trim()){haptic();setActiveTab("search");}}}
                   style={{background:"linear-gradient(135deg,#FF9933,#FF8C00)",borderRadius:8,padding:"6px 12px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>
                   {t.searchBtn}
                 </div>
@@ -1942,7 +1947,7 @@ export default function YojanaSetu(){
 
           <div style={{padding:"14px 16px 100px"}}>
             {/* Eligibility CTA */}
-            <div className={`fu s1 cp ${loaded?"show":""}`} onClick={()=>setShowChecker(true)}
+            <div className={`fu s1 cp ${loaded?"show":""}`} onClick={()=>{haptic();setShowChecker(true);}}
               style={{background:"linear-gradient(135deg,#138808,#16a34a)",borderRadius:18,padding:18,marginBottom:16,display:"flex",alignItems:"center",gap:14,cursor:"pointer"}}>
               <div style={{width:52,height:52,background:"rgba(255,255,255,0.2)",borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0,border:"1.5px solid rgba(255,255,255,0.3)"}}>🎯</div>
               <div style={{flex:1}}>
@@ -1956,14 +1961,14 @@ export default function YojanaSetu(){
             <div style={{marginBottom:16}}>
               <div className={`fu s2 ${loaded?"show":""}`} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                 <div style={{fontSize:15,fontWeight:800,color:th.text,fontFamily:bf}}>{t.categoriesTitle}</div>
-                <div onClick={()=>setActiveTab("schemes")} style={{color:"#003580",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t.seeAll}</div>
+                <div onClick={()=>{haptic();setActiveTab("schemes");}} style={{color:"#003580",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t.seeAll}</div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
                 {categories.map((cat,i)=>{
                   const count=categoryCounts[cat.filterKey]||0;
                   return(
                     <div key={i} className={`fu ch c${i} ${loaded?"show":""}`}
-                      onClick={()=>setSelectedCategory(cat)}
+                      onClick={()=>{haptic();setSelectedCategory(cat);}}
                       style={{background:cat.bg,borderRadius:14,padding:"13px 8px",textAlign:"center",border:`1.5px solid ${cat.color}20`,position:"relative"}}>
                       {/* Scheme count badge */}
                       <div style={{
@@ -1990,11 +1995,11 @@ export default function YojanaSetu(){
                   <div style={{fontSize:15,fontWeight:800,color:th.text,fontFamily:bf}}>{t.schemesTitle}</div>
                   <div style={{fontSize:11,color:th.textSub}}>{t.schemesSub}</div>
                 </div>
-                <div onClick={()=>setActiveTab("schemes")} style={{color:"#003580",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t.seeAll}</div>
+                <div onClick={()=>{haptic();setActiveTab("schemes");}} style={{color:"#003580",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t.seeAll}</div>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:9}}>
                 {homeSchemes.map((s,i)=>(
-                  <div key={i} className="ch sc" onClick={()=>setSelectedScheme(s.id)}
+                  <div key={i} className="ch sc" onClick={()=>{haptic();setSelectedScheme(s.id);}}
                     style={{background:th.card,borderRadius:16,padding:"13px 15px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 2px 10px rgba(0,0,0,0.05)",border:`1.5px solid ${th.border}`}}>
                     <div style={{width:44,height:44,background:s.color+"14",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,border:`1.5px solid ${s.color}20`}}>{s.icon}</div>
                     <div style={{flex:1,minWidth:0}}>
@@ -2021,7 +2026,7 @@ export default function YojanaSetu(){
                 <div style={{fontSize:13,fontWeight:700,color:th.text,fontFamily:bf}}>{t.helplineTitle}</div>
                 <div style={{fontSize:11,color:th.textSub}}>{t.helplineSub}</div>
               </div>
-              <div onClick={()=>{window.location.href="tel:1800111555";}}
+              <div onClick={()=>{haptic([10,30,10]);window.location.href="tel:1800111555";}}
                 style={{background:"#FF9933",borderRadius:10,padding:"8px 14px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:bf}}>{t.helplineBtn}</div>
             </div>
           </div>
@@ -2065,7 +2070,7 @@ export default function YojanaSetu(){
         {navItems.map(item=>{
           const active=activeTab===item.tab;
           return(
-            <div key={item.tab} className="bn" onClick={()=>setActiveTab(item.tab)}
+            <div key={item.tab} className="bn" onClick={()=>{haptic();setActiveTab(item.tab);}}
               style={{position:"relative",background:active?"#EFF6FF":"transparent",borderRadius:12,padding:"6px 8px 7px"}}>
               <div style={{fontSize:20,filter:active?"none":"grayscale(0.3)",transition:"filter 0.2s"}}>{item.icon}</div>
               <div style={{fontSize:9,fontWeight:active?800:500,color:active?"#003580":th.textSub,fontFamily:bf,transition:"color 0.2s"}}>{item.label}</div>
