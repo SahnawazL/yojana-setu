@@ -29,7 +29,9 @@ function useCountUp(targets, trigger, duration=1400){
   return counts;
 }
 // ─── HAPTIC FEEDBACK ───────────────────────────────────────────────────────────
-const haptic = (pattern = 10) => { try { navigator.vibrate?.(pattern); } catch {} };
+// navigator.vibrate works on Android Chrome. iOS ignores it silently.
+// Patterns: "light"=30ms, default=50ms, "medium"=80ms, "double"=[50,60,50]
+const haptic = (pattern = 50) => { try { navigator.vibrate?.(pattern); } catch {} };
 
 // ─── STAT TARGETS (stable reference — prevents useCountUp from re-animating) ──
 const STAT_TARGETS = [3000, 28, 50];
@@ -891,7 +893,7 @@ function StatePickerSheet({selectedState,onSelect,onClose,lang,dark=false}){
               alignItems:"center",justifyContent:"center",
               paddingTop:4,paddingBottom:4,gap:1,zIndex:10}}>
               {alphabet.map(letter=>(
-                <div key={letter} onClick={()=>{haptic(5);jumpTo(letter);}}
+                <div key={letter} onClick={()=>{haptic(30);jumpTo(letter);}}
                   style={{width:20,height:20,display:"flex",alignItems:"center",
                     justifyContent:"center",borderRadius:6,cursor:"pointer",
                     fontSize:10,fontWeight:700,
@@ -995,7 +997,7 @@ function SchemesTab({lang,dark=false}){
             </div>
             {/* State schemes count pill — clickable, scrolls to state section */}
             <div
-              onClick={()=>{if(stateSchemes.length>0){haptic(5);scrollToRef(stateHeaderRef);}}}
+              onClick={()=>{if(stateSchemes.length>0){haptic(30);scrollToRef(stateHeaderRef);}}}
               style={{display:"flex",alignItems:"center",gap:4,background:stateSchemes.length>0?"#FEF9C3":"#f5f5f0",border:`1.5px solid ${stateSchemes.length>0?"#d97706":"#e0e0e0"}`,borderRadius:20,padding:"4px 10px",cursor:stateSchemes.length>0?"pointer":"default",opacity:stateSchemes.length>0?1:0.55,transition:"transform 0.15s,box-shadow 0.15s",boxShadow:stateSchemes.length>0?"0 1px 4px #d9770620":"none"}}
               onMouseDown={e=>{if(stateSchemes.length>0)e.currentTarget.style.transform="scale(0.95)";}}
               onMouseUp={e=>{e.currentTarget.style.transform="scale(1)";}}
@@ -1009,7 +1011,7 @@ function SchemesTab({lang,dark=false}){
             </div>
             {/* Central schemes count pill — clickable, scrolls to central section */}
             <div
-              onClick={()=>{if(national.length>0){haptic(5);scrollToRef(centralHeaderRef);}}}
+              onClick={()=>{if(national.length>0){haptic(30);scrollToRef(centralHeaderRef);}}}
               style={{display:"flex",alignItems:"center",gap:4,background:"#EFF6FF",border:"1.5px solid #3b82f6",borderRadius:20,padding:"4px 10px",cursor:national.length>0?"pointer":"default",transition:"transform 0.15s,box-shadow 0.15s",boxShadow:"0 1px 4px #3b82f620"}}
               onMouseDown={e=>{e.currentTarget.style.transform="scale(0.95)";}}
               onMouseUp={e=>{e.currentTarget.style.transform="scale(1)";}}
@@ -1693,7 +1695,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
               style={{flex:1,padding:14,borderRadius:14,border:`1.5px solid ${th.border3}`,background:th.card,textAlign:"center",fontSize:13,fontWeight:600,color:th.textMid,cursor:"pointer",fontFamily:bf}}>
               {pt.backBtn}
             </div>
-            <div onClick={()=>{if(canSave)haptic([10,30,10]);handleSetup2Save();}}
+            <div onClick={()=>{if(canSave)haptic([50,60,50]);handleSetup2Save();}}
               style={{flex:2,background:canSave?"linear-gradient(135deg,#138808,#16a34a)":"#ddd",borderRadius:14,padding:14,textAlign:"center",fontSize:14,fontWeight:700,color:"#fff",cursor:canSave?"pointer":"default",fontFamily:bf,boxShadow:canSave?"0 6px 22px rgba(19,136,8,0.38)":"none",transition:"all 0.22s"}}>
               {pt.saveBtn}
             </div>
@@ -1796,7 +1798,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           </div>
 
           {/* Sign Out */}
-          <div onClick={()=>{haptic([10,50,10]);handleSignOut();}}
+          <div onClick={()=>{haptic([50,60,50]);handleSignOut();}}
             style={{padding:"13px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <div style={{width:36,height:36,borderRadius:10,background:"#FEF2F2",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🚪</div>
@@ -2026,7 +2028,7 @@ export default function YojanaSetu(){
                 <div style={{fontSize:13,fontWeight:700,color:th.text,fontFamily:bf}}>{t.helplineTitle}</div>
                 <div style={{fontSize:11,color:th.textSub}}>{t.helplineSub}</div>
               </div>
-              <div onClick={()=>{haptic([10,30,10]);window.location.href="tel:1800111555";}}
+              <div onClick={()=>{haptic([50,60,50]);window.location.href="tel:1800111555";}}
                 style={{background:"#FF9933",borderRadius:10,padding:"8px 14px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:bf}}>{t.helplineBtn}</div>
             </div>
           </div>
