@@ -30,7 +30,6 @@ const DEVELOPER = {
   portfolio: "https://sahnawaz-portfolio.vercel.app",
   email:     "shzthedigitalalchemist@gmail.com",
   instagram: "@sahnawaz.ui.dev",
-  github:    "https://github.com/sahnawazl",
   clients:   "Flipkart, Xiaomi India, Rapido",
   skills:    "React.js, Node.js, JavaScript, Python, PHP, Tailwind CSS, Figma, Firebase, Groq AI",
 };
@@ -208,7 +207,6 @@ CHIPS:["question 1","question 2","question 3"]
 - Portfolio: ${DEVELOPER.portfolio}
 - Email: ${DEVELOPER.email}
 - Instagram: ${DEVELOPER.instagram}
-- GitHub: ${DEVELOPER.github}
 - Past clients: ${DEVELOPER.clients}
 - Skills: ${DEVELOPER.skills}
 - If anyone asks who built this app or who you were made by, answer with the above details warmly and proudly.
@@ -239,18 +237,16 @@ ${smartContext}
 
 // ─── PARSE AI RESPONSE → { reply, followUps } ────────────────────────────────
 function parseResponse(raw) {
-  const chipsMatch = raw.match(/CHIPS:\s*(\[[\s\S]*?\])\s*$/m);
+  // Always strip ALL occurrences of CHIPS:[...] from reply first (global replace)
+  const chipsMatch = raw.match(/CHIPS:\s*(\[[\s\S]*?\])/);
   let followUps = [];
-  let reply = raw;
 
   if (chipsMatch) {
-    try {
-      followUps = JSON.parse(chipsMatch[1]);
-      reply = raw.slice(0, chipsMatch.index).trim();
-    } catch {
-      reply = raw.replace(/CHIPS:\s*\[[\s\S]*?\]\s*$/m, "").trim();
-    }
+    try { followUps = JSON.parse(chipsMatch[1]); } catch { followUps = []; }
   }
+
+  // Remove every CHIPS:[...] block from the reply text — handles mid-reply leaks too
+  const reply = raw.replace(/\n?CHIPS:\s*\[[\s\S]*?\]/g, "").trim();
 
   followUps = [...new Set(followUps.filter(c => typeof c === "string" && c.trim()))].slice(0, 3);
   return { reply, followUps };

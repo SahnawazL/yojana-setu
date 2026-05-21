@@ -500,42 +500,64 @@ function InputBar({ input, setInput, onSend, onKeyDown, loading, dark, lang, tex
 // renderInline handles bold (**text**) and clickable links within a single line.
 function renderInline(line, lineIdx, isUser, th) {
   const parts = [];
-  const regex = /\*\*(.*?)\*\*|(https?:\/\/[^\s]+|[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
+  // Group 1: **bold**
+  // Group 2: email address (must come BEFORE url group so user@gmail.com is caught whole)
+  // Group 3: full https URL or domain with whitelisted TLD only
+  //   — whitelist prevents React.js / Node.js / file.ts etc. from becoming links
+  const regex = /\*\*(.*?)\*\*|([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})|(https?:\/\/[^\s]+|[a-zA-Z0-9][a-zA-Z0-9.-]*\.(?:com|org|net|io|dev|app|in|gov|edu|co|info|biz|me)(?:[/?#][^\s]*)?)/g;
   let last = 0; let match;
   while ((match = regex.exec(line)) !== null) {
     if (match.index > last) parts.push(line.slice(last, match.index));
+
     if (match[1] !== undefined) {
+      // ── Bold ──────────────────────────────────────────────────────────────
       parts.push(
         <strong key={`b-${lineIdx}-${match.index}`} style={{ fontWeight:700 }}>
           {match[1]}
         </strong>
       );
+    } else if (match[2] !== undefined) {
+      // ── Email address ─────────────────────────────────────────────────────
+      const email = match[2];
+      parts.push(
+        <a key={`e-${lineIdx}-${match.index}`} href={`mailto:${email}`}
+          style={
+            isUser
+              ? { color:"#ffe0a0", textDecoration:"underline", wordBreak:"break-all" }
+              : {
+                  display:"inline-flex", alignItems:"center", gap:3,
+                  background:"rgba(0,53,128,0.08)",
+                  border:"1px solid rgba(0,53,128,0.22)",
+                  borderRadius:5, padding:"1px 7px",
+                  color:"#003580", textDecoration:"none",
+                  fontWeight:600, fontSize:"0.88em",
+                  wordBreak:"break-all", verticalAlign:"middle", lineHeight:1.5,
+                }
+          }>
+          {email}
+          {!isUser && <span style={{ fontSize:9, opacity:0.55, flexShrink:0 }}>✉</span>}
+        </a>
+      );
     } else {
-      const raw  = match[2];
+      // ── URL / domain ──────────────────────────────────────────────────────
+      const raw  = match[3];
       const href = raw.startsWith("http") ? raw : `https://${raw}`;
       parts.push(
         isUser ? (
-          // User bubble — light gold underline (on dark blue bg)
           <a key={`l-${lineIdx}-${match.index}`} href={href} target="_blank" rel="noopener noreferrer"
             style={{ color:"#ffe0a0", textDecoration:"underline", wordBreak:"break-all" }}>
             {raw}
           </a>
         ) : (
-          // AI bubble — premium pill badge (readable on glassmorphism surface)
           <a key={`l-${lineIdx}-${match.index}`} href={href} target="_blank" rel="noopener noreferrer"
             style={{
               display:"inline-flex", alignItems:"center", gap:3,
               background:"rgba(0,53,128,0.08)",
               border:"1px solid rgba(0,53,128,0.22)",
-              borderRadius:5,
-              padding:"1px 7px",
-              color:"#003580",
-              textDecoration:"none",
-              fontWeight:600,
-              fontSize:"0.88em",
-              wordBreak:"break-all",
-              verticalAlign:"middle",
-              lineHeight:1.5,
+              borderRadius:5, padding:"1px 7px",
+              color:"#003580", textDecoration:"none",
+              fontWeight:600, fontSize:"0.88em",
+              wordBreak:"break-all", verticalAlign:"middle", lineHeight:1.5,
             }}>
             {raw}
             <span style={{ fontSize:9, opacity:0.55, flexShrink:0 }}>↗</span>
