@@ -317,6 +317,25 @@ function SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
   const t=T[lang];
   const bf=fontFamily(lang);
   const isNational=scheme.scope==="national";
+  const [copied,setCopied]=useState(false);
+  const handleCopy=(e)=>{
+    e.stopPropagation();
+    haptic(30);
+    navigator.clipboard?.writeText(scheme.name.en).then(()=>{
+      setCopied(true);
+      setTimeout(()=>setCopied(false),2000);
+    }).catch(()=>{
+      // fallback for older browsers
+      const el=document.createElement("textarea");
+      el.value=scheme.name.en;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      setCopied(true);
+      setTimeout(()=>setCopied(false),2000);
+    });
+  };
   return(
     <div style={{
       background:th.card,borderRadius:18,marginBottom:10,overflow:"hidden",
@@ -352,8 +371,25 @@ function SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
               {scheme.tag[lang]}
             </span>
           </div>
-          <div style={{fontSize:13,fontWeight:700,color:th.text,lineHeight:1.35,fontFamily:bf,marginBottom:4}}>
-            {scheme.name[lang]}
+          <div style={{display:"flex",alignItems:"flex-start",gap:7,marginBottom:4}}>
+            <div style={{fontSize:13,fontWeight:700,color:th.text,lineHeight:1.35,fontFamily:bf,flex:1}}>
+              {scheme.name[lang]}
+            </div>
+            <div onClick={handleCopy}
+              style={{flexShrink:0,display:"flex",alignItems:"center",gap:3,
+                background:copied?(dark?"#14532d":"#f0fdf4"):(dark?"rgba(255,255,255,0.07)":scheme.color+"12"),
+                border:`1px solid ${copied?"#22c55e60":scheme.color+"35"}`,
+                borderRadius:8,padding:"3px 7px",cursor:"pointer",
+                transition:"all 0.2s",marginTop:1,
+              }}>
+              <span style={{fontSize:11,lineHeight:1}}>{copied?"✓":"⎘"}</span>
+              <span style={{fontSize:9,fontWeight:700,
+                color:copied?"#16a34a":scheme.color,
+                fontFamily:"sans-serif",transition:"color 0.2s",
+              }}>
+                {copied?"Copied":"Copy"}
+              </span>
+            </div>
           </div>
           <div style={{fontSize:12,color:scheme.color,fontWeight:600}}>{scheme.benefit[lang]}</div>
           <div style={{fontSize:10,color:th.textLight,marginTop:3,fontFamily:bf}}>{scheme.ministry[lang]}</div>
@@ -643,6 +679,17 @@ function SearchTab({lang,initialQuery="",dark=false}){
 
       {/* Results */}
       <div style={{padding:"12px 16px 80px"}}>
+
+        {/* ── LINK HINT BANNER ── */}
+        <div style={{display:"flex",alignItems:"flex-start",gap:8,background:dark?"#1c1300":"#FFFBEB",borderRadius:12,padding:"9px 12px",marginBottom:14,border:`1px solid ${dark?"#78350f40":"#FDE68A"}`}}>
+          <span style={{fontSize:13,flexShrink:0,marginTop:1}}>💡</span>
+          <span style={{fontSize:11,color:dark?"#fbbf24":"#92400e",lineHeight:1.5,fontFamily:bf}}>
+            {isHindi
+              ? "कुछ योजना लिंक काम नहीं कर सकते। सटीक जानकारी के लिए योजना का नाम कॉपी करके Google पर खोजें।"
+              : "Some scheme links may not work. Copy the scheme name & search on Google for the correct & up-to-date info."}
+          </span>
+        </div>
+
         {national.length>0&&(
           <>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
@@ -1029,6 +1076,16 @@ function SchemesTab({lang,dark=false}){
 
       {/* Scheme list — State first, then Central */}
       <div ref={scrollContainerRef} style={{padding:"12px 16px 80px",overflowY:"auto",flex:1}}>
+
+        {/* ── LINK HINT BANNER ── */}
+        <div style={{display:"flex",alignItems:"flex-start",gap:8,background:dark?"#1c1300":"#FFFBEB",borderRadius:12,padding:"9px 12px",marginBottom:14,border:`1px solid ${dark?"#78350f40":"#FDE68A"}`}}>
+          <span style={{fontSize:13,flexShrink:0,marginTop:1}}>💡</span>
+          <span style={{fontSize:11,color:dark?"#fbbf24":"#92400e",lineHeight:1.5,fontFamily:bf}}>
+            {isHindi
+              ? "कुछ योजना लिंक काम नहीं कर सकते। सटीक जानकारी के लिए योजना का नाम कॉपी करके Google पर खोजें।"
+              : "Some scheme links may not work. Copy the scheme name & search on Google for the correct & up-to-date info."}
+          </span>
+        </div>
 
         {/* ── STATE SCHEMES (shown first) ── */}
         {stateSchemes.length>0&&(
