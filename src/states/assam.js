@@ -431,6 +431,20 @@ export const ASSAM_SCHEMES = [
     match: (a) => a.state === "Assam" && a.who === "women",
   },
 
+  {
+    id: "assam_disability_pension",
+    icon: "♿", color: "#6D28D9", scope: "state", state: "Assam",
+    ministry: { en: "Assam Social Welfare Dept.", hi: "असम समाज कल्याण विभाग" },
+    name:    { en: "Assam Disability Pension Scheme",                            hi: "असम दिव्यांग पेंशन योजना" },
+    benefit: { en: "₹1,000/month financial assistance to persons with 40%+ disability who are not covered under any other government pension", hi: "40% या अधिक दिव्यांगता वाले व्यक्तियों को ₹1,000/माह — जो किसी अन्य सरकारी पेंशन के अंतर्गत नहीं आते" },
+    tag:     { en: "Disability / Pension", hi: "दिव्यांग / पेंशन" },
+    annual: 12000,
+    apply:   { en: "socialjustice.assam.gov.in", hi: "socialjustice.assam.gov.in" }, applyType: "online",
+    docs:    { en: ["Aadhaar Card","Disability Certificate (40%+ from Govt. Medical Board)","Bank Account (Aadhaar-linked)","BPL / Income Certificate","Residence Proof","Declaration of no other pension"],
+               hi: ["आधार कार्ड","दिव्यांगता प्रमाण पत्र (40%+ सरकारी मेडिकल बोर्ड से)","बैंक खाता (आधार-लिंक्ड)","BPL/आय प्रमाण पत्र","निवास प्रमाण","अन्य पेंशन न होने की घोषणा"] },
+    match: (a) => a.state === "Assam" && a.disability === true,
+  },
+
   // ADD MORE ASSAM SCHEMES ABOVE THIS LINE ↓
   // {
   //   id: "assam_new_scheme",
