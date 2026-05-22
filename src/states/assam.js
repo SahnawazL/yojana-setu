@@ -101,7 +101,7 @@ export const ASSAM_SCHEMES = [
     benefit: { en: "Interest-free loan up to ₹50,000 + training for women's self-employment", hi: "महिला स्वरोजगार के लिए ₹50,000 तक ब्याज मुक्त लोन + प्रशिक्षण" },
     tag:     { en: "Women / Business", hi: "महिला / व्यापार" },
     annual: 0,
-    apply:   { en: "socialwelfare.assam.gov.in", hi: "socialwelfare.assam.gov.in" }, applyType: "online",
+    apply:   { en: "dht.assam.gov.in/portlets/swanirbhar-naari", hi: "dht.assam.gov.in/portlets/swanirbhar-naari" }, applyType: "online",
     docs:    { en: ["Aadhaar Card","Bank Account","Business Plan / Activity Details","Income Certificate","Residence Proof"],
                hi: ["आधार कार्ड","बैंक खाता","व्यापार योजना/गतिविधि विवरण","आय प्रमाण","निवास प्रमाण"] },
     match: (a) => a.state === "Assam" && a.who === "women",
