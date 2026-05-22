@@ -17,7 +17,7 @@ export const ASSAM_SCHEMES = [
     benefit: { en: "₹1,250/month direct cash to women of low-income families", hi: "कम आय वाली महिलाओं को ₹1,250/माह सीधे बैंक में" },
     tag:     { en: "Women", hi: "महिला" },
     annual: 15000,
-    apply:   { en: "https://assam.gov.in/scheme-page", hi: "https://assam.gov.in/scheme-page" }, applyType: "online",
+    apply:   { en: "https://assam.gov.in/scheme-page/154", hi: "https://assam.gov.in/scheme-page/154" }, applyType: "online",
     docs:    { en: ["Aadhaar Card","Ration Card","Bank Account (women's name)","Income Certificate"],
                hi: ["आधार कार्ड","राशन कार्ड","बैंक खाता (महिला के नाम)","आय प्रमाण पत्र"] },
     match: (a) => a.state === "Assam" && a.who === "women" && ["below1","1to3"].includes(a.income),
