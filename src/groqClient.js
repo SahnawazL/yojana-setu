@@ -198,13 +198,19 @@ function buildSmartContext(query, lang = "en") {
     );
   };
 
-  const formatName = (s) =>
-    `• ${s.name[l]} [${s.scope === "state" ? s.state : "Central"}]`;
+  const formatName = (s, i) => {
+    const link = getLink(s);
+    return (
+      `${i + 1}. **${s.name[l]}** [${s.scope === "state" ? s.state : "Central"}]` +
+      (link ? `\n   OFFICIAL_LINK: ${link}` : "")
+    );
+  };
 
   // ── AUTO-PICK DEPTH based on match count + query signals ─────────────────────
   if (wantsCount || wantsList) {
-    // Just names + count
-    return `${matched.length} scheme(s) found:\n` + matched.map(formatName).join("\n");
+    // Numbered list with links — AI must use EXACT_COUNT, not recount itself
+    const lines = matched.map((s, i) => formatName(s, i)).join("\n");
+    return `EXACT_COUNT: ${matched.length} schemes. Use this number verbatim.\n\n` + lines;
   }
 
   if (matched.length === 1 || wantsDetail) {
@@ -264,14 +270,20 @@ CHIPS:["question 1","question 2","question 3"]
 
 ══ RULES ══
 ${langRule}
-- Keep answers mobile-friendly — short sentences, max 8 lines for lists, full detail only when asked
 - Use simple words — many users are rural citizens
-- LINKS: For every scheme you mention, show its link right below it as "🔗 https://..." — never say "Not available" if OFFICIAL_LINK is given below
-- NEVER show "${APP.url}" as a scheme link — user is already in the app
-- If no link is in the data, write: "🔗 Apply at nearest govt. office or official state website"
+
+FORMATTING (follow strictly):
+- When listing multiple schemes: ALWAYS number them as "1. **Scheme Name**" with bold name
+- Show each scheme's OFFICIAL_LINK immediately below it as "🔗 https://..." on a new line
+- NEVER use plain bullet dots (•) for scheme lists — use numbers
+- For scheme count questions: use the EXACT_COUNT number from the data — do not recount yourself
+- NEVER hallucinate links — ONLY use links from OFFICIAL_LINK field in data below
+- NEVER show "${APP.url}" as a link — user is already in the app
+- If OFFICIAL_LINK is missing for a scheme: write "🔗 Apply at nearest govt. office"
+- Full detail (docs, annual, ministry) only when user asks for details/documents/how to apply
+- Do NOT use: # headers, backticks, or tables
 - Only answer about: government schemes, eligibility, documents, how to apply, app features, developer info
 - If off-topic, politely redirect to schemes
-- Do NOT use: # headers, backticks, or tables
 ${chipsRule}
 
 ══ RELEVANT SCHEME DATA FOR THIS QUERY ══
