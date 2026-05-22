@@ -262,6 +262,12 @@ const PT = {
     signOutConfirm:"Sign out of YojanaSetu?",
     darkLabel:"Dark Mode",
     darkSub:(on)=>on?"On":"Off",
+    loginBenefits:[
+      {icon:"🎯", title:"Matched Schemes Saved",    sub:"Your qualifying schemes auto-saved to account"},
+      {icon:"🤖", title:"Personalized AI Answers",  sub:"AI knows your profile, gives tailored replies"},
+      {icon:"💾", title:"Progress Never Lost",       sub:"Eligibility results & chat history saved"},
+      {icon:"🔔", title:"Scheme Deadline Alerts",   sub:"Get notified about deadlines & new schemes"},
+    ],
   },
   hi:{
     signInTitle:"साइन इन करें",
@@ -299,6 +305,12 @@ const PT = {
     signOutConfirm:"YojanaSetu से साइन आउट करें?",
     darkLabel:"डार्क मोड",
     darkSub:(on)=>on?"चालू":"बंद",
+    loginBenefits:[
+      {icon:"🎯", title:"मिलान योजनाएं सेव",        sub:"पात्र योजनाएं अकाउंट में ऑटो-सेव"},
+      {icon:"🤖", title:"पर्सनल AI जवाब",           sub:"AI प्रोफाइल देखकर सटीक जवाब देता है"},
+      {icon:"💾", title:"प्रगति कभी न खोएं",        sub:"पात्रता परिणाम और चैट इतिहास सेव"},
+      {icon:"🔔", title:"योजना अलर्ट",             sub:"नई योजनाएं व डेडलाइन की सूचना पाएं"},
+    ],
   }
 };
 
@@ -1579,6 +1591,29 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           </div>
         </div>
         <div style={{color:"rgba(255,255,255,0.88)",fontSize:13,lineHeight:1.6,fontFamily:bf}}>{pt.signInSub}</div>
+
+        {/* ── What you unlock — 2×2 benefit grid ── */}
+        <div style={{marginTop:20,display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+          {pt.loginBenefits.map((b,i)=>(
+            <div key={i} style={{
+              background:"rgba(255,255,255,0.13)",
+              border:"1px solid rgba(255,255,255,0.22)",
+              borderRadius:13,padding:"11px 11px 10px",
+              backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",
+            }}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
+                <span style={{fontSize:16}}>{b.icon}</span>
+                <span style={{
+                  fontSize:8.5,fontWeight:800,letterSpacing:0.6,textTransform:"uppercase",
+                  background:"rgba(255,255,255,0.22)",borderRadius:20,padding:"2px 7px",
+                  color:"rgba(255,255,255,0.9)",
+                }}>UNLOCKS</span>
+              </div>
+              <div style={{fontSize:11,fontWeight:700,color:"#fff",lineHeight:1.3,fontFamily:bf,marginBottom:3}}>{b.title}</div>
+              <div style={{fontSize:9.5,color:"rgba(255,255,255,0.68)",lineHeight:1.45,fontFamily:bf}}>{b.sub}</div>
+            </div>
+          ))}
+        </div>
       </TriHeader>
 
       <Card dark={dark}>

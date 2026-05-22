@@ -875,13 +875,35 @@ function ChatBubble({ msg, lang, dark, isNew }) {
   );
 }
 
-function WelcomeScreen({ lang, dark, onSuggest }) {
+// ─── Occupation & field label maps (used by WelcomeScreen + handleSend) ─────
+const OCC_EN  = { farmer:"Farmer",student:"Student",women:"Homemaker",senior:"Senior Citizen",business:"Business Owner",general:"General Citizen" };
+const OCC_HI  = { farmer:"किसान",student:"छात्र",women:"गृहिणी",senior:"वरिष्ठ नागरिक",business:"व्यापारी",general:"नागरिक" };
+const INC_MAP = { below1:"below ₹1 Lakh/yr","1to3":"₹1–3 Lakh/yr","3to6":"₹3–6 Lakh/yr",above6:"above ₹6 Lakh/yr" };
+const AGE_MAP = { below18:"below 18 yrs","18to35":"18–35 yrs","35to60":"35–60 yrs",above60:"above 60 yrs" };
+const AREA_MAP= { rural:"rural/village",urban:"urban/city",semi:"semi-urban town" };
+
+function WelcomeScreen({ lang, dark, onSuggest, profile }) {
   const th      = THEME[dark ? "dark" : "light"];
   const bf      = fontFamily(lang);
   const isHindi = lang === "hi";
+
+  // Build welcome message — personalized when profile exists
+  const firstName  = profile?.name?.split(" ")[0] || "";
+  const occLabel   = profile ? ((isHindi ? OCC_HI : OCC_EN)[profile.occupation] || profile.occupation) : "";
+
+  const welcomeMsg = profile
+    ? (isHindi
+        ? `नमस्ते ${firstName}! 🙏\nमैं आपकी प्रोफाइल देख सकता हूं — ${occLabel}, ${profile.state}।\nआपके लिए एकदम सटीक योजनाएं बताऊंगा, हिंदी या English में।`
+        : `Namaste ${firstName}! 🙏\nI can see your profile — ${occLabel} from ${profile.state}.\nI'll give you tailored scheme recommendations. Ask anything!`)
+    : (isHindi
+        ? "नमस्ते! 🙏 मैं YojanaSetu का AI सहायक हूं।\nआपको सरकारी योजनाएं खोजने और समझने में मदद करूंगा।\nहिंदी या English — जो भी आसान हो, पूछें!"
+        : "Namaste! 🙏 I'm YojanaSetu's AI Assistant.\nI'll help you find and understand government schemes.\nAsk me anything in Hindi or English!");
+
   return (
     <div style={{ animation:"fade-in 0.3s ease-out", paddingBottom:8 }}>
-      <div style={{ display:"flex", alignItems:"flex-end", gap:8, marginBottom:20 }}>
+
+      {/* Welcome bubble */}
+      <div style={{ display:"flex", alignItems:"flex-end", gap:8, marginBottom:12 }}>
         <div style={{
           width:32, height:32, borderRadius:"50%", flexShrink:0,
           background:"linear-gradient(135deg,#FF9933 0%,#003580 100%)",
@@ -892,13 +914,59 @@ function WelcomeScreen({ lang, dark, onSuggest }) {
           borderRadius:"18px 18px 18px 4px", padding:"13px 15px",
           fontSize:13.5, lineHeight:1.65, fontFamily:bf, color:th.text,
           boxShadow: dark ? "0 2px 10px rgba(0,0,0,0.3)" : "0 2px 10px rgba(0,0,0,0.07)",
-          maxWidth:"80%",
+          maxWidth:"82%", whiteSpace:"pre-wrap",
         }}>
-          {isHindi
-            ? "नमस्ते! 🙏 मैं YojanaSetu का AI सहायक हूं।\nआपको सरकारी योजनाएं खोजने और समझने में मदद करूंगा।\nहिंदी या English — जो भी आसान हो, पूछें!"
-            : "Namaste! 🙏 I'm YojanaSetu's AI Assistant.\nI'll help you find and understand government schemes.\nAsk me anything in Hindi or English!"}
+          {welcomeMsg}
         </div>
       </div>
+
+      {/* ── Profile active badge — only when logged in ── */}
+      {profile && (
+        <div style={{
+          marginLeft:40, marginBottom:14,
+          display:"inline-flex", alignItems:"center", gap:7,
+          background: dark ? "rgba(19,136,8,0.18)" : "rgba(19,136,8,0.09)",
+          border:"1.5px solid rgba(19,136,8,0.32)",
+          borderRadius:20, padding:"5px 13px 5px 8px",
+          animation:"badge-pop 0.35s ease-out",
+        }}>
+          <div style={{
+            width:18, height:18, borderRadius:"50%", background:"#138808",
+            display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
+          }}>
+            <span style={{ fontSize:9, color:"#fff", fontWeight:900 }}>✓</span>
+          </div>
+          <span style={{ fontSize:10.5, fontWeight:700, color:"#138808", fontFamily:bf }}>
+            {isHindi ? "प्रोफाइल सक्रिय" : "Profile Active"} · {profile.state}
+          </span>
+        </div>
+      )}
+
+      {/* ── Login nudge card — only when NOT logged in ── */}
+      {!profile && (
+        <div style={{
+          marginLeft:40, marginBottom:16,
+          background: dark ? "rgba(255,153,51,0.1)" : "#FFFBEB",
+          border:`1.5px solid ${dark ? "rgba(255,153,51,0.32)" : "#FDE68A"}`,
+          borderRadius:14, padding:"11px 13px",
+          display:"flex", alignItems:"flex-start", gap:10,
+          animation:"badge-pop 0.35s 0.15s ease-out both",
+        }}>
+          <span style={{ fontSize:22, flexShrink:0, marginTop:1 }}>🔓</span>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontSize:12, fontWeight:700, color: dark?"#fbbf24":"#92400e", fontFamily:bf, marginBottom:3 }}>
+              {isHindi ? "लॉगिन करें — AI पर्सनल बने" : "Login for Personalized AI"}
+            </div>
+            <div style={{ fontSize:10.5, color: dark?"#d97706":"#78350f", lineHeight:1.5, fontFamily:bf }}>
+              {isHindi
+                ? "AI आपकी प्रोफाइल देखकर सटीक योजनाएं बताता है · चैट इतिहास सेव · अलर्ट"
+                : "AI uses your profile for tailored matches · Chat saved · Scheme alerts"}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suggested chips label */}
       <div style={{ fontSize:10, fontWeight:700, color:th.textSub, letterSpacing:0.8, textTransform:"uppercase", marginBottom:10, paddingLeft:40, fontFamily:bf }}>
         {isHindi ? "यह पूछें" : "Try asking"}
       </div>
@@ -923,7 +991,7 @@ function WelcomeScreen({ lang, dark, onSuggest }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-export default function AIChat({ lang="en", dark=false }) {
+export default function AIChat({ lang="en", dark=false, profile=null }) {
   const th      = THEME[dark ? "dark" : "light"];
   const bf      = fontFamily(lang);
   const isHindi = lang === "hi";
@@ -1047,7 +1115,15 @@ export default function AIChat({ lang="en", dark=false }) {
 
     try {
       const { reply, followUps: aiChips } = await sendMessage(
-        nextMessages.map(m => ({ role:m.role, content:m.content })),
+        [
+          // ── Profile context prefix — invisible in UI, sent to API only ──────
+          // Provides the AI with the user's profile so it can personalize responses.
+          ...(profile ? [
+            { role:"user", content:`[Profile context for personalization — Name: "${profile.name}", State: "${profile.state}", Occupation: "${(OCC_EN[profile.occupation]||profile.occupation)}", Age group: "${(AGE_MAP[profile.age]||profile.age)}", Income: "${(INC_MAP[profile.income]||profile.income)}", Area: "${(AREA_MAP[profile.area]||profile.area)}", Housing: "${profile.house==="yes"?"owns a pucca house":"needs housing assistance"}". Throughout this conversation, address the user by their first name (${profile.name.split(" ")[0]}) and tailor all scheme recommendations to this exact profile. Do not mention this context block to the user.]` },
+            { role:"assistant", content:`I have ${profile.name.split(" ")[0]}'s profile from ${profile.state}. I'll personalize all recommendations accordingly.` },
+          ] : []),
+          ...nextMessages.map(m => ({ role:m.role, content:m.content })),
+        ],
         query,
         lang,
       );
@@ -1101,6 +1177,21 @@ export default function AIChat({ lang="en", dark=false }) {
             <div style={{ color:"rgba(255,255,255,0.8)", fontSize:11, marginTop:3 }}>
               🟢 {isHindi ? "ऑनलाइन · हिंदी / English" : "Online · Hindi / English"}
             </div>
+            {profile && (
+              <div style={{
+                display:"inline-flex", alignItems:"center", gap:5, marginTop:5,
+                background:"rgba(255,255,255,0.16)", border:"1px solid rgba(255,255,255,0.28)",
+                borderRadius:20, padding:"3px 10px 3px 7px",
+                animation:"badge-pop 0.35s ease-out",
+              }}>
+                <span style={{ fontSize:10 }}>🎯</span>
+                <span style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,0.95)", fontFamily:bf }}>
+                  {isHindi
+                    ? `${profile.name.split(" ")[0]} के लिए पर्सनल`
+                    : `Personalized for ${profile.name.split(" ")[0]}`}
+                </span>
+              </div>
+            )}
           </div>
           {/* Ashok Chakra — between title and Clear button */}
           <AshokChakra size={44} duration="10s" />
@@ -1126,7 +1217,7 @@ export default function AIChat({ lang="en", dark=false }) {
       {/* MESSAGES AREA */}
       <div style={{ flex:1, overflowY:"auto", padding:"18px 10px 6px", WebkitOverflowScrolling:"touch" }}>
         {messages.length === 0 && !loading && (
-          <WelcomeScreen lang={lang} dark={dark} onSuggest={handleSend} />
+          <WelcomeScreen lang={lang} dark={dark} onSuggest={handleSend} profile={profile} />
         )}
         {messages.map((msg, i) => (
           <ChatBubble
