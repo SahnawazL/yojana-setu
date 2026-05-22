@@ -143,10 +143,17 @@ function buildSmartContext(query, lang = "en") {
   const schemes = getRelevantSchemes(query);
   const l = lang === "hi" ? "hi" : "en";
 
-  const format = (s) =>
-    `• [${s.id}] ${s.name[l]}\n` +
-    `  Benefit: ${s.benefit[l]}\n` +
-    `  Tag: ${s.tag[l]} | Apply: ${s.apply[l]}`;
+  const format = (s) => {
+    const raw  = s.apply?.[l] ?? "";
+    const link = raw
+      ? (raw.startsWith("http") ? raw : `https://${raw}`)
+      : "Not available";
+    return (
+      `• [${s.id}] ${s.name[l]}\n` +
+      `  Benefit: ${s.benefit[l]}\n` +
+      `  Tag: ${s.tag[l]} | Official Link: ${link}`
+    );
+  };
 
   const stateSchemes    = schemes.filter(s => s.scope === "state");
   const nationalSchemes = schemes.filter(s => s.scope === "national");
@@ -224,7 +231,9 @@ ${langRule}
 - Keep answers SHORT and mobile-friendly — 4 to 7 lines max
 - Use simple words — many users are from rural areas
 - Use emojis occasionally to be warm and friendly
-- Answer about: Indian government schemes, eligibility, documents, application process, app features, developer info
+- ALWAYS show the official link from the scheme data exactly as provided — never say "Not available" if a link exists in the data
+- Format links as: Link: https://... (always include https://)
+- If no link is in the data for that scheme, then say: "Apply through official state/central govt website"
 - If asked anything unrelated (jokes, weather, general knowledge), politely redirect to schemes
 - Formatting: **bold** for scheme names and key terms, numbered lists (1. 2. 3.) for steps, bullet (- item) for options
 - Do NOT use: # headers, backticks, tables, or heavy formatting
