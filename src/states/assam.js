@@ -143,7 +143,7 @@ export const ASSAM_SCHEMES = [
     benefit: { en: "₹40,000 cash directly in bride's bank account to buy gold at marriage", hi: "विवाह पर दुल्हन के बैंक खाते में सीधे ₹40,000 — सोना खरीदने के लिए" },
     tag:     { en: "Women / Marriage", hi: "महिला / विवाह" },
     annual: 40000,
-    apply:   { en: "arundhati.assam.gov.in", hi: "arundhati.assam.gov.in" }, applyType: "online",
+    apply:   { en: "assam.gov.in/scheme-page/447", hi: "assam.gov.in/scheme-page/447" }, applyType: "online",
     docs:    { en: ["Aadhaar Card","Marriage Certificate (registered under Special Marriage Act)","Bank Account (bride's name)","Income Certificate (family income < ₹5 lakh/year)","Age Proof (bride must be 18+, groom 21+)"],
                hi: ["आधार कार्ड","विवाह प्रमाण पत्र (विशेष विवाह अधिनियम के तहत)","बैंक खाता (दुल्हन के नाम)","आय प्रमाण (पारिवारिक आय ₹5 लाख/वर्ष से कम)","आयु प्रमाण (दुल्हन 18+, दूल्हा 21+)"] },
     match: (a) => a.state === "Assam" && a.who === "women",
