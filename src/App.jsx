@@ -6,7 +6,7 @@ import {
   getSchemesForCategory,
 } from "./schemesData.js";
 import { auth } from "./firebase.js";
-import { RecaptchaVerifier, signInWithPhoneNumber, signOut } from "firebase/auth";
+import { RecaptchaVerifier, signInWithPhoneNumber, signOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import AIChat from "./AIChat.jsx";
 
 // ─── COUNT-UP HOOK ─────────────────────────────────────────────────────────────
@@ -260,6 +260,14 @@ const PT = {
     settingsTitle:"Settings",langLabel:"Language",
     editProfile:"Edit Profile",signOut:"Sign Out",
     signOutConfirm:"Sign out of YojanaSetu?",
+    googleBtn:"Continue with Google",
+    emailLabel:"Email Address",emailPh:"Enter your email",
+    passwordLabel:"Password",passwordPh:"Min. 6 characters",
+    signInTab:"Sign In",createAcctTab:"Create Account",
+    signInBtn:"Sign In →",createAcctBtn:"Create Account →",
+    forgotHint:"Use 'Create Account' if you're new here",
+    weakPassword:"Password must be at least 6 characters",
+    invalidEmail:"Please enter a valid email address",
     darkLabel:"Dark Mode",
     darkSub:(on)=>on?"On":"Off",
     loginBenefits:[
@@ -303,6 +311,14 @@ const PT = {
     settingsTitle:"सेटिंग्स",langLabel:"भाषा",
     editProfile:"प्रोफाइल बदलें",signOut:"साइन आउट",
     signOutConfirm:"YojanaSetu से साइन आउट करें?",
+    googleBtn:"Google से जारी रखें",
+    emailLabel:"ईमेल पता",emailPh:"अपना ईमेल दर्ज करें",
+    passwordLabel:"पासवर्ड",passwordPh:"कम से कम 6 अक्षर",
+    signInTab:"साइन इन",createAcctTab:"अकाउंट बनाएं",
+    signInBtn:"साइन इन करें →",createAcctBtn:"अकाउंट बनाएं →",
+    forgotHint:"नए हैं? 'अकाउंट बनाएं' चुनें",
+    weakPassword:"पासवर्ड कम से कम 6 अक्षर का होना चाहिए",
+    invalidEmail:"कृपया सही ईमेल दर्ज करें",
     darkLabel:"डार्क मोड",
     darkSub:(on)=>on?"चालू":"बंद",
     loginBenefits:[
@@ -1460,6 +1476,13 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   const [setupCat,setSetupCat]=useState(profile?.occupation||"");
   const [authLoading,setAuthLoading]=useState(false);
   const [authError,setAuthError]=useState("");
+  const [googleLoading,setGoogleLoading]=useState(false);
+  const [googleEmail,setGoogleEmail]=useState("");
+  const [emailInput,setEmailInput]=useState("");
+  const [passwordInput,setPasswordInput]=useState("");
+  const [showPassword,setShowPassword]=useState(false);
+  const [emailTab,setEmailTab]=useState("signin"); // "signin" | "signup"
+  const [emailLoading,setEmailLoading]=useState(false);
   const otpRefs=useRef([]);
   const verifierRef=useRef(null);
   const confirmationRef=useRef(null);
@@ -1547,6 +1570,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       house:savedAnswers?.house||"no",
       age:savedAnswers?.age||"18to35",
       area:savedAnswers?.area||"rural",
+      ...(googleEmail?{email:googleEmail}:{}),
     });
     setStage("dashboard");
   };
@@ -1563,7 +1587,85 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setProfile(null);
     setPhone("");setOtp(["","","","","",""]);
     setSetupName("");setSetupGender("");setSetupState("");setStateSearch("");setSetupCat("");
+    setGoogleEmail("");setEmailInput("");setPasswordInput("");setShowPassword(false);setEmailTab("signin");
     setStage("phone");
+  };
+
+  const handleGoogleSignIn=async()=>{
+    setGoogleLoading(true);setAuthError("");
+    try{
+      const provider=new GoogleAuthProvider();
+      const result=await signInWithPopup(auth,provider);
+      const user=result.user;
+      // Store email so profile knows this is a Google login
+      setGoogleEmail(user.email||"");
+      // Pre-fill name from Google account
+      if(user.displayName) setSetupName(user.displayName);
+      // Pre-fill state/category from any saved eligibility answers
+      if(savedAnswers){
+        if(savedAnswers.state){setSetupState(savedAnswers.state);setStateSearch(savedAnswers.state);}
+        if(savedAnswers.who) setSetupCat(savedAnswers.who);
+      }
+      setStage("setup1");
+    }catch(err){
+      // Don't show error if user just closed the popup
+      if(err.code!=="auth/popup-closed-by-user"){
+        setAuthError(err.message||"Google sign-in failed. Please try again.");
+      }
+    }finally{setGoogleLoading(false);}
+  };
+
+  // ── Email validation helpers ────────────────────────────────────────────────
+  const isValidEmail=(v)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+  const isValidPassword=(v)=>v.length>=6;
+
+  const afterEmailAuth=(email)=>{
+    setGoogleEmail(email);
+    if(savedAnswers){
+      if(savedAnswers.state){setSetupState(savedAnswers.state);setStateSearch(savedAnswers.state);}
+      if(savedAnswers.who) setSetupCat(savedAnswers.who);
+    }
+    setStage("setup1");
+  };
+
+  const handleEmailSignIn=async()=>{
+    if(!isValidEmail(emailInput)){setAuthError(pt.invalidEmail);return;}
+    if(!isValidPassword(passwordInput)){setAuthError(pt.weakPassword);return;}
+    setEmailLoading(true);setAuthError("");
+    try{
+      await signInWithEmailAndPassword(auth,emailInput.trim(),passwordInput);
+      afterEmailAuth(emailInput.trim());
+    }catch(err){
+      // Map Firebase codes to friendly messages
+      const code=err.code||"";
+      if(code==="auth/user-not-found"||code==="auth/wrong-password"||code==="auth/invalid-credential"){
+        setAuthError(isHindi?"गलत ईमेल या पासवर्ड। फिर से जाँचें।":"Wrong email or password. Please check and try again.");
+      }else if(code==="auth/too-many-requests"){
+        setAuthError(isHindi?"बहुत अधिक प्रयास। कुछ देर बाद कोशिश करें।":"Too many attempts. Please try again later.");
+      }else{
+        setAuthError(err.message||"Sign in failed. Please try again.");
+      }
+    }finally{setEmailLoading(false);}
+  };
+
+  const handleEmailSignUp=async()=>{
+    if(!isValidEmail(emailInput)){setAuthError(pt.invalidEmail);return;}
+    if(!isValidPassword(passwordInput)){setAuthError(pt.weakPassword);return;}
+    setEmailLoading(true);setAuthError("");
+    try{
+      await createUserWithEmailAndPassword(auth,emailInput.trim(),passwordInput);
+      afterEmailAuth(emailInput.trim());
+    }catch(err){
+      const code=err.code||"";
+      if(code==="auth/email-already-in-use"){
+        setAuthError(isHindi?"यह ईमेल पहले से उपयोग में है। साइन इन करें।":"This email is already registered. Please sign in instead.");
+        setEmailTab("signin");
+      }else if(code==="auth/weak-password"){
+        setAuthError(pt.weakPassword);
+      }else{
+        setAuthError(err.message||"Account creation failed. Please try again.");
+      }
+    }finally{setEmailLoading(false);}
   };
 
   // Matched scheme count for dashboard
@@ -1617,25 +1719,165 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       </TriHeader>
 
       <Card dark={dark}>
-        <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:8,fontFamily:bf,letterSpacing:0.3}}>📱 {pt.phoneLabel}</div>
-        <div style={{display:"flex",alignItems:"center",border:`2px solid ${phone.length===10?"#138808":"#FF9933"}`,borderRadius:14,overflow:"hidden",marginBottom:18,transition:"border-color 0.2s"}}>
-          <div style={{padding:"14px 12px",borderRight:"1.5px solid rgba(255,153,51,0.35)",background:"#FFF7ED",fontSize:14,fontWeight:700,color:"#CC6600",flexShrink:0}}>+91</div>
-          <input type="tel" inputMode="numeric" maxLength={10} value={phone}
-            onChange={e=>setPhone(e.target.value.replace(/\D/g,"").slice(0,10))}
-            placeholder={pt.phonePh}
-            style={{flex:1,border:"none",outline:"none",fontSize:15,padding:"14px 14px",background:"transparent",fontFamily:bf,color:th.text,letterSpacing:1.5}}/>
-          {phone.length===10&&<div style={{paddingRight:14,fontSize:18,color:"#138808",fontWeight:700}}>✓</div>}
+        {/* ── Google Sign-In button (ACTIVE) ── */}
+        <div onClick={!googleLoading?()=>{haptic();handleGoogleSignIn();}:undefined}
+          style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:"#fff",border:`1.5px solid ${dark?"#3a3a3c":"#e0e0e0"}`,borderRadius:14,padding:"14px 16px",cursor:googleLoading?"default":"pointer",boxShadow:"0 2px 12px rgba(0,0,0,0.08)",transition:"all 0.2s",userSelect:"none"}}>
+          {/* Official Google G logo */}
+          <svg width="20" height="20" viewBox="0 0 24 24" style={{flexShrink:0}}>
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          <span style={{fontSize:15,fontWeight:700,color:"#3c3c3c",fontFamily:bf}}>
+            {googleLoading?(isHindi?"साइन इन हो रहे हैं...":"Signing in…"):pt.googleBtn}
+          </span>
         </div>
-        <div onClick={!authLoading?()=>{haptic();handleGetOtp();}:undefined}
-          style={{background:phone.length===10&&!authLoading?"linear-gradient(135deg,#FF9933,#FF8C00)":"#ddd",borderRadius:14,padding:"15px",textAlign:"center",fontSize:15,fontWeight:700,color:"#fff",cursor:phone.length===10&&!authLoading?"pointer":"default",fontFamily:bf,boxShadow:phone.length===10&&!authLoading?"0 6px 22px rgba(255,153,51,0.42)":"none",transition:"all 0.22s"}}>
-          {authLoading?(isHindi?"भेज रहे हैं...":"Sending OTP…"):pt.getOtpBtn}
-        </div>
-        {authError&&<div style={{marginTop:10,fontSize:12,color:"#e53e3e",textAlign:"center",fontFamily:bf,padding:"8px 12px",background:"#FFF5F5",borderRadius:10,border:"1px solid #FED7D7"}}>{authError}</div>}
-        <div id="recaptcha-container"/>
-        <div style={{marginTop:16,textAlign:"center",fontSize:11,color:"#bbb",fontFamily:bf,lineHeight:1.6}}>
-          {isHindi?"यह पूरी तरह सुरक्षित है। कोई पासवर्ड नहीं।":"Completely secure · No passwords needed"}
-        </div>
+        {authError&&!emailLoading&&<div style={{marginTop:10,fontSize:12,color:"#e53e3e",textAlign:"center",fontFamily:bf,padding:"8px 12px",background:"#FFF5F5",borderRadius:10,border:"1px solid #FED7D7"}}>{authError}</div>}
       </Card>
+
+      {/* ── OR divider ── */}
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 28px"}}>
+        <div style={{flex:1,height:1,background:dark?"#3a3a3c":"#e0e0e0"}}/>
+        <span style={{fontSize:11,fontWeight:700,color:dark?"#555":"#bbb",letterSpacing:0.7}}>OR</span>
+        <div style={{flex:1,height:1,background:dark?"#3a3a3c":"#e0e0e0"}}/>
+      </div>
+
+      {/* ── Email / Password Card (ACTIVE) ── */}
+      <div style={{margin:"0 16px 14px",background:dark?"#1c1c1e":"#fff",borderRadius:20,padding:20,border:`1.5px solid ${dark?"#2c2c2e":"#f0f0f0"}`,boxShadow:dark?"0 6px 28px rgba(0,0,0,0.35)":"0 6px 28px rgba(0,0,0,0.10)"}}>
+
+        {/* Sign In / Create Account tab switcher */}
+        <div style={{display:"flex",background:dark?"#2c2c2e":"#f5f5f0",borderRadius:12,padding:3,marginBottom:18,gap:3}}>
+          {[{key:"signin",label:pt.signInTab},{key:"signup",label:pt.createAcctTab}].map(tab=>{
+            const active=emailTab===tab.key;
+            return(
+              <div key={tab.key} onClick={()=>{haptic();setEmailTab(tab.key);setAuthError("");}}
+                style={{flex:1,padding:"9px 6px",borderRadius:10,textAlign:"center",fontSize:12.5,fontWeight:active?700:500,
+                  background:active?(dark?"#1c1c1e":"#fff"):"transparent",
+                  color:active?(dark?"#f0f0f0":"#1a1a1a"):(dark?"#666":"#aaa"),
+                  cursor:"pointer",fontFamily:bf,
+                  boxShadow:active?(dark?"0 1px 6px rgba(0,0,0,0.4)":"0 1px 6px rgba(0,0,0,0.10)"):"none",
+                  transition:"all 0.22s cubic-bezier(0.22,1,0.36,1)",
+                }}>
+                {tab.label}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Email field */}
+        <div style={{marginBottom:12}}>
+          <div style={{fontSize:11.5,fontWeight:700,color:dark?"#aaa":"#555",marginBottom:6,fontFamily:bf,letterSpacing:0.3}}>
+            📧 {pt.emailLabel}
+          </div>
+          <input
+            type="email" inputMode="email" autoComplete="email"
+            value={emailInput}
+            onChange={e=>{setEmailInput(e.target.value);setAuthError("");}}
+            placeholder={pt.emailPh}
+            style={{
+              width:"100%",padding:"13px 14px",borderRadius:13,
+              border:`2px solid ${emailInput&&isValidEmail(emailInput)?"#138808":emailInput?"#e53e3e":(dark?"#3a3a3c":"#e8e8e8")}`,
+              fontSize:14,outline:"none",fontFamily:bf,
+              background:dark?"#2c2c2e":"#fff",color:dark?"#f0f0f0":"#1a1a1a",
+              boxSizing:"border-box",transition:"border-color 0.2s",
+            }}/>
+        </div>
+
+        {/* Password field */}
+        <div style={{marginBottom:18}}>
+          <div style={{fontSize:11.5,fontWeight:700,color:dark?"#aaa":"#555",marginBottom:6,fontFamily:bf,letterSpacing:0.3}}>
+            🔒 {pt.passwordLabel}
+          </div>
+          <div style={{position:"relative"}}>
+            <input
+              type={showPassword?"text":"password"}
+              autoComplete={emailTab==="signin"?"current-password":"new-password"}
+              value={passwordInput}
+              onChange={e=>{setPasswordInput(e.target.value);setAuthError("");}}
+              placeholder={pt.passwordPh}
+              style={{
+                width:"100%",padding:"13px 46px 13px 14px",borderRadius:13,
+                border:`2px solid ${passwordInput&&isValidPassword(passwordInput)?"#138808":passwordInput?"#e53e3e":(dark?"#3a3a3c":"#e8e8e8")}`,
+                fontSize:14,outline:"none",fontFamily:bf,
+                background:dark?"#2c2c2e":"#fff",color:dark?"#f0f0f0":"#1a1a1a",
+                boxSizing:"border-box",transition:"border-color 0.2s",
+              }}/>
+            {/* Eye toggle */}
+            <div onClick={()=>{haptic(30);setShowPassword(v=>!v);}}
+              style={{position:"absolute",right:13,top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:18,lineHeight:1,color:dark?"#666":"#aaa",userSelect:"none"}}>
+              {showPassword?"🙈":"👁️"}
+            </div>
+          </div>
+          {/* Hint text */}
+          {emailTab==="signin"&&(
+            <div style={{marginTop:5,fontSize:10.5,color:dark?"#555":"#bbb",fontFamily:bf}}>
+              {pt.forgotHint}
+            </div>
+          )}
+          {emailTab==="signup"&&passwordInput&&!isValidPassword(passwordInput)&&(
+            <div style={{marginTop:5,fontSize:10.5,color:"#e53e3e",fontFamily:bf}}>
+              {pt.weakPassword}
+            </div>
+          )}
+        </div>
+
+        {/* Error display */}
+        {authError&&(
+          <div style={{marginBottom:14,fontSize:12,color:"#e53e3e",fontFamily:bf,padding:"9px 12px",background:"#FFF5F5",borderRadius:10,border:"1px solid #FED7D7",lineHeight:1.4}}>
+            {authError}
+          </div>
+        )}
+
+        {/* Submit button */}
+        <div
+          onClick={()=>{
+            if(emailLoading)return;
+            haptic();
+            emailTab==="signin"?handleEmailSignIn():handleEmailSignUp();
+          }}
+          style={{
+            background:emailLoading?"#ddd":"linear-gradient(135deg,#003580,#1a56db)",
+            borderRadius:14,padding:15,textAlign:"center",fontSize:15,fontWeight:700,
+            color:"#fff",cursor:emailLoading?"default":"pointer",fontFamily:bf,
+            boxShadow:emailLoading?"none":"0 6px 22px rgba(0,53,128,0.35)",
+            transition:"all 0.22s",
+          }}>
+          {emailLoading
+            ?(isHindi?"कृपया प्रतीक्षा करें...":"Please wait…")
+            :(emailTab==="signin"?pt.signInBtn:pt.createAcctBtn)}
+        </div>
+      </div>
+
+      {/* ── OR divider before Phone ── */}
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"2px 28px 10px"}}>
+        <div style={{flex:1,height:1,background:dark?"#3a3a3c":"#e8e8e8"}}/>
+        <span style={{fontSize:10,fontWeight:600,color:dark?"#444":"#ccc",letterSpacing:0.5}}>OR</span>
+        <div style={{flex:1,height:1,background:dark?"#3a3a3c":"#e8e8e8"}}/>
+      </div>
+
+      {/* ── Phone Sign-In (visible but COMING SOON — remove opacity + pointerEvents when billing is enabled) ── */}
+      <div style={{opacity:0.45,pointerEvents:"none",margin:"0 16px 32px"}}>
+        <div style={{background:dark?"#1c1c1e":"#fff",borderRadius:20,padding:22,border:`1.5px solid ${dark?"#2c2c2e":"#f0f0f0"}`,position:"relative",overflow:"hidden",boxShadow:dark?"0 6px 28px rgba(0,0,0,0.35)":"0 6px 28px rgba(0,0,0,0.10)"}}>
+          {/* COMING SOON badge */}
+          <div style={{position:"absolute",top:14,right:14,background:"#FF9933",borderRadius:20,padding:"3px 10px",fontSize:9,fontWeight:800,color:"#fff",letterSpacing:0.8,textTransform:"uppercase",boxShadow:"0 2px 6px rgba(255,153,51,0.4)"}}>
+            {isHindi?"जल्द आएगा":"COMING SOON"}
+          </div>
+          <div style={{fontSize:12,fontWeight:700,color:dark?"#aaa":"#555",marginBottom:8,fontFamily:bf,letterSpacing:0.3}}>📱 {pt.phoneLabel}</div>
+          <div style={{display:"flex",alignItems:"center",border:"2px solid #FF9933",borderRadius:14,overflow:"hidden",marginBottom:18}}>
+            <div style={{padding:"14px 12px",borderRight:"1.5px solid rgba(255,153,51,0.35)",background:"#FFF7ED",fontSize:14,fontWeight:700,color:"#CC6600",flexShrink:0}}>+91</div>
+            <input type="tel" inputMode="numeric" maxLength={10} value={phone}
+              onChange={e=>setPhone(e.target.value.replace(/\D/g,"").slice(0,10))}
+              placeholder={pt.phonePh}
+              style={{flex:1,border:"none",outline:"none",fontSize:15,padding:"14px 14px",background:"transparent",fontFamily:bf,color:dark?"#f0f0f0":"#1a1a1a",letterSpacing:1.5}}/>
+          </div>
+          <div style={{background:"#ddd",borderRadius:14,padding:"15px",textAlign:"center",fontSize:15,fontWeight:700,color:"#fff",fontFamily:bf}}>
+            {pt.getOtpBtn}
+          </div>
+          {/* recaptcha-container must remain in the DOM for when phone billing is enabled */}
+          <div id="recaptcha-container"/>
+        </div>
+      </div>
     </div>
   );
 
@@ -1804,7 +2046,11 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
 
   // ── STAGE: DASHBOARD ─────────────────────────────────────────────────────────
   const initials=(profile?.name||"U").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
-  const maskedPhone=profile?.phone?`+91 ${profile.phone.slice(0,5)} ••••••`:`+91 ${phone.slice(0,5)||"•••••"} ••••••`;
+  const maskedPhone=profile?.phone
+    ?`+91 ${profile.phone.slice(0,5)} ••••••`
+    :profile?.email
+      ?profile.email
+      :`+91 ${phone.slice(0,5)||"•••••"} ••••••`;
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",background:th.appBg,overflowY:"auto"}}>
       {/* Dashboard header */}
@@ -1909,6 +2155,454 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   );
 }
 
+// ─── BENEFIT CALCULATOR CARD ───────────────────────────────────────────────────
+function BenefitCalculatorCard({ allMatchedSchemes, lang, dark }) {
+  const th = THEME[dark ? "dark" : "light"];
+  const isHindi = lang === "hi";
+  const bf = fontFamily(lang);
+  const [revealed, setRevealed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  const schemesWithBenefit = useMemo(
+    () => allMatchedSchemes.filter(s => s.annual > 0).sort((a, b) => b.annual - a.annual),
+    [allMatchedSchemes]
+  );
+  const totalAnnual = useMemo(
+    () => schemesWithBenefit.reduce((sum, s) => sum + s.annual, 0),
+    [schemesWithBenefit]
+  );
+
+  const [animTotal] = useCountUp([totalAnnual], revealed, 2200);
+
+  useEffect(() => {
+    const t = setTimeout(() => setRevealed(true), 350);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (schemesWithBenefit.length === 0 || totalAnnual === 0) return null;
+
+  const formatINR = (n) => `₹${n.toLocaleString("en-IN")}`;
+  const visibleSchemes = expanded ? schemesWithBenefit : schemesWithBenefit.slice(0, 3);
+
+  return (
+    <div style={{
+      background: "linear-gradient(145deg, #0c1445 0%, #0f2a5c 45%, #0d3b6e 100%)",
+      borderRadius: 20,
+      padding: "18px 18px 14px",
+      marginBottom: 16,
+      position: "relative",
+      overflow: "hidden",
+      boxShadow: "0 10px 40px rgba(6, 3, 141, 0.28), 0 2px 8px rgba(0,0,0,0.2)",
+      border: "1px solid rgba(255,255,255,0.07)",
+    }}>
+      {/* Decorative orbs */}
+      <div style={{ position:"absolute", right:-40, top:-40, width:140, height:140, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,153,51,0.12) 0%, transparent 70%)", pointerEvents:"none" }}/>
+      <div style={{ position:"absolute", left:-20, bottom:-30, width:100, height:100, borderRadius:"50%", background:"radial-gradient(circle, rgba(19,136,8,0.12) 0%, transparent 70%)", pointerEvents:"none" }}/>
+      <div style={{ position:"absolute", right:30, bottom:-10, width:60, height:60, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,215,0,0.08) 0%, transparent 70%)", pointerEvents:"none" }}/>
+
+      {/* Header row */}
+      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14, position:"relative" }}>
+        <div style={{ width:38, height:38, background:"linear-gradient(135deg,rgba(255,153,51,0.3),rgba(255,153,51,0.12))", border:"1.5px solid rgba(255,153,51,0.45)", borderRadius:11, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
+          💰
+        </div>
+        <div style={{ flex:1 }}>
+          <div style={{ color:"#fff", fontSize:13, fontWeight:800, fontFamily:bf, lineHeight:1.2 }}>
+            {isHindi ? "आपका अनुमानित लाभ" : "Your Benefit Potential"}
+          </div>
+          <div style={{ color:"rgba(255,255,255,0.5)", fontSize:10, marginTop:2 }}>
+            {isHindi
+              ? `${schemesWithBenefit.length} योजनाओं का संयुक्त वार्षिक लाभ`
+              : `Combined annual from ${schemesWithBenefit.length} scheme${schemesWithBenefit.length !== 1 ? "s" : ""}`}
+          </div>
+        </div>
+        {/* Live indicator */}
+        <div style={{ display:"flex", alignItems:"center", gap:5, background:"rgba(74,222,128,0.15)", border:"1px solid rgba(74,222,128,0.35)", borderRadius:20, padding:"4px 9px" }}>
+          <div style={{ width:6, height:6, borderRadius:"50%", background:"#4ade80", animation:"calc-pulse 1.6s ease-in-out infinite" }}/>
+          <span style={{ color:"#4ade80", fontSize:9, fontWeight:800, letterSpacing:0.7 }}>
+            {isHindi ? "लाइव" : "LIVE"}
+          </span>
+        </div>
+      </div>
+
+      {/* Animated total */}
+      <div style={{ textAlign:"center", padding:"8px 0 14px", position:"relative" }}>
+        {/* Ambient glow behind number */}
+        <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:220, height:70, borderRadius:"50%", background:"radial-gradient(ellipse, rgba(255,153,51,0.14) 0%, transparent 70%)", pointerEvents:"none" }}/>
+        <div style={{ fontSize:10.5, fontWeight:700, letterSpacing:1.4, color:"rgba(255,255,255,0.45)", textTransform:"uppercase", marginBottom:5, fontFamily:bf }}>
+          {isHindi ? "वार्षिक सरकारी सहायता" : "Annual Govt. Assistance"}
+        </div>
+        <div style={{
+          fontSize: 40, fontWeight: 900,
+          fontFamily: "'Noto Sans', sans-serif",
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1,
+          background: "linear-gradient(90deg, #FF9933 0%, #FFD700 40%, #FFA500 70%, #FF9933 100%)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+          backgroundSize: "300% 100%",
+          animation: revealed ? "calc-shimmer 3.5s linear infinite" : "none",
+          letterSpacing: -1,
+          transition: "all 0.3s",
+          display: "inline-block",
+        }}>
+          {`₹${animTotal.toLocaleString("en-IN")}`}
+        </div>
+        <div style={{ marginTop:6, fontSize:10.5, color:"rgba(255,255,255,0.38)", fontFamily:bf, letterSpacing:0.3 }}>
+          {isHindi ? "प्रति वर्ष · आपकी पात्रता के आधार पर" : "per year · based on your eligibility"}
+        </div>
+      </div>
+
+      {/* Separator */}
+      <div style={{ height:1, background:"linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)", marginBottom:12 }}/>
+
+      {/* Scheme breakdown list */}
+      <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+        {visibleSchemes.map((s, i) => (
+          <div key={s.id} style={{
+            display:"flex", alignItems:"center", gap:10,
+            animation: `calc-slide-in 0.38s cubic-bezier(0.22,1,0.36,1) ${0.05 + i * 0.06}s both`,
+          }}>
+            <div style={{ width:28, height:28, background:s.color+"22", border:`1px solid ${s.color}40`, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, flexShrink:0 }}>
+              {s.icon}
+            </div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.82)", fontFamily:bf, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                {s.name[lang]}
+              </div>
+            </div>
+            {/* Amount pill */}
+            <div style={{ fontSize:11.5, fontWeight:800, color:s.color, flexShrink:0, background:s.color+"1a", borderRadius:8, padding:"3px 9px", border:`1px solid ${s.color}30` }}>
+              {formatINR(s.annual)}{isHindi ? "/वर्ष" : "/yr"}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Show more toggle */}
+      {schemesWithBenefit.length > 3 && (
+        <div onClick={() => { haptic(); setExpanded(e => !e); }}
+          style={{ marginTop:10, textAlign:"center", fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.4)", cursor:"pointer", padding:"7px 0 2px", borderTop:"1px solid rgba(255,255,255,0.07)", transition:"color 0.2s" }}>
+          {expanded
+            ? (isHindi ? "कम दिखाएं ↑" : "Show less ↑")
+            : (isHindi ? `+${schemesWithBenefit.length - 3} और योजनाएं ↓` : `+${schemesWithBenefit.length - 3} more schemes ↓`)}
+        </div>
+      )}
+
+      {/* Bottom disclaimer */}
+      <div style={{ marginTop:10, fontSize:9.5, color:"rgba(255,255,255,0.25)", textAlign:"center", lineHeight:1.4, fontFamily:bf }}>
+        {isHindi ? "* अनुमानित। वास्तविक लाभ पात्रता पर निर्भर करता है।" : "* Estimated. Actual benefits depend on final eligibility."}
+      </div>
+    </div>
+  );
+}
+
+// ─── DOCUMENT VAULT CARD ──────────────────────────────────────────────────────
+const DOC_VAULT_KEY = "yojana_doc_vault";
+
+function DocumentVaultCard({ allMatchedSchemes, lang, dark }) {
+  const th = THEME[dark ? "dark" : "light"];
+  const isHindi = lang === "hi";
+  const bf = fontFamily(lang);
+  const [showAll, setShowAll] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
+
+  // Build de-duped doc map: en-normalised key → { en, hi, schemes[] }
+  const docMap = useMemo(() => {
+    const map = {};
+    allMatchedSchemes.forEach(scheme => {
+      const enDocs = scheme.docs?.en || [];
+      const hiDocs = scheme.docs?.hi || [];
+      enDocs.forEach((doc, i) => {
+        const key = doc.toLowerCase().trim().replace(/\s+/g, " ");
+        if (!map[key]) {
+          map[key] = {
+            key,
+            en: doc,
+            hi: hiDocs[i] || doc,
+            schemes: [],
+          };
+        }
+        // avoid duplicate scheme refs
+        if (!map[key].schemes.find(s => s.id === scheme.id)) {
+          map[key].schemes.push({ id: scheme.id, name: scheme.name, color: scheme.color, icon: scheme.icon });
+        }
+      });
+    });
+    return Object.values(map);
+  }, [allMatchedSchemes]);
+
+  const [checked, setChecked] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(DOC_VAULT_KEY) || "{}"); } catch { return {}; }
+  });
+
+  const toggle = useCallback((key) => {
+    haptic();
+    setChecked(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      try { localStorage.setItem(DOC_VAULT_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
+
+  const checkedCount = docMap.filter(d => checked[d.key]).length;
+  const total = docMap.length;
+  const pct = total > 0 ? Math.round((checkedCount / total) * 100) : 0;
+  const allDone = checkedCount === total && total > 0;
+
+  // Celebrate when all checked
+  useEffect(() => {
+    if (allDone) { setCelebrate(true); const t = setTimeout(() => setCelebrate(false), 2500); return () => clearTimeout(t); }
+  }, [allDone]);
+
+  // Unchecked first, checked last
+  const sortedDocs = useMemo(() =>
+    [...docMap].sort((a, b) => (checked[a.key] ? 1 : 0) - (checked[b.key] ? 1 : 0)),
+    [docMap, checked]
+  );
+  const visibleDocs = showAll ? sortedDocs : sortedDocs.slice(0, 5);
+
+  if (docMap.length === 0) return null;
+
+  const progressColor = pct === 100 ? "#138808" : pct >= 60 ? "#FF9933" : "#e53e3e";
+
+  return (
+    <div style={{
+      background: th.card,
+      borderRadius: 20,
+      marginBottom: 16,
+      overflow: "hidden",
+      boxShadow: dark
+        ? "0 4px 24px rgba(0,0,0,0.25)"
+        : "0 4px 24px rgba(0,0,0,0.07)",
+      border: `1.5px solid ${th.border}`,
+    }}>
+
+      {/* Header */}
+      <div style={{
+        background: dark
+          ? "linear-gradient(135deg,#1a1a2e,#16213e)"
+          : "linear-gradient(135deg,#EFF6FF,#F0FDF4)",
+        padding: "16px 16px 14px",
+        borderBottom: `1px solid ${th.border}`,
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        {/* Decorative line */}
+        <div style={{ position:"absolute", bottom:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${ASHOKA_BLUE},${IND_GREEN})` }}/>
+
+        <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+          <div style={{ width:38, height:38, background:`linear-gradient(135deg,${ASHOKA_BLUE}22,${ASHOKA_BLUE}0a)`, border:`1.5px solid ${ASHOKA_BLUE}30`, borderRadius:11, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
+            📁
+          </div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:13, fontWeight:800, color:th.text, fontFamily:bf, lineHeight:1.2 }}>
+              {isHindi ? "दस्तावेज़ वॉल्ट" : "Document Vault"}
+            </div>
+            <div style={{ fontSize:10, color:th.textSub, marginTop:2 }}>
+              {isHindi
+                ? `${allMatchedSchemes.length} योजनाओं के लिए ज़रूरी दस्तावेज़`
+                : `Required for your ${allMatchedSchemes.length} matched scheme${allMatchedSchemes.length !== 1 ? "s" : ""}`}
+            </div>
+          </div>
+          {/* Progress pill */}
+          <div style={{
+            background: pct === 100 ? "#DCFCE7" : dark ? "#2c2c2e" : "#F1F5F9",
+            border: `1.5px solid ${pct === 100 ? "#86EFAC" : th.border2}`,
+            borderRadius: 20, padding: "5px 11px",
+            display:"flex", alignItems:"center", gap:5,
+            transition: "all 0.4s",
+          }}>
+            <span style={{ fontSize:13 }}>{pct === 100 ? "🎉" : "📋"}</span>
+            <div>
+              <div style={{ fontSize:12, fontWeight:800, color: pct === 100 ? "#16a34a" : th.text, lineHeight:1, fontVariantNumeric:"tabular-nums" }}>
+                {checkedCount}<span style={{ fontWeight:500, color:th.textSub }}>/{total}</span>
+              </div>
+              <div style={{ fontSize:9, color:th.textSub, fontWeight:600 }}>
+                {isHindi ? "तैयार" : "Ready"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div style={{ height:6, background:dark?"#2c2c2e":"#e8edf2", borderRadius:6, overflow:"hidden" }}>
+          <div style={{
+            height:"100%",
+            width:`${pct}%`,
+            borderRadius:6,
+            background: pct === 100
+              ? "linear-gradient(90deg,#22c55e,#16a34a)"
+              : pct >= 60
+                ? "linear-gradient(90deg,#FF9933,#f97316)"
+                : "linear-gradient(90deg,#ef4444,#dc2626)",
+            transition: "width 0.7s cubic-bezier(0.22,1,0.36,1)",
+            boxShadow: `0 0 8px ${progressColor}66`,
+          }}/>
+        </div>
+        <div style={{ display:"flex", justifyContent:"space-between", marginTop:5 }}>
+          <span style={{ fontSize:10, color:th.textSub, fontFamily:bf }}>
+            {pct === 100
+              ? (isHindi ? "✅ सभी दस्तावेज़ तैयार!" : "✅ All docs ready!")
+              : isHindi
+                ? `${total - checkedCount} दस्तावेज़ बाकी`
+                : `${total - checkedCount} doc${total - checkedCount !== 1 ? "s" : ""} remaining`}
+          </span>
+          <span style={{ fontSize:10, fontWeight:700, color: progressColor, transition:"color 0.4s" }}>{pct}%</span>
+        </div>
+      </div>
+
+      {/* Celebration banner */}
+      {celebrate && (
+        <div style={{
+          background: "linear-gradient(135deg,#138808,#16a34a)",
+          padding: "10px 16px",
+          display: "flex", alignItems: "center", gap:10,
+          animation: "vault-slide-down 0.4s cubic-bezier(0.22,1,0.36,1)",
+        }}>
+          <span style={{ fontSize:22 }}>🎉</span>
+          <div>
+            <div style={{ color:"#fff", fontSize:13, fontWeight:800, fontFamily:bf }}>
+              {isHindi ? "शाबाश! सभी दस्तावेज़ तैयार हैं!" : "Amazing! All documents ready!"}
+            </div>
+            <div style={{ color:"rgba(255,255,255,0.8)", fontSize:10, marginTop:1 }}>
+              {isHindi ? "आप सभी योजनाओं के लिए आवेदन कर सकते हैं।" : "You're set to apply for all your schemes."}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Doc list */}
+      <div style={{ padding:"8px 0 4px" }}>
+        {visibleDocs.map((doc, i) => {
+          const isChecked = !!checked[doc.key];
+          const docName = lang === "hi" ? doc.hi : doc.en;
+          return (
+            <div key={doc.key}
+              onClick={() => toggle(doc.key)}
+              style={{
+                display:"flex", alignItems:"flex-start", gap:12,
+                padding:"11px 16px",
+                borderBottom: i < visibleDocs.length - 1 ? `1px solid ${th.divider}` : "none",
+                cursor:"pointer",
+                background: isChecked
+                  ? (dark ? "rgba(19,136,8,0.08)" : "rgba(19,136,8,0.04)")
+                  : "transparent",
+                transition:"background 0.2s",
+                animation: `vault-row-in 0.3s cubic-bezier(0.22,1,0.36,1) ${i * 0.04}s both`,
+              }}>
+
+              {/* Custom checkbox */}
+              <div style={{
+                width:22, height:22,
+                borderRadius:7,
+                flexShrink:0,
+                marginTop:1,
+                border:`2px solid ${isChecked ? IND_GREEN : th.border3}`,
+                background: isChecked
+                  ? `linear-gradient(135deg,${IND_GREEN},#16a34a)`
+                  : th.optionBg,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                transition:"all 0.22s cubic-bezier(0.22,1,0.36,1)",
+                boxShadow: isChecked ? `0 2px 8px rgba(19,136,8,0.35)` : "none",
+                transform: isChecked ? "scale(1.08)" : "scale(1)",
+              }}>
+                {isChecked && (
+                  <svg width={12} height={12} viewBox="0 0 12 12" fill="none">
+                    <path d="M2 6.5L4.5 9L10 3" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+                      style={{ animation:"vault-check 0.25s ease" }}/>
+                  </svg>
+                )}
+              </div>
+
+              {/* Doc info */}
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{
+                  fontSize:13, fontWeight:isChecked ? 600 : 700,
+                  color: isChecked ? th.textSub : th.text,
+                  fontFamily:bf,
+                  textDecoration: isChecked ? "line-through" : "none",
+                  textDecorationColor: th.textSub,
+                  transition:"all 0.2s",
+                  lineHeight:1.3,
+                }}>
+                  {docName}
+                </div>
+                {/* Scheme pills */}
+                <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginTop:5 }}>
+                  {doc.schemes.slice(0, 3).map(s => (
+                    <div key={s.id} style={{
+                      display:"inline-flex", alignItems:"center", gap:3,
+                      background: s.color + (dark ? "22" : "14"),
+                      border:`1px solid ${s.color}30`,
+                      borderRadius:20, padding:"2px 7px",
+                    }}>
+                      <span style={{ fontSize:9 }}>{s.icon}</span>
+                      <span style={{ fontSize:9.5, fontWeight:700, color:s.color, lineHeight:1, maxWidth:80, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                        {s.name.en.length > 18 ? s.name.en.slice(0, 16) + "…" : s.name.en}
+                      </span>
+                    </div>
+                  ))}
+                  {doc.schemes.length > 3 && (
+                    <div style={{ display:"inline-flex", alignItems:"center", background:th.pillBg, borderRadius:20, padding:"2px 7px" }}>
+                      <span style={{ fontSize:9.5, fontWeight:700, color:th.textSub }}>+{doc.schemes.length - 3}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Show all / collapse */}
+      {sortedDocs.length > 5 && (
+        <div onClick={() => { haptic(); setShowAll(v => !v); }}
+          style={{
+            padding:"11px 16px",
+            borderTop:`1px solid ${th.border}`,
+            display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+            cursor:"pointer",
+            background: dark ? th.card2 : "#FAFAFA",
+          }}>
+          <span style={{ fontSize:12, fontWeight:700, color:ASHOKA_BLUE, fontFamily:bf }}>
+            {showAll
+              ? (isHindi ? "कम दिखाएं" : "Show less")
+              : (isHindi ? `सभी ${sortedDocs.length} दस्तावेज़ देखें` : `See all ${sortedDocs.length} documents`)}
+          </span>
+          <span style={{ color:ASHOKA_BLUE, fontSize:14, transition:"transform 0.25s", display:"inline-block", transform: showAll ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
+        </div>
+      )}
+
+      {/* DigiLocker CTA */}
+      <div style={{
+        margin:"0 16px 14px",
+        marginTop: sortedDocs.length > 5 ? 10 : 10,
+      }}>
+        <div onClick={() => { haptic(); window.open("https://www.digilocker.gov.in", "_blank"); }}
+          style={{
+            background: "linear-gradient(135deg,#003580,#1a56db)",
+            borderRadius:12, padding:"10px 14px",
+            display:"flex", alignItems:"center", gap:10,
+            cursor:"pointer",
+            boxShadow:"0 4px 14px rgba(0,53,128,0.22)",
+          }}>
+          <span style={{ fontSize:18 }}>🔒</span>
+          <div style={{ flex:1 }}>
+            <div style={{ color:"#fff", fontSize:12, fontWeight:700, fontFamily:bf }}>
+              {isHindi ? "DigiLocker पर अपलोड करें" : "Upload to DigiLocker"}
+            </div>
+            <div style={{ color:"rgba(255,255,255,0.65)", fontSize:10, marginTop:1 }}>
+              {isHindi ? "सरकारी ऐप · सुरक्षित डिजिटल तिजोरी" : "Govt. app · Secure digital document locker"}
+            </div>
+          </div>
+          <span style={{ color:"rgba(255,255,255,0.7)", fontSize:16 }}>↗</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function YojanaSetu(){
   const [lang,setLang]=useState(()=>localStorage.getItem("yojana_lang")||"en");
@@ -1960,6 +2654,12 @@ export default function YojanaSetu(){
     return SCHEME_DB.filter(s=>s.match(profileAnswers)).slice(0,3);
   },[profileAnswers]);
 
+  // All matched schemes — used for BenefitCalculatorCard
+  const allMatchedSchemes=useMemo(()=>{
+    if(!profileAnswers)return[];
+    return SCHEME_DB.filter(s=>s.match(profileAnswers));
+  },[profileAnswers]);
+
   const navItems=useMemo(()=>[
     {icon:"🏠",label:t.navHome,tab:"home"},
     {icon:"🔍",label:t.navSearch,tab:"search"},
@@ -1996,6 +2696,12 @@ export default function YojanaSetu(){
         @keyframes fadeSlide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
         @keyframes tabEnter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes iconPop{0%{transform:scale(1)}45%{transform:scale(1.28)}100%{transform:scale(1)}}
+        @keyframes calc-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.85)}}
+        @keyframes calc-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        @keyframes calc-slide-in{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes vault-slide-down{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes vault-row-in{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes vault-check{from{stroke-dashoffset:20}to{stroke-dashoffset:0}}
         .tab-enter{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;animation:tabEnter 0.28s cubic-bezier(0.22,1,0.36,1);}
         .bn-icon{transition:transform 0.2s cubic-bezier(0.22,1,0.36,1);}
         .bn-icon.active{animation:iconPop 0.35s cubic-bezier(0.22,1,0.36,1);}
@@ -2067,6 +2773,16 @@ export default function YojanaSetu(){
               </div>
               <div style={{background:"rgba(255,255,255,0.25)",borderRadius:12,padding:"10px 14px",color:"#fff",fontSize:13,fontWeight:700,border:"1.5px solid rgba(255,255,255,0.4)",fontFamily:bf,flexShrink:0}}>{t.ctaBtn(!!profile)}</div>
             </div>
+
+            {/* Benefit Calculator — shown when profile has matched schemes with annual benefits */}
+            {profile&&allMatchedSchemes.length>0&&(
+              <BenefitCalculatorCard allMatchedSchemes={allMatchedSchemes} lang={lang} dark={dark}/>
+            )}
+
+            {/* Document Vault — auto-generated checklist from matched schemes */}
+            {profile&&allMatchedSchemes.length>0&&(
+              <DocumentVaultCard allMatchedSchemes={allMatchedSchemes} lang={lang} dark={dark}/>
+            )}
 
             {/* Categories — now CLICKABLE, opens CategorySheet */}
             <div style={{marginBottom:16}}>
