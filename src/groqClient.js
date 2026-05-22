@@ -104,68 +104,123 @@ function buildAllSchemesIndex() {
   );
 }
 
-// ─── TIER 2: SMART RELEVANT SCHEME FILTER ────────────────────────────────────
-// Returns full details of up to 6 most relevant schemes for the query.
-function getRelevantSchemes(query) {
-  const q = query.toLowerCase();
-  const matchedState      = ALL_STATES.find(s => q.includes(s));
-  const matchedCategories = Object.entries(KEYWORD_MAP)
-    .filter(([, kws]) => kws.some(kw => q.includes(kw)))
-    .map(([cat]) => cat);
-
-  let relevant = SCHEME_DB.filter(scheme => {
-    const allText = `${scheme.name.en} ${scheme.name.hi} ${scheme.tag.en} ${scheme.benefit.en}`.toLowerCase();
-    const stateOk = !matchedState || scheme.scope === "national" ||
-      (scheme.state && scheme.state.toLowerCase().includes(matchedState));
-    const categoryOk = matchedCategories.length === 0 ||
-      matchedCategories.some(cat => KEYWORD_MAP[cat].some(kw => allText.includes(kw)));
-    return stateOk && categoryOk;
-  });
-
-  // Boost state-specific schemes to top when state is mentioned
-  if (matchedState) {
-    const stateSchemes    = relevant.filter(s => s.scope === "state");
-    const nationalSchemes = relevant.filter(s => s.scope === "national");
-    relevant = [...stateSchemes, ...nationalSchemes];
-  }
-
-  // Fallback: send top 6 national schemes if nothing matched
-  if (relevant.length === 0) {
-    relevant = SCHEME_DB.filter(s => s.scope === "national").slice(0, 6);
-  }
-
-  // Cap at 6 — enough detail without blowing token budget
-  return relevant.slice(0, 6);
-}
-
-// ─── BUILD TIER 2 CONTEXT (full details for relevant schemes only) ─────────────
+// ─── SMART CONTEXT BUILDER ───────────────────────────────────────────────────
+// Scores every scheme against the query, then auto-picks detail depth:
+//   • 1 scheme matched  → full card (docs, annual, link, ministry)
+//   • 2–4 matched       → medium (benefit + link per scheme)
+//   • 5+ matched / list → names only
+//   • Nothing matched   → top 5 national, compact
 function buildSmartContext(query, lang = "en") {
-  const schemes = getRelevantSchemes(query);
+  const q = query.toLowerCase();
   const l = lang === "hi" ? "hi" : "en";
 
-  const format = (s) => {
-    const raw  = s.apply?.[l] ?? "";
-    const link = raw
-      ? (raw.startsWith("http") ? raw : `https://${raw}`)
-      : "Not available";
+  // ── Detect state & detail-level signals from query ──────────────────────────
+  const mentionedState = ALL_STATES.find(s => q.includes(s)) ?? null;
+  const wantsCount  = /how many|kitni|kitne|total|count/.test(q);
+  const wantsList   = /list|all scheme|sabhi|show all|sab yojna/.test(q);
+  const wantsDetail = /document|kagaz|apply|avedan|eligib|yogyta|how to|kaise|kya chahiye|detail|full info|link|website|portal/.test(q);
+
+  // ── Score each scheme against the query ─────────────────────────────────────
+  const scored = SCHEME_DB.map(s => {
+    const searchText = [
+      s.name.en, s.name.hi,
+      s.tag.en,  s.tag.hi,
+      s.benefit.en, s.benefit.hi,
+      s.id,
+      s.state ?? "",
+      s.ministry?.en ?? "",
+    ].join(" ").toLowerCase();
+
+    let score = 0;
+
+    // Exact scheme name / id mention → very high boost
+    if (q.includes(s.id.replace(/_/g, " "))) score += 20;
+    if (q.includes(s.name.en.toLowerCase()))  score += 15;
+    if (q.includes(s.name.hi.toLowerCase()))  score += 15;
+
+    // State match
+    if (mentionedState) {
+      if (s.scope === "state" && s.state?.toLowerCase().includes(mentionedState)) score += 8;
+      else if (s.scope === "national") score += 2; // national schemes always somewhat relevant
+    }
+
+    // Keyword category matches
+    for (const [, kws] of Object.entries(KEYWORD_MAP)) {
+      for (const kw of kws) {
+        if (q.includes(kw) && searchText.includes(kw)) score += 3;
+      }
+    }
+
+    // Query words found in scheme text
+    const words = q.split(/\s+/).filter(w => w.length > 3);
+    for (const w of words) {
+      if (searchText.includes(w)) score += 1;
+    }
+
+    return { scheme: s, score };
+  })
+  .filter(x => x.score > 0)
+  .sort((a, b) => b.score - a.score);
+
+  // Fallback: top 5 national if nothing scored
+  const matched = scored.length > 0
+    ? scored.map(x => x.scheme)
+    : SCHEME_DB.filter(s => s.scope === "national").slice(0, 5);
+
+  // ── Helper: build official link ──────────────────────────────────────────────
+  const getLink = (s) => {
+    const raw = s.apply?.[l] ?? "";
+    return raw ? (raw.startsWith("http") ? raw : `https://${raw}`) : null;
+  };
+
+  // ── FORMAT FUNCTIONS ─────────────────────────────────────────────────────────
+  const formatFull = (s) => {
+    const link = getLink(s);
+    const docs = (s.docs?.[l] ?? []).join(", ") || "Aadhaar Card";
+    const annual = s.annual > 0 ? `₹${s.annual.toLocaleString("en-IN")}/year` : "Non-monetary";
     return (
-      `• [${s.id}] ${s.name[l]}\n` +
-      `  Benefit: ${s.benefit[l]}\n` +
-      `  Tag: ${s.tag[l]} | Official Link: ${link}`
+      `📌 ${s.name[l]} [${s.scope === "state" ? s.state : "Central"}]\n` +
+      `  Ministry : ${s.ministry?.[l] ?? "—"}\n` +
+      `  Benefit  : ${s.benefit[l]}\n` +
+      `  Annual   : ${annual}\n` +
+      `  Docs     : ${docs}\n` +
+      `  Apply    : ${s.applyType === "online" ? "Online" : "At office"}` +
+      (link ? `\n  OFFICIAL_LINK: ${link}` : "")
     );
   };
 
-  const stateSchemes    = schemes.filter(s => s.scope === "state");
-  const nationalSchemes = schemes.filter(s => s.scope === "national");
+  const formatMedium = (s) => {
+    const link = getLink(s);
+    return (
+      `• ${s.name[l]} [${s.scope === "state" ? s.state : "Central"}]\n` +
+      `  ${s.benefit[l]}` +
+      (link ? `\n  OFFICIAL_LINK: ${link}` : "")
+    );
+  };
 
-  let ctx = "";
-  if (nationalSchemes.length)
-    ctx += "=== NATIONAL ===\n" + nationalSchemes.map(format).join("\n\n");
-  if (stateSchemes.length)
-    ctx += "\n\n=== STATE ===\n" + stateSchemes.map(s => `[${s.state}]\n${format(s)}`).join("\n\n");
+  const formatName = (s) =>
+    `• ${s.name[l]} [${s.scope === "state" ? s.state : "Central"}]`;
 
-  return ctx;
+  // ── AUTO-PICK DEPTH based on match count + query signals ─────────────────────
+  if (wantsCount || wantsList) {
+    // Just names + count
+    return `${matched.length} scheme(s) found:\n` + matched.map(formatName).join("\n");
+  }
+
+  if (matched.length === 1 || wantsDetail) {
+    // Full detail — 1 exact match OR user explicitly asked for details
+    return matched.slice(0, 3).map(formatFull).join("\n\n");
+  }
+
+  if (matched.length <= 4) {
+    // Medium — benefit + link per scheme
+    return matched.slice(0, 4).map(formatMedium).join("\n\n");
+  }
+
+  // Many matches — compact names + benefit + link, cap at 6
+  return matched.slice(0, 6).map(formatMedium).join("\n\n");
 }
+
 
 // ─── SYSTEM PROMPT ────────────────────────────────────────────────────────────
 // Built once per request. Contains:
@@ -193,53 +248,33 @@ CHIPS:["question 1","question 2","question 3"]
 - Provide chips ONLY for scheme-related queries; for off-topic messages use CHIPS:[]
 - Keep each chip 4–7 words, specific and actionable`;
 
-  // ── Tier 1: static knowledge ─────────────────────────────────────────────
-  const allSchemesIndex = buildAllSchemesIndex();
-  const smartContext    = buildSmartContext(query, lang);
+  // ── Context: only smart-scored relevant schemes for this query ───────────────
+  const smartContext = buildSmartContext(query, lang);
 
   return `You are YojanaSetu AI — the official AI assistant of the YojanaSetu app.
 
 ══ YOUR IDENTITY ══
-- You are built into the YojanaSetu app (${APP.url})
-- App purpose: ${APP.tagline}
-- App description: ${APP.description}
-- App features: ${APP.features.join("; ")}
-- Built with: ${APP.tech}
+- App: ${APP.name} (${APP.tagline})
+- Built by: ${DEVELOPER.name} aka "${DEVELOPER.alias}"
+- If asked about the developer, share: Portfolio: ${DEVELOPER.portfolio} | Email: ${DEVELOPER.email} | Instagram: ${DEVELOPER.instagram}
 
-══ YOUR CREATOR ══
-- Developer: ${DEVELOPER.name} (also known as "${DEVELOPER.alias}")
-- Role: ${DEVELOPER.role}
-- Location: ${DEVELOPER.location}
-- Education: ${DEVELOPER.education}
-- Portfolio: ${DEVELOPER.portfolio}
-- Email: ${DEVELOPER.email}
-- Instagram: ${DEVELOPER.instagram}
-- Past clients: ${DEVELOPER.clients}
-- Skills: ${DEVELOPER.skills}
-- If anyone asks who built this app or who you were made by, ALWAYS include ALL THREE contact details in your reply: (1) portfolio ${DEVELOPER.portfolio}, (2) email ${DEVELOPER.email}, (3) Instagram ${DEVELOPER.instagram}. Answer warmly and proudly.
-
-══ SCHEME DATABASE STATS (use these exact numbers when asked) ══
-- Total schemes in our database: ${total}
-- National / Central schemes: ${national}
-- State-specific schemes: ${state}
-
-══ COMPLETE SCHEME INDEX (all ${total} schemes) ══
-${allSchemesIndex}
+══ DATABASE ══
+- Total schemes: ${total} (${national} Central + ${state} State-specific)
+- You only know what's in our database — never invent schemes not provided below
 
 ══ RULES ══
 ${langRule}
-- Keep answers SHORT and mobile-friendly — 4 to 7 lines max
-- Use simple words — many users are from rural areas
-- Use emojis occasionally to be warm and friendly
-- ALWAYS show the official link from the scheme data exactly as provided — never say "Not available" if a link exists in the data
-- Format links as: Link: https://... (always include https://)
-- If no link is in the data for that scheme, then say: "Apply through official state/central govt website"
-- If asked anything unrelated (jokes, weather, general knowledge), politely redirect to schemes
-- Formatting: **bold** for scheme names and key terms, numbered lists (1. 2. 3.) for steps, bullet (- item) for options
-- Do NOT use: # headers, backticks, tables, or heavy formatting
+- Keep answers mobile-friendly — short sentences, max 8 lines for lists, full detail only when asked
+- Use simple words — many users are rural citizens
+- LINKS: For every scheme you mention, show its link right below it as "🔗 https://..." — never say "Not available" if OFFICIAL_LINK is given below
+- NEVER show "${APP.url}" as a scheme link — user is already in the app
+- If no link is in the data, write: "🔗 Apply at nearest govt. office or official state website"
+- Only answer about: government schemes, eligibility, documents, how to apply, app features, developer info
+- If off-topic, politely redirect to schemes
+- Do NOT use: # headers, backticks, or tables
 ${chipsRule}
 
-══ FULL DETAILS — RELEVANT SCHEMES FOR THIS QUERY ══
+══ RELEVANT SCHEME DATA FOR THIS QUERY ══
 ${smartContext}
 `;
 }
@@ -268,7 +303,7 @@ export async function sendMessage(conversationHistory, userQuery, lang = "en") {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model:       MODEL,
-      max_tokens:  800,        // 70b gives richer answers; 800 fits well within 6K TPM
+      max_tokens:  800,        // smart context keeps this well within Groq free tier limits
       temperature: 0.5,        // More factual accuracy for scheme data
       messages: [
         { role: "system", content: buildSystemPrompt(userQuery, lang) },
