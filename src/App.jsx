@@ -3,7 +3,6 @@ import {
   INDIA_STATES,
   SCHEME_DB,
   CATEGORIES,
-  getHomeSchemes,
   getSchemesForCategory,
 } from "./schemesData.js";
 import { auth } from "./firebase.js";
@@ -98,6 +97,9 @@ const T = {
     ctaSub:(hp)=> hp ? "Results ready from your profile · Tap to view" : "6 quick questions · Get matched instantly",
     ctaBtn:(hp)=> hp ? "View My Schemes →" : "Start Now →",
     schemesTitle:"Popular Schemes", schemesSub:"Top government benefits",
+    matchedTitle:"Matched for You", matchedSub:(n)=>`${n} scheme${n!==1?"s":""} you qualify for`,
+    noProfileTitle:"Get Personalised Schemes", noProfileSub:"Complete your profile once — we'll show schemes tailored just for you.",
+    setupProfileBtn:"Set Up Profile →",
     helplineTitle:"Government Helpline", helplineSub:"Available 24×7 · 1800-111-555", helplineBtn:"Call Now",
     navHome:"Home", navSearch:"Search", navSchemes:"Schemes", navAI:"AI Help", navProfile:"Profile",
     checkerTitle:"Eligibility Check", checkerSub:"6 quick questions",
@@ -164,6 +166,9 @@ const T = {
     ctaSub:(hp)=> hp ? "प्रोफाइल से परिणाम तैयार · देखें" : "6 सवाल · तुरंत जानें",
     ctaBtn:(hp)=> hp ? "मेरी योजनाएं →" : "शुरू करें →",
     schemesTitle:"लोकप्रिय योजनाएं", schemesSub:"शीर्ष सरकारी लाभ",
+    matchedTitle:"आपके लिए योजनाएं", matchedSub:(n)=>`${n} योजनाएं जिनके आप पात्र हैं`,
+    noProfileTitle:"अपनी योजनाएं पर्सनल बनाएं", noProfileSub:"एक बार प्रोफाइल बनाएं — हम आपके लिए सही योजनाएं दिखाएंगे।",
+    setupProfileBtn:"प्रोफाइल बनाएं →",
     helplineTitle:"सरकारी हेल्पलाइन", helplineSub:"24×7 · 1800-111-555", helplineBtn:"कॉल करें",
     navHome:"होम", navSearch:"खोजें", navSchemes:"योजनाएं", navAI:"AI", navProfile:"प्रोफाइल",
     checkerTitle:"पात्रता जांच", checkerSub:"6 आसान सवाल",
@@ -1903,8 +1908,6 @@ export default function YojanaSetu(){
     return s;
   }),[c0,c1,c2,t]);
 
-  // Home page schemes — pulled from SCHEME_DB via helper (no duplicate data)
-  const homeSchemes=useMemo(()=>getHomeSchemes(lang),[lang]);
   // Categories — pulled from schemesData.js
   const categories=useMemo(()=>CATEGORIES[lang],[lang]);
   // Scheme counts per category — computed once (filterKey is language-agnostic)
@@ -1915,6 +1918,12 @@ export default function YojanaSetu(){
   },[]);
 
   const profileAnswers=useMemo(()=>profile?{who:profile.occupation,income:profile.income,house:profile.house,age:profile.age,area:profile.area,state:profile.state}:null,[profile]);
+
+  // Top 3 matched schemes for home "Matched for You" section
+  const matchedSchemes=useMemo(()=>{
+    if(!profileAnswers)return[];
+    return SCHEME_DB.filter(s=>s.match(profileAnswers)).slice(0,3);
+  },[profileAnswers]);
 
   const navItems=useMemo(()=>[
     {icon:"🏠",label:t.navHome,tab:"home"},
@@ -2055,34 +2064,64 @@ export default function YojanaSetu(){
               </div>
             </div>
 
-            {/* Popular Schemes — data from SCHEME_DB via getHomeSchemes() */}
+            {/* Matched for You — personalised if profile exists, setup prompt if not */}
             <div className={`fu s3 ${loaded?"show":""}`} style={{marginBottom:16}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                 <div>
-                  <div style={{fontSize:15,fontWeight:800,color:th.text,fontFamily:bf}}>{t.schemesTitle}</div>
-                  <div style={{fontSize:11,color:th.textSub}}>{t.schemesSub}</div>
+                  <div style={{fontSize:15,fontWeight:800,color:th.text,fontFamily:bf}}>{t.matchedTitle}</div>
+                  {profile&&<div style={{fontSize:11,color:th.textSub}}>{t.matchedSub(matchedSchemes.length)}</div>}
                 </div>
-                <div onClick={()=>{haptic();setActiveTab("schemes");}} style={{color:"#003580",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t.seeAll}</div>
+                {profile&&<div onClick={()=>{haptic();setShowChecker(true);}} style={{color:"#003580",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t.seeAll}</div>}
               </div>
-              <div style={{display:"flex",flexDirection:"column",gap:9}}>
-                {homeSchemes.map((s,i)=>(
-                  <div key={i} className="ch sc" onClick={()=>{haptic();setSelectedScheme(s.id);}}
-                    style={{background:th.card,borderRadius:16,padding:"13px 15px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 2px 10px rgba(0,0,0,0.05)",border:`1.5px solid ${th.border}`}}>
-                    <div style={{width:44,height:44,background:s.color+"14",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,border:`1.5px solid ${s.color}20`}}>{s.icon}</div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{display:"flex",gap:5,marginBottom:4}}>
-                        <span style={{fontSize:9,fontWeight:700,background:"#EFF6FF",color:"#1D4ED8",borderRadius:6,padding:"1px 6px",border:"1px solid #BFDBFE"}}>🇮🇳 {isHindi?"केंद्रीय":"Central"}</span>
+
+              {profile ? (
+                matchedSchemes.length>0 ? (
+                  <div style={{display:"flex",flexDirection:"column",gap:9}}>
+                    {matchedSchemes.map((s)=>(
+                      <div key={s.id} className="ch sc" onClick={()=>{haptic();setSelectedScheme(s.id);}}
+                        style={{background:th.card,borderRadius:16,padding:"13px 15px",display:"flex",alignItems:"center",gap:12,boxShadow:"0 2px 10px rgba(0,0,0,0.05)",border:`1.5px solid ${s.color}28`}}>
+                        <div style={{width:44,height:44,background:s.color+"14",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,border:`1.5px solid ${s.color}20`}}>{s.icon}</div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{display:"flex",gap:5,marginBottom:4}}>
+                            <span style={{fontSize:9,fontWeight:700,
+                              background:s.scope==="national"?"#EFF6FF":"#FEF9C3",
+                              color:s.scope==="national"?"#1D4ED8":"#854D0E",
+                              borderRadius:6,padding:"1px 6px",
+                              border:`1px solid ${s.scope==="national"?"#BFDBFE":"#FEF08A"}`}}>
+                              {s.scope==="national"?`🇮🇳 ${isHindi?"केंद्रीय":"Central"}`:`📍 ${s.state}`}
+                            </span>
+                          </div>
+                          <div style={{fontSize:13,fontWeight:700,color:th.text,lineHeight:1.3,fontFamily:bf}}>{s.name[lang]}</div>
+                          <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3}}>
+                            <span className="tb" style={{background:s.color+"18",color:s.color}}>{s.tag[lang]}</span>
+                            <span style={{fontSize:11,color:th.textSub,fontWeight:600}}>{s.benefit[lang]}</span>
+                          </div>
+                        </div>
+                        <div style={{color:s.color,fontSize:18,fontWeight:700}}>›</div>
                       </div>
-                      <div style={{fontSize:13,fontWeight:700,color:th.text,lineHeight:1.3,fontFamily:bf}}>{s.name}</div>
-                      <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3}}>
-                        <span className="tb" style={{background:s.color+"18",color:s.color}}>{s.tag}</span>
-                        <span style={{fontSize:11,color:th.textSub,fontWeight:600}}>{s.benefit}</span>
-                      </div>
-                    </div>
-                    <div style={{color:s.color,fontSize:18,fontWeight:700}}>›</div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div style={{textAlign:"center",padding:"24px 20px",background:th.card,borderRadius:16,border:`1.5px solid ${th.border}`}}>
+                    <div style={{fontSize:36,marginBottom:8}}>🔍</div>
+                    <div style={{fontSize:13,fontWeight:600,color:th.text,fontFamily:bf}}>{t.noMatchTitle}</div>
+                    <div style={{fontSize:11,color:th.textSub,marginTop:4,fontFamily:bf}}>{t.noMatchSub}</div>
+                  </div>
+                )
+              ) : (
+                /* No profile — nudge to set up */
+                <div style={{background:`linear-gradient(135deg,#003580,#1a56db)`,borderRadius:16,padding:"18px 20px",display:"flex",alignItems:"center",gap:14,boxShadow:"0 6px 22px rgba(0,53,128,0.22)"}}>
+                  <div style={{fontSize:38,flexShrink:0}}>🎯</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{color:"#fff",fontSize:13,fontWeight:700,fontFamily:bf,marginBottom:4}}>{t.noProfileTitle}</div>
+                    <div style={{color:"rgba(255,255,255,0.75)",fontSize:11,lineHeight:1.5,fontFamily:bf}}>{t.noProfileSub}</div>
+                  </div>
+                  <div onClick={()=>{haptic();setActiveTab("profile");}}
+                    style={{flexShrink:0,background:"rgba(255,255,255,0.18)",border:"1.5px solid rgba(255,255,255,0.35)",borderRadius:12,padding:"9px 12px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:bf,whiteSpace:"nowrap",textAlign:"center",lineHeight:1.4}}>
+                    {t.setupProfileBtn}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Helpline */}
