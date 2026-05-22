@@ -42,18 +42,19 @@ const APP = {
   features: [
     "Home screen with popular schemes and category tiles",
     "Search tab to browse and filter all schemes",
-    "Schemes tab with detailed eligibility checker",
+    "Schemes tab: browse ALL schemes with category filter pills (🌾Farmer · 📚Student · 👩Women · 👴Senior · 💼Business · 🏠Housing) and state selector (top-right); the All(N) pill shows the live total count",
     "AI Help tab — this AI assistant (Hindi + English)",
     "Profile tab for personalized scheme recommendations",
     "Eligibility quiz: asks about occupation, income, state, housing, age, area",
     "Suggested follow-up chips after each AI response",
     "Reading-time cooldown for rural users (10–15s after each reply)",
     "Light / dark mode, Ashok Chakra animation in header",
-    "Powered by Groq AI (llama-3.1-8b-instant) via Vercel serverless API",
+    "Powered by Groq AI (llama-3.3-70b-versatile) via Vercel serverless API",
   ],
   tech: "React.js, Vercel, Groq API, Tailwind CSS, Vite",
   builtBy: DEVELOPER.name,
 };
+
 
 // ─── KEYWORD MAP ──────────────────────────────────────────────────────────────
 const KEYWORD_MAP = {
@@ -104,12 +105,78 @@ function buildAllSchemesIndex() {
   );
 }
 
+// ─── STOP WORDS ───────────────────────────────────────────────────────────────
+// Generic words that appear in almost every query but should NOT boost any scheme's score.
+// Without this, "how many scheme record you have" matches every scheme because "scheme"
+// appears in every scheme name → all 70+ schemes score > 0 → chaos.
+const STOP_WORDS = new Set([
+  "scheme","yojana","yojna","total","many","have","give","show","list","about",
+  "what","which","tell","please","karo","batao","dikha","kitne","kitni","kuch",
+  "aapke","aapki","your","you","this","that","with","from","more","also","just",
+  "know","want","need","find","help","info","data","record","database","much",
+  "each","every","some","only","here","does","when","where",
+]);
+
+// ─── PER-STATE SCHEME COUNT BUILDER ──────────────────────────────────────────
+// Returns exact per-state counts derived from SCHEME_DB — never hallucinated.
+function buildStateBreakdown() {
+  const byState = {};
+  SCHEME_DB.filter(s => s.scope === "state").forEach(s => {
+    const key = s.state ?? "Unknown";
+    byState[key] = (byState[key] ?? 0) + 1;
+  });
+  return Object.entries(byState)
+    .sort((a, b) => b[1] - a[1])
+    .map(([state, count]) => `  ${state}: ${count} scheme${count > 1 ? "s" : ""}`)
+    .join("\n");
+}
+
+
+// ─── COUNT GUIDANCE BUILDER ───────────────────────────────────────────────────
+// Returns a bilingual in-app navigation guide for any count-related question.
+// The Schemes tab shows LIVE counts directly from SCHEME_DB — always accurate,
+// even after new schemes are added to state files without redeploying the AI.
+function buildCountGuidance(lang, context = "total") {
+  const isHindi = lang === "hi";
+
+  if (isHindi) {
+    const base = `\n\n📱 **ऐप में सटीक गिनती देखें (हमेशा सही रहती है):**
+1. नीचे नेविगेशन बार में **"योजनाएं"** टैब पर टैप करें
+2. सबसे ऊपर **"सभी (N)"** पिल में लाइव कुल संख्या दिखती है
+3. श्रेणी के अनुसार: 🌾 किसान · 📚 छात्र · 👩 महिला · 👴 वरिष्ठ · 💼 व्यापार · 🏠 आवास — किसी भी पिल पर टैप करें
+4. अपने राज्य की योजनाएं: ऊपर दाईं ओर **"🇮🇳 सभी राज्य"** बटन → अपना राज्य चुनें`;
+
+    if (context === "state") {
+      return base + `\n5. राज्य चुनने के बाद "सभी (N)" में केवल उस राज्य की + केंद्रीय योजनाएं दिखेंगी`;
+    }
+    if (context === "category") {
+      return base + `\n   (श्रेणी पिल में टैप करने पर उस श्रेणी की कुल योजनाएं दिखती हैं)`;
+    }
+    return base;
+  }
+
+  const base = `\n\n📱 **Check the exact count live in the app (always accurate):**
+1. Tap the **"Schemes"** tab in the bottom navigation bar
+2. The **"All (N)"** pill at the top shows the live total — updates whenever new schemes are added
+3. By category: tap 🌾 Farmer · 📚 Student · 👩 Women · 👴 Senior · 💼 Business · 🏠 Housing to see each category's count
+4. By state: tap the **"🇮🇳 All States"** button (top-right) → select your state`;
+
+  if (context === "state") {
+    return base + `\n5. After selecting a state, the "All (N)" pill shows only that state's schemes + Central schemes`;
+  }
+  if (context === "category") {
+    return base + `\n   (The "All (N)" pill updates as you switch category filters)`;
+  }
+  return base;
+}
+
 // ─── SMART CONTEXT BUILDER ───────────────────────────────────────────────────
 // Scores every scheme against the query, then auto-picks detail depth:
-//   • 1 scheme matched  → full card (docs, annual, link, ministry)
-//   • 2–4 matched       → medium (benefit + link per scheme)
-//   • 5+ matched / list → names only
-//   • Nothing matched   → top 5 national, compact
+//   • Total/global count query  → exact totals + per-state breakdown (NO listing)
+//   • 1 scheme matched          → full card (docs, annual, link, ministry)
+//   • 2–4 matched               → medium (benefit + link per scheme)
+//   • 5+ matched / list query   → names only, capped at 6
+//   • Nothing matched           → top 5 national, compact
 function buildSmartContext(query, lang = "en") {
   const q = query.toLowerCase();
   const l = lang === "hi" ? "hi" : "en";
@@ -117,8 +184,19 @@ function buildSmartContext(query, lang = "en") {
   // ── Detect state & detail-level signals from query ──────────────────────────
   const mentionedState = ALL_STATES.find(s => q.includes(s)) ?? null;
   const wantsCount  = /how many|kitni|kitne|total|count/.test(q);
-  const wantsList   = /list|all scheme|sabhi|show all|sab yojna/.test(q);
+  const wantsList   = /list|all scheme|sabhi|show all|sab yojna|sab yojana/.test(q);
   const wantsDetail = /document|kagaz|apply|avedan|eligib|yogyta|how to|kaise|kya chahiye|detail|full info|link|website|portal/.test(q);
+
+  // ── Detect "total/overall count" queries (no specific topic) ─────────────────
+  // e.g. "how many total schemes", "how many schemes do you have", "total record"
+  // These should return exact counts + breakdown -- NOT a list of all schemes.
+  // wantsTotalCount: fires on count OR list queries with no specific topic
+  const NO_TOPIC = !mentionedState &&
+    !/farmer|kisan|health|student|women|mahila|housing|awas|business|pension|senior|insurance|ration|water|jal|skill/.test(q);
+  const wantsTotalCount = (wantsCount || wantsList) && NO_TOPIC;
+
+  // ── Detect per-state breakdown request ───────────────────────────────────────
+  const wantsStateBreakdown = /each state|state.?wise|har state|per state|state mein kitni|state ke liye|every state/.test(q) && (wantsCount || wantsList);
 
   // ── Score each scheme against the query ─────────────────────────────────────
   const scored = SCHEME_DB.map(s => {
@@ -151,15 +229,15 @@ function buildSmartContext(query, lang = "en") {
       }
     }
 
-    // Query words found in scheme text
-    const words = q.split(/\s+/).filter(w => w.length > 3);
+    // Query words found in scheme text — skip stop words to avoid false matches
+    const words = q.split(/\s+/).filter(w => w.length > 3 && !STOP_WORDS.has(w));
     for (const w of words) {
       if (searchText.includes(w)) score += 1;
     }
 
     return { scheme: s, score };
   })
-  .filter(x => x.score > 0)
+  .filter(x => x.score >= 2)   // >= 2 prevents spurious matches on generic words
   .sort((a, b) => b.score - a.score);
 
   // Fallback: top 5 national if nothing scored
@@ -207,15 +285,74 @@ function buildSmartContext(query, lang = "en") {
   };
 
   // ── AUTO-PICK DEPTH based on match count + query signals ─────────────────────
+
+  // CASE B checked first — it is more specific than CASE A.
+  // "how many for each state" matches both wantsTotalCount AND wantsStateBreakdown;
+  // without this ordering, Case A would fire and swallow the state breakdown query.
+
+  // CASE B: User asks per-state count breakdown
+  if (wantsStateBreakdown) {
+    const national = SCHEME_DB.filter(s => s.scope === "national").length;
+    const stateTotal = SCHEME_DB.filter(s => s.scope === "state").length;
+    const breakdown = buildStateBreakdown();
+    const guidance = buildCountGuidance(l, "state");
+    return (
+      `The ${stateTotal} state-specific schemes are distributed as follows (use these EXACT numbers — do not change them):\n` +
+      breakdown + "\n\n" +
+      `There are also ${national} Central (national) schemes available to all states.\n` +
+      `Do NOT invent or modify these numbers.\n\n` +
+      `AFTER giving the breakdown, append this navigation tip for the user:` +
+      guidance
+    );
+  }
+
+  // CASE A: User asks total count OR wants to list all schemes (no specific topic)
+  // → Give exact numbers + guide user to Schemes tab for live counts.
+  if (wantsTotalCount) {
+    const national = SCHEME_DB.filter(s => s.scope === "national").length;
+    const stateTotal = SCHEME_DB.filter(s => s.scope === "state").length;
+    const total = SCHEME_DB.length;
+    const guidance = buildCountGuidance(l, "total");
+
+    if (wantsList) {
+      // User wants to SEE all schemes — provide full compact index + app guidance
+      return (
+        `EXACT DATABASE TOTAL: ${total} schemes (${national} Central + ${stateTotal} State-specific).\n` +
+        `List them ALL using ONLY the names below — do NOT add, remove, or rename any:\n\n` +
+        buildAllSchemesIndex() +
+        `\n\nAPPEND THIS GUIDANCE AT THE END OF YOUR REPLY (translate to ${l === "hi" ? "Hindi" : "English"}):` +
+        guidance
+      );
+    }
+
+    // User only wants the COUNT
+    const breakdown = buildStateBreakdown();
+    return (
+      `ANSWER THIS EXACTLY: The database currently has ${total} total schemes — ${national} Central (national) schemes and ${stateTotal} State-specific schemes.\n` +
+      `Do NOT list all scheme names unless explicitly asked.\n` +
+      `Per-state distribution (use EXACT numbers — do not invent):\n` +
+      breakdown +
+      `\n\nAFTER giving the count, ALWAYS append this guidance (it helps users see live counts):` +
+      guidance
+    );
+  }
+
+  // CASE C: Count/list for a specific topic (e.g. "how many farmer schemes")
   if (wantsCount || wantsList) {
+    if (matched.length === 0) {
+      return `No schemes found in the database matching that specific criteria. There are ${SCHEME_DB.length} total schemes (${SCHEME_DB.filter(s=>s.scope==="national").length} Central + ${SCHEME_DB.filter(s=>s.scope==="state").length} State).`;
+    }
     // Numbered list with links.
     // Pre-build the opening sentence so AI copies it exactly — never recounts.
     const lines = matched.map((s, i) => formatName(s, i)).join("\n");
     const label = matched.length === 1 ? "scheme" : "schemes";
+    const guidance = buildCountGuidance(l, "category");
     return (
       `START_YOUR_REPLY_WITH_EXACTLY: "There are ${matched.length} ${label} in our database for this."\n` +
       `TOTAL: ${matched.length} — do NOT recount, do NOT deduplicate by link.\n\n` +
-      lines
+      lines +
+      `\n\nAFTER the numbered list, append this navigation tip for the user:` +
+      guidance
     );
   }
 
@@ -271,8 +408,18 @@ CHIPS:["question 1","question 2","question 3"]
 - If asked about the developer, share: Portfolio: ${DEVELOPER.portfolio} | Email: ${DEVELOPER.email} | Instagram: ${DEVELOPER.instagram}
 
 ══ DATABASE ══
-- Total schemes: ${total} (${national} Central + ${state} State-specific)
-- You only know what's in our database — never invent schemes not provided below
+- EXACT total: ${total} schemes (${national} Central + ${state} State-specific)
+- NEVER guess or invent scheme counts — the context below always has the exact numbers
+- NEVER invent per-state counts — only use the breakdown provided in the context
+- You only know what's in our database — never add or rename schemes
+
+══ APP NAVIGATION (guide users here for live counts) ══
+- Schemes tab (bottom nav): shows ALL schemes with live count in "All (N)" pill
+- Category filter pills in Schemes tab: 🌾 Farmer · 📚 Student · 👩 Women · 👴 Senior · 💼 Business · 🏠 Housing
+- State selector button (top-right of Schemes tab): filter by state → shows that state's + Central schemes
+- Home tab: category tiles show count badges — always live
+- Eligibility Checker: Home/Profile → "Check Eligibility" → 6 questions → personal matched schemes
+- COUNT QUERIES: Always give the number from context, THEN guide user to Schemes tab to verify live
 
 ══ RULES ══
 ${langRule}
@@ -321,7 +468,7 @@ export async function sendMessage(conversationHistory, userQuery, lang = "en") {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model:       MODEL,
-      max_tokens:  800,        // smart context keeps this well within Groq free tier limits
+      max_tokens:  lang === "hi" ? 1200 : 800, // Hindi responses are longer — extra headroom to avoid mid-sentence cutoff
       temperature: 0.5,        // More factual accuracy for scheme data
       messages: [
         { role: "system", content: buildSystemPrompt(userQuery, lang) },
