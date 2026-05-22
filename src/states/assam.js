@@ -445,6 +445,132 @@ export const ASSAM_SCHEMES = [
     match: (a) => a.state === "Assam" && a.disability === true,
   },
 
+  {
+    id: "assam_matsyadeep",
+    icon: "🎣", color: "#0369A1", scope: "state", state: "Assam",
+    ministry: { en: "Assam Fisheries Dept.", hi: "असम मत्स्य विभाग" },
+    name:    { en: "Chief Minister's Matsyadeep Scheme (Assam)",                 hi: "मुख्यमंत्री मत्स्यदीप योजना (असम)" },
+    benefit: { en: "50% subsidy on motorised fishing boats, nets & equipment for traditional fishermen; up to ₹50,000 per beneficiary; promotes blue economy in Assam's rivers & wetlands", hi: "पारंपरिक मछुआरों को मोटरयुक्त नाव, जाल और उपकरण पर 50% सब्सिडी; प्रति लाभार्थी ₹50,000 तक; असम की नदियों व आर्द्रभूमि में ब्लू इकोनॉमी को बढ़ावा" },
+    tag:     { en: "Fishermen / Subsidy", hi: "मछुआरा / सब्सिडी" },
+    annual: 50000,
+    apply:   { en: "fisheries.assam.gov.in", hi: "fisheries.assam.gov.in" }, applyType: "offline", // ⚠️ offline — apply via District Fishery Officer
+    docs:    { en: ["Aadhaar Card","Fishermen Identity Card (issued by Fisheries Dept.)","Caste Certificate (SC/ST/OBC preferred)","BPL / Income Certificate","Bank Account (Aadhaar-linked)","Residence Proof","Boat / Equipment Quotation"],
+               hi: ["आधार कार्ड","मछुआरा पहचान पत्र (मत्स्य विभाग द्वारा)","जाति प्रमाण पत्र (SC/ST/OBC को प्राथमिकता)","BPL/आय प्रमाण पत्र","बैंक खाता (आधार-लिंक्ड)","निवास प्रमाण","नाव/उपकरण कोटेशन"] },
+    match: (a) => a.state === "Assam" && (a.who === "farmer" || a.occupation === "fisherman"),
+  },
+
+  {
+    id: "assam_bakri_palan",
+    icon: "🐐", color: "#65A30D", scope: "state", state: "Assam",
+    ministry: { en: "Assam Animal Husbandry & Veterinary Dept.", hi: "असम पशुपालन एवं पशु चिकित्सा विभाग" },
+    name:    { en: "Mukhyamantri Bakri Palan Yojana (Assam)",                    hi: "मुख्यमंत्री बकरी पालन योजना (असम)" },
+    benefit: { en: "Free goat unit (2 female + 1 male) to BPL / SC / ST families for livelihood; includes veterinary support & insurance for one year", hi: "BPL/SC/ST परिवारों को मुफ्त बकरी इकाई (2 मादा + 1 नर); एक वर्ष का पशु चिकित्सा सहयोग व बीमा सहित" },
+    tag:     { en: "Farmer / Animal Husbandry", hi: "किसान / पशुपालन" },
+    annual: 15000,
+    apply:   { en: "ahvassam.gov.in", hi: "ahvassam.gov.in" }, applyType: "offline", // ⚠️ offline — apply via Block Veterinary Officer
+    docs:    { en: ["Aadhaar Card","BPL Ration Card / Caste Certificate (SC or ST)","Income Certificate (family income < ₹2 lakh/year)","Land / Shed Availability Proof","Bank Account (Aadhaar-linked)","Residence Proof"],
+               hi: ["आधार कार्ड","BPL राशन कार्ड/जाति प्रमाण पत्र (SC या ST)","आय प्रमाण पत्र (पारिवारिक आय ₹2 लाख/वर्ष से कम)","भूमि/शेड उपलब्धता प्रमाण","बैंक खाता (आधार-लिंक्ड)","निवास प्रमाण"] },
+    match: (a) => a.state === "Assam" && ["below1","1to3"].includes(a.income),
+  },
+
+  {
+    id: "assam_dairy_incentive",
+    icon: "🐄", color: "#D97706", scope: "state", state: "Assam",
+    ministry: { en: "Assam Animal Husbandry & Dairying Dept.", hi: "असम पशुपालन एवं डेयरी विभाग" },
+    name:    { en: "Mukhyamantri Dugdha Utpadak Sahayata Yojana (Assam)",        hi: "मुख्यमंत्री दुग्ध उत्पादक सहायता योजना (असम)" },
+    benefit: { en: "₹5/litre direct cash incentive (DBT) to dairy farmers for milk sold to registered cooperatives / collection centres; promotes white revolution in Assam", hi: "सरकारी सहकारी/संग्रह केंद्रों को दूध बेचने वाले डेयरी किसानों को ₹5/लीटर सीधे बैंक में (DBT); असम में श्वेत क्रांति को बढ़ावा" },
+    tag:     { en: "Farmer / Dairy", hi: "किसान / डेयरी" },
+    annual: 18000,
+    apply:   { en: "ahvassam.gov.in", hi: "ahvassam.gov.in" }, applyType: "offline", // ⚠️ offline — register with nearest milk cooperative/AMUL collection point
+    docs:    { en: ["Aadhaar Card","Milk Cooperative / Society Membership Certificate","Bank Account (Aadhaar-linked, for DBT)","Cattle Ownership Proof (vaccination record/purchase receipt)","Residence Proof"],
+               hi: ["आधार कार्ड","दूध सहकारी/समिति सदस्यता प्रमाण पत्र","बैंक खाता (आधार-लिंक्ड, DBT के लिए)","पशु स्वामित्व प्रमाण (टीकाकरण रिकॉर्ड/खरीद रसीद)","निवास प्रमाण"] },
+    match: (a) => a.state === "Assam" && a.who === "farmer",
+  },
+
+  {
+    id: "assam_amfirs",
+    icon: "💳", color: "#BE185D", scope: "state", state: "Assam",
+    ministry: { en: "Assam Finance Dept. / ASRLM", hi: "असम वित्त विभाग / ASRLM" },
+    name:    { en: "Assam Micro Finance Incentive & Relief Scheme (AMFIRS)",     hi: "असम माइक्रो फाइनेंस प्रोत्साहन एवं राहत योजना (AMFIRS)" },
+    benefit: { en: "State pays outstanding MFI loan balance (up to ₹25,000) directly to MFI on behalf of rural women borrowers in default — complete debt waiver for eligible families; over 8 lakh women benefited", hi: "ग्रामीण महिला कर्जदारों की बकाया MFI राशि (₹25,000 तक) राज्य सरकार MFI को सीधे देती है — पूर्ण ऋण माफी; 8 लाख से अधिक महिलाएं लाभान्वित" },
+    tag:     { en: "Women / Debt Relief", hi: "महिला / ऋण राहत" },
+    annual: 25000,
+    apply:   { en: "amfirs.assam.gov.in", hi: "amfirs.assam.gov.in" }, applyType: "offline", // ⚠️ offline — apply via block ASRLM or District Commissioner office
+    docs:    { en: ["Aadhaar Card","MFI Loan Account Statement (showing outstanding balance)","Bank Account","BPL / Income Certificate (family income < ₹3 lakh/year)","Residence Proof (Assam domicile)","Affidavit of loan default / inability to repay"],
+               hi: ["आधार कार्ड","MFI ऋण खाता विवरण (बकाया राशि सहित)","बैंक खाता","BPL/आय प्रमाण पत्र (पारिवारिक आय ₹3 लाख/वर्ष से कम)","निवास प्रमाण (असम अधिवास)","ऋण चूक/चुकाने में असमर्थता का शपथ-पत्र"] },
+    match: (a) => a.state === "Assam" && a.who === "women" && ["below1","1to3"].includes(a.income),
+  },
+
+  {
+    id: "assam_weaver_scheme",
+    icon: "🧵", color: "#7C3AED", scope: "state", state: "Assam",
+    ministry: { en: "Assam Handloom, Textile & Sericulture Dept.", hi: "असम हस्तशिल्प, वस्त्र एवं रेशम विभाग" },
+    name:    { en: "Assam Handloom Weavers' Development Scheme",                 hi: "असम हस्तशिल्प बुनकर विकास योजना" },
+    benefit: { en: "30% capital subsidy on loom upgrades (up to ₹30,000) + yarn subsidy (10% on purchase price) + free tool kit for traditional weavers of Mekhela Chador, Gamosa & Eri silk; cluster-based training and market linkage", hi: "पारंपरिक बुनकरों (मेखला चादोर, गमोसा, ईरी रेशम) को करघा उन्नयन पर 30% पूंजी सब्सिडी (₹30,000 तक) + धागा सब्सिडी 10% + मुफ्त टूल किट; क्लस्टर प्रशिक्षण व बाजार जुड़ाव" },
+    tag:     { en: "Weaver / Artisan", hi: "बुनकर / कारीगर" },
+    annual: 30000,
+    apply:   { en: "handloom.assam.gov.in", hi: "handloom.assam.gov.in" }, applyType: "offline", // ⚠️ offline — apply via District Handloom & Textile Officer
+    docs:    { en: ["Aadhaar Card","Weaver Identity Card (issued by Handloom Dept.)","Caste / Community Certificate (if applicable)","Bank Account (Aadhaar-linked)","Loom Ownership Proof / Declaration","Residence Proof"],
+               hi: ["आधार कार्ड","बुनकर पहचान पत्र (हस्तशिल्प विभाग द्वारा)","जाति/समुदाय प्रमाण पत्र (यदि लागू हो)","बैंक खाता (आधार-लिंक्ड)","करघा स्वामित्व प्रमाण/घोषणा","निवास प्रमाण"] },
+    match: (a) => a.state === "Assam",
+  },
+
+  {
+    id: "assam_cmsguy",
+    icon: "🏘️", color: "#15803D", scope: "state", state: "Assam",
+    ministry: { en: "Assam Panchayat & Rural Development Dept.", hi: "असम पंचायत एवं ग्रामीण विकास विभाग" },
+    name:    { en: "CM Samagra Gramya Unnayan Yojana — CMSGUY (Assam)",          hi: "मुख्यमंत्री समग्र ग्राम्य उन्नयन योजना — CMSGUY (असम)" },
+    benefit: { en: "Integrated village-level development: roads, drinking water, drainage, electrification, and household sanitation in one convergence model — every village gets a comprehensive development plan (Gramya Unnayan Yojana) with 100% govt. funding", hi: "एकीकृत ग्राम विकास: सड़क, पेयजल, ड्रेनेज, विद्युतीकरण और स्वच्छता एक साथ — प्रत्येक गांव को समग्र विकास योजना (ग्राम्य उन्नयन योजना) 100% सरकारी वित्तपोषण से" },
+    tag:     { en: "Rural / Village Development", hi: "ग्रामीण / गाँव विकास" },
+    annual: 0,
+    apply:   { en: "pnrd.assam.gov.in", hi: "pnrd.assam.gov.in" }, applyType: "offline", // ⚠️ offline — implemented at Gram Panchayat level; no individual application needed
+    docs:    { en: ["Aadhaar Card","Residence Proof (village in Assam)","Voter ID or Domicile Certificate","Gram Sabha Membership Proof"],
+               hi: ["आधार कार्ड","निवास प्रमाण (असम के गांव में)","मतदाता ID या अधिवास प्रमाण पत्र","ग्राम सभा सदस्यता प्रमाण"] },
+    match: (a) => a.state === "Assam" && a.area === "rural",
+  },
+
+  {
+    id: "assam_sports_scholarship",
+    icon: "🏅", color: "#DC2626", scope: "state", state: "Assam",
+    ministry: { en: "Assam Sports & Youth Welfare Dept.", hi: "असम खेल एवं युवा कल्याण विभाग" },
+    name:    { en: "Chief Minister's Sports Scholarship (Assam)",                hi: "मुख्यमंत्री खेल छात्रवृत्ति (असम)" },
+    benefit: { en: "₹4,000–₹10,000/month scholarship + coaching support + sports kit for outstanding athletes representing Assam at National / International competitions; ₹10,000/month for international medalists", hi: "राष्ट्रीय/अंतर्राष्ट्रीय स्तर पर असम का प्रतिनिधित्व करने वाले उत्कृष्ट खिलाड़ियों को ₹4,000–₹10,000/माह छात्रवृत्ति + कोचिंग + खेल किट; अंतर्राष्ट्रीय पदक विजेता को ₹10,000/माह" },
+    tag:     { en: "Youth / Sports", hi: "युवा / खेल" },
+    annual: 120000,
+    apply:   { en: "sportsyouth.assam.gov.in", hi: "sportsyouth.assam.gov.in" }, applyType: "online",
+    docs:    { en: ["Aadhaar Card","Sports Achievement Certificate (National / International level)","Selection / Participation Certificate from National Sports Federation","Age Proof","Bank Account (Aadhaar-linked)","School / College Enrollment Certificate (if student)","Recommendation Letter from District Sports Officer","Passport Photo"],
+               hi: ["आधार कार्ड","खेल उपलब्धि प्रमाण पत्र (राष्ट्रीय/अंतर्राष्ट्रीय स्तर)","राष्ट्रीय खेल महासंघ से चयन/भागीदारी प्रमाण पत्र","आयु प्रमाण","बैंक खाता (आधार-लिंक्ड)","स्कूल/कॉलेज नामांकन प्रमाण (यदि छात्र हो)","जिला खेल अधिकारी का अनुशंसा पत्र","पासपोर्ट फोटो"] },
+    match: (a) => a.state === "Assam" && ["18to35"].includes(a.age),
+  },
+
+  {
+    id: "assam_obc_scholarship",
+    icon: "📖", color: "#0F766E", scope: "state", state: "Assam",
+    ministry: { en: "Assam Welfare of Plain Tribes & Backward Classes (WPT&BC) Dept.", hi: "असम सादा जनजाति एवं पिछड़ा वर्ग कल्याण विभाग (WPT&BC)" },
+    name:    { en: "CM's Special Scholarship for OBC / MOBC Students (Assam)",   hi: "मुख्यमंत्री विशेष छात्रवृत्ति — OBC/MOBC छात्र (असम)" },
+    benefit: { en: "Post-Matric scholarship for OBC / MOBC students in higher education: ₹1,200–₹3,000/month stipend based on course type + reimbursement of admission & tuition fees at govt. or govt.-aided institutions", hi: "उच्च शिक्षा में OBC/MOBC छात्रों के लिए पोस्ट-मैट्रिक छात्रवृत्ति: पाठ्यक्रम के अनुसार ₹1,200–₹3,000/माह वजीफा + सरकारी/सरकारी-सहायता प्राप्त संस्थान में प्रवेश व ट्यूशन शुल्क प्रतिपूर्ति" },
+    tag:     { en: "Student / OBC-MOBC", hi: "छात्र / OBC-MOBC" },
+    annual: 36000,
+    apply:   { en: "scholarshipforbc.assam.gov.in", hi: "scholarshipforbc.assam.gov.in" }, applyType: "online",
+    docs:    { en: ["Aadhaar Card","OBC / MOBC Caste Certificate (issued in Assam)","Class X / XII Marksheet","College / University Admission / Enrollment Certificate","Family Income Certificate (annual income < ₹1 lakh for central list; < ₹2 lakh for state list)","Bank Account (Aadhaar-linked)","Previous Year Marksheet (for renewal)","Domicile Certificate (Assam)"],
+               hi: ["आधार कार्ड","OBC/MOBC जाति प्रमाण पत्र (असम में जारी)","कक्षा X/XII अंकसूची","कॉलेज/विश्वविद्यालय प्रवेश/नामांकन प्रमाण पत्र","पारिवारिक आय प्रमाण पत्र (वार्षिक ₹1 लाख से कम — केंद्रीय; ₹2 लाख से कम — राज्य सूची)","बैंक खाता (आधार-लिंक्ड)","पिछले वर्ष की अंकसूची (नवीनीकरण के लिए)","अधिवास प्रमाण पत्र (असम)"] },
+    match: (a) => a.state === "Assam" && a.who === "student",
+  },
+
+  {
+    id: "assam_solar_pump",
+    icon: "☀️", color: "#CA8A04", scope: "state", state: "Assam",
+    ministry: { en: "Assam Energy Development Agency (AEDA) / Agriculture Dept.", hi: "असम ऊर्जा विकास एजेंसी (AEDA) / कृषि विभाग" },
+    name:    { en: "PM-KUSUM Solar Irrigation Pump Scheme — Assam Component",    hi: "PM-KUSUM सौर सिंचाई पंप योजना — असम घटक" },
+    benefit: { en: "90% subsidy (60% central + 30% state) on solar irrigation pumps up to 7.5 HP for farmers; eliminates diesel cost; free installation by empanelled vendor; farmer pays only 10% of pump cost", hi: "किसानों के लिए 7.5 HP तक के सौर सिंचाई पंप पर 90% सब्सिडी (60% केंद्र + 30% राज्य); डीजल लागत समाप्त; किसान केवल 10% भुगतान करता है; सूचीबद्ध विक्रेता द्वारा मुफ्त स्थापना" },
+    tag:     { en: "Farmer / Solar Energy", hi: "किसान / सौर ऊर्जा" },
+    annual: 0,
+    apply:   { en: "aeda.assam.gov.in", hi: "aeda.assam.gov.in" }, applyType: "online",
+    docs:    { en: ["Aadhaar Card","Land Records / Patta (agricultural land in Assam)","Farmer Registration Certificate","Bank Account (for 10% cost deposit)","Electricity Connection Proof (or No-Connection Declaration for off-grid pump)","Residence Proof","Passport Photo"],
+               hi: ["आधार कार्ड","जमीन के कागज़/पट्टा (असम में कृषि भूमि)","किसान पंजीकरण प्रमाण पत्र","बैंक खाता (10% लागत जमा के लिए)","बिजली कनेक्शन प्रमाण (या ऑफ-ग्रिड पंप के लिए कोई कनेक्शन न होने की घोषणा)","निवास प्रमाण","पासपोर्ट फोटो"] },
+    match: (a) => a.state === "Assam" && a.who === "farmer",
+  },
+
   // ADD MORE ASSAM SCHEMES ABOVE THIS LINE ↓
   // {
   //   id: "assam_new_scheme",
