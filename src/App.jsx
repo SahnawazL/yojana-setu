@@ -6,7 +6,7 @@ import {
   getSchemesForCategory,
 } from "./schemesData.js";
 import { auth } from "./firebase.js";
-import { RecaptchaVerifier, signInWithPhoneNumber, signOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { RecaptchaVerifier, signInWithPhoneNumber, signOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import AIChat from "./AIChat.jsx";
 
 // ─── COUNT-UP HOOK ─────────────────────────────────────────────────────────────
@@ -2615,12 +2615,29 @@ export default function YojanaSetu(){
   const [showChecker,setShowChecker]=useState(false);
   const [selectedScheme,setSelectedScheme]=useState(null);   // SchemeDetailSheet
   const [selectedCategory,setSelectedCategory]=useState(null); // CategorySheet
-  const [profile,setProfile]=useState(null);
+  const [profile,setProfile]=useState(()=>{
+    try{return JSON.parse(localStorage.getItem("yojana_profile")||"null")||null;}catch{return null;}
+  });
   const toggleDark=()=>setDark(d=>!d);
 
   useEffect(()=>{localStorage.setItem("yojana_lang",lang);},[lang]);
   useEffect(()=>{localStorage.setItem("yojana_dark",dark);},[dark]);
   useEffect(()=>{const id=setTimeout(()=>setLoaded(true),100);return()=>clearTimeout(id);},[]);
+
+  // Persist profile across page refreshes
+  useEffect(()=>{
+    if(profile) localStorage.setItem("yojana_profile",JSON.stringify(profile));
+    else localStorage.removeItem("yojana_profile");
+  },[profile]);
+
+  // If Firebase session expires or user signs out from another tab → clear profile
+  useEffect(()=>{
+    const unsub=onAuthStateChanged(auth,(user)=>{
+      if(!user) setProfile(null);
+      // If user exists, localStorage profile already loaded above — nothing to do
+    });
+    return()=>unsub();
+  },[]);
 
   const th=THEME[dark?"dark":"light"];
   const t=T[lang];
