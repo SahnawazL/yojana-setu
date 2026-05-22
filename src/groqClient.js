@@ -142,12 +142,12 @@ function buildCountGuidance(lang, context = "total") {
   if (isHindi) {
     const base = `\n\n📱 **ऐप में सटीक गिनती देखें (हमेशा सही रहती है):**
 1. नीचे नेविगेशन बार में **"योजनाएं"** टैब पर टैप करें
-2. सबसे ऊपर **"सभी (N)"** पिल में लाइव कुल संख्या दिखती है
+2. सबसे ऊपर **"सभी योजनाएं"** पिल में लाइव कुल संख्या दिखती है
 3. श्रेणी के अनुसार: 🌾 किसान · 📚 छात्र · 👩 महिला · 👴 वरिष्ठ · 💼 व्यापार · 🏠 आवास — किसी भी पिल पर टैप करें
 4. अपने राज्य की योजनाएं: ऊपर दाईं ओर **"🇮🇳 सभी राज्य"** बटन → अपना राज्य चुनें`;
 
     if (context === "state") {
-      return base + `\n5. राज्य चुनने के बाद "सभी (N)" में केवल उस राज्य की + केंद्रीय योजनाएं दिखेंगी`;
+      return base + `\n5. राज्य चुनने के बाद **"सभी योजनाएं"** पिल में केवल उस राज्य की + केंद्रीय योजनाएं दिखेंगी`;
     }
     if (context === "category") {
       return base + `\n   (श्रेणी पिल में टैप करने पर उस श्रेणी की कुल योजनाएं दिखती हैं)`;
@@ -157,15 +157,15 @@ function buildCountGuidance(lang, context = "total") {
 
   const base = `\n\n📱 **Check the exact count live in the app (always accurate):**
 1. Tap the **"Schemes"** tab in the bottom navigation bar
-2. The **"All (N)"** pill at the top shows the live total — updates whenever new schemes are added
+2. The **"All Schemes"** pill at the top shows the live total — updates whenever new schemes are added
 3. By category: tap 🌾 Farmer · 📚 Student · 👩 Women · 👴 Senior · 💼 Business · 🏠 Housing to see each category's count
 4. By state: tap the **"🇮🇳 All States"** button (top-right) → select your state`;
 
   if (context === "state") {
-    return base + `\n5. After selecting a state, the "All (N)" pill shows only that state's schemes + Central schemes`;
+    return base + `\n5. After selecting a state, the **"All Schemes"** pill shows only that state's schemes + Central schemes`;
   }
   if (context === "category") {
-    return base + `\n   (The "All (N)" pill updates as you switch category filters)`;
+    return base + `\n   (The **"All Schemes"** pill updates as you switch category filters)`;
   }
   return base;
 }
@@ -348,7 +348,8 @@ function buildSmartContext(query, lang = "en") {
     const label = matched.length === 1 ? "scheme" : "schemes";
     const guidance = buildCountGuidance(l, "category");
     return (
-      `START_YOUR_REPLY_WITH_EXACTLY: "There are ${matched.length} ${label} in our database for this."\n` +
+      `YOUR FIRST LINE MUST BE EXACTLY THIS (do not include this label in your reply):\n` +
+      `There are ${matched.length} ${label} in our database for this.\n\n` +
       `TOTAL: ${matched.length} — do NOT recount, do NOT deduplicate by link.\n\n` +
       lines +
       `\n\nAFTER the numbered list, append this navigation tip for the user:` +
@@ -429,7 +430,7 @@ FORMATTING (follow strictly):
 - When listing multiple schemes: ALWAYS number them as "1. **Scheme Name**" with bold name
 - Show each scheme's OFFICIAL_LINK immediately below it as "🔗 https://..." on a new line
 - NEVER use plain bullet dots (•) for scheme lists — use numbers
-- COUNT RULE: If data has START_YOUR_REPLY_WITH_EXACTLY, copy that sentence word-for-word as your first line. NEVER recount the list yourself — two schemes sharing the same website are still two separate schemes
+- COUNT RULE: If data has "YOUR FIRST LINE MUST BE EXACTLY THIS", use that sentence as your very first line — do NOT include the label itself. NEVER recount the list yourself — two schemes sharing the same website are still two separate schemes
 - NEVER hallucinate links — ONLY use links from OFFICIAL_LINK field in data below
 - NEVER show "${APP.url}" as a link — user is already in the app
 - If OFFICIAL_LINK is missing for a scheme: write "🔗 Apply at nearest govt. office"
