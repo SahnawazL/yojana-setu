@@ -208,9 +208,15 @@ function buildSmartContext(query, lang = "en") {
 
   // ── AUTO-PICK DEPTH based on match count + query signals ─────────────────────
   if (wantsCount || wantsList) {
-    // Numbered list with links — AI must use EXACT_COUNT, not recount itself
+    // Numbered list with links.
+    // Pre-build the opening sentence so AI copies it exactly — never recounts.
     const lines = matched.map((s, i) => formatName(s, i)).join("\n");
-    return `EXACT_COUNT: ${matched.length} schemes. Use this number verbatim.\n\n` + lines;
+    const label = matched.length === 1 ? "scheme" : "schemes";
+    return (
+      `START_YOUR_REPLY_WITH_EXACTLY: "There are ${matched.length} ${label} in our database for this."\n` +
+      `TOTAL: ${matched.length} — do NOT recount, do NOT deduplicate by link.\n\n` +
+      lines
+    );
   }
 
   if (matched.length === 1 || wantsDetail) {
@@ -276,7 +282,7 @@ FORMATTING (follow strictly):
 - When listing multiple schemes: ALWAYS number them as "1. **Scheme Name**" with bold name
 - Show each scheme's OFFICIAL_LINK immediately below it as "🔗 https://..." on a new line
 - NEVER use plain bullet dots (•) for scheme lists — use numbers
-- For scheme count questions: use the EXACT_COUNT number from the data — do not recount yourself
+- COUNT RULE: If data has START_YOUR_REPLY_WITH_EXACTLY, copy that sentence word-for-word as your first line. NEVER recount the list yourself — two schemes sharing the same website are still two separate schemes
 - NEVER hallucinate links — ONLY use links from OFFICIAL_LINK field in data below
 - NEVER show "${APP.url}" as a link — user is already in the app
 - If OFFICIAL_LINK is missing for a scheme: write "🔗 Apply at nearest govt. office"
