@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, useDeferredValue } from "react";
 import {
   INDIA_STATES,
   SCHEME_DB,
@@ -1116,57 +1116,128 @@ function StatePickerSheet({selectedState,onSelect,onClose,lang,dark=false}){
   );
 }
 
+// ─── SCHEME SKELETON CARD ──────────────────────────────────────────────────────
+// Shimmer placeholder shown while schemes are loading / filtering
+function SkeletonCard({dark=false}){
+  const th=THEME[dark?"dark":"light"];
+  return(
+    <div style={{background:th.card,borderRadius:16,padding:"14px 16px",marginBottom:10,
+      border:`1.5px solid ${th.border}`,overflow:"hidden",position:"relative"}}>
+      <style>{`
+        @keyframes sk-shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+        .sk-s{position:relative;overflow:hidden}
+        .sk-s::after{content:"";position:absolute;inset:0;
+          background:linear-gradient(90deg,transparent 0%,${dark?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.75)"} 50%,transparent 100%);
+          animation:sk-shimmer 1.4s infinite}
+      `}</style>
+      <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
+        <div className="sk-s" style={{width:42,height:42,borderRadius:13,flexShrink:0,
+          background:dark?"#2c2c2e":"#eeeeea"}}/>
+        <div style={{flex:1}}>
+          <div style={{display:"flex",gap:6,marginBottom:8}}>
+            <div className="sk-s" style={{width:58,height:16,borderRadius:8,background:dark?"#2c2c2e":"#eeeeea"}}/>
+            <div className="sk-s" style={{width:80,height:16,borderRadius:8,background:dark?"#2c2c2e":"#eeeeea"}}/>
+          </div>
+          <div className="sk-s" style={{width:"72%",height:14,borderRadius:6,marginBottom:8,background:dark?"#333":"#e5e5e0"}}/>
+          <div className="sk-s" style={{width:"48%",height:12,borderRadius:6,background:dark?"#2c2c2e":"#eeeeea"}}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── ALL SCHEMES TAB ───────────────────────────────────────────────────────────
-// Shows all schemes with category pills + state filter working together
+// Paginated + skeleton + deferred-filter for instant tab open
+const PAGE_SIZE=20;
+
 function SchemesTab({lang,dark=false}){
   const th=THEME[dark?"dark":"light"];
   const t=T[lang];
   const isHindi=lang==="hi";
   const bf=fontFamily(lang);
+
   const [expandedId,setExpandedId]=useState(null);
   const [filter,setFilter]=useState("all");
   const [selectedState,setSelectedState]=useState("all");
   const [showStatePicker,setShowStatePicker]=useState(false);
+  const [visibleCount,setVisibleCount]=useState(PAGE_SIZE);
+  const [isReady,setIsReady]=useState(false);
+
   const cats=useMemo(()=>CATEGORIES[lang],[lang]);
 
-  // Refs for smooth-scroll anchors
   const scrollContainerRef=useRef(null);
   const stateHeaderRef=useRef(null);
   const centralHeaderRef=useRef(null);
+  const loadMoreRef=useRef(null);
 
-  // Combined filter: category + state both applied together
+  // Deferred values: pill taps are instant; heavy filtering runs async
+  const deferredFilter=useDeferredValue(filter);
+  const deferredState=useDeferredValue(selectedState);
+  const isStale=filter!==deferredFilter||selectedState!==deferredState;
+
+  // Delay first paint by 1 frame so tab slide animation fires first
+  useEffect(()=>{
+    const id=requestAnimationFrame(()=>setIsReady(true));
+    return()=>cancelAnimationFrame(id);
+  },[]);
+
   const filtered=useMemo(()=>{
-    let base=filter==="all" ? SCHEME_DB : getSchemesForCategory(filter);
-    if(selectedState!=="all"){
-      base=base.filter(s=>s.scope==="national"||s.state===selectedState);
+    let base=deferredFilter==="all"?SCHEME_DB:getSchemesForCategory(deferredFilter);
+    if(deferredState!=="all"){
+      base=base.filter(s=>s.scope==="national"||s.state===deferredState);
     }
     return base;
-  },[filter,selectedState]);
+  },[deferredFilter,deferredState]);
 
   const national=useMemo(()=>filtered.filter(s=>s.scope==="national"),[filtered]);
   const stateSchemes=useMemo(()=>filtered.filter(s=>s.scope==="state"),[filtered]);
 
-  // Smooth scroll a section header into view inside the scrollable container
+  // Reset pagination when filter changes
+  useEffect(()=>{setVisibleCount(PAGE_SIZE);setExpandedId(null);},[filter,selectedState]);
+
+  // Paginated slices — state schemes first, then central
+  const visibleState=useMemo(()=>stateSchemes.slice(0,Math.min(visibleCount,stateSchemes.length)),[stateSchemes,visibleCount]);
+  const centralBudget=Math.max(0,visibleCount-stateSchemes.length);
+  const visibleNat=useMemo(()=>national.slice(0,centralBudget),[national,centralBudget]);
+  const totalVisible=visibleState.length+visibleNat.length;
+  const hasMore=totalVisible<filtered.length;
+
+  // IntersectionObserver: silently load next page when sentinel scrolls into view
+  useEffect(()=>{
+    if(!hasMore||!loadMoreRef.current)return;
+    const obs=new IntersectionObserver(([entry])=>{
+      if(entry.isIntersecting)setVisibleCount(c=>c+PAGE_SIZE);
+    },{threshold:0.1});
+    obs.observe(loadMoreRef.current);
+    return()=>obs.disconnect();
+  },[hasMore,totalVisible]);
+
   const scrollToRef=(ref)=>{
-    if(!ref.current||!scrollContainerRef.current) return;
+    if(!ref.current||!scrollContainerRef.current)return;
     const container=scrollContainerRef.current;
-    const headerEl=ref.current;
-    // getBoundingClientRect is relative to viewport; we want offset inside container
     const containerTop=container.getBoundingClientRect().top;
-    const elTop=headerEl.getBoundingClientRect().top;
-    const offset=elTop-containerTop+container.scrollTop-12; // 12px breathing room
-    container.scrollTo({top:offset,behavior:"smooth"});
+    const elTop=ref.current.getBoundingClientRect().top;
+    container.scrollTo({top:elTop-containerTop+container.scrollTop-12,behavior:"smooth"});
   };
+
+  const skeletonCount=!isReady||isStale?6:0;
 
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",overflowY:"auto",background:th.appBg}}>
-      {/* Header */}
+
+      {/* ── STICKY HEADER ── */}
       <div style={{background:th.card,padding:"16px 16px 0",position:"sticky",top:0,zIndex:10,borderBottom:`1px solid ${th.border}`}}>
 
-        {/* Title row — "All Schemes" + state selector button */}
+        {/* Title row */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-          <div style={{fontSize:17,fontWeight:800,color:th.text,fontFamily:bf}}>{t.allSchemes||"All Schemes"}</div>
-          {/* State pill button */}
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{fontSize:17,fontWeight:800,color:th.text,fontFamily:bf}}>{t.allSchemes||"All Schemes"}</div>
+            {isStale&&(
+              <div style={{width:16,height:16,flexShrink:0}}>
+                <AshokaChakra size={16} color={SAFFRON} spinning={true}/>
+              </div>
+            )}
+          </div>
           <div onClick={()=>{haptic();setShowStatePicker(true);}}
             style={{display:"flex",alignItems:"center",gap:5,background:selectedState!=="all"?SAFFRON+"18":th.pillBg,border:`1.5px solid ${selectedState!=="all"?SAFFRON:th.border2}`,borderRadius:20,padding:"5px 11px",cursor:"pointer",flexShrink:0,transition:"background 0.2s"}}>
             <span style={{fontSize:13}}>{selectedState==="all"?"🇮🇳":"📍"}</span>
@@ -1179,49 +1250,50 @@ function SchemesTab({lang,dark=false}){
 
         {/* Category filter pills */}
         <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:12,scrollbarWidth:"none"}}>
-          <div onClick={()=>{haptic();setFilter("all");setExpandedId(null);}}
-            style={{flexShrink:0,padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:700,background:filter==="all"?"#003580":th.pillBg,color:filter==="all"?"#fff":th.textMid,cursor:"pointer",border:`1.5px solid ${filter==="all"?"#003580":th.border2}`}}>
+          <div onClick={()=>{haptic();setFilter("all");}}
+            style={{flexShrink:0,padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:700,
+              background:filter==="all"?"#003580":th.pillBg,
+              color:filter==="all"?"#fff":th.textMid,cursor:"pointer",
+              border:`1.5px solid ${filter==="all"?"#003580":th.border2}`}}>
             {isHindi?"सभी":"All"} ({filtered.length})
           </div>
           {cats.map(cat=>(
-            <div key={cat.filterKey} onClick={()=>{haptic();setFilter(cat.filterKey);setExpandedId(null);}}
-              style={{flexShrink:0,padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:700,background:filter===cat.filterKey?cat.color:th.pillBg,color:filter===cat.filterKey?"#fff":th.textMid,cursor:"pointer",border:`1.5px solid ${filter===cat.filterKey?cat.color:th.border2}`}}>
+            <div key={cat.filterKey} onClick={()=>{haptic();setFilter(cat.filterKey);}}
+              style={{flexShrink:0,padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:700,
+                background:filter===cat.filterKey?cat.color:th.pillBg,
+                color:filter===cat.filterKey?"#fff":th.textMid,cursor:"pointer",
+                border:`1.5px solid ${filter===cat.filterKey?cat.color:th.border2}`}}>
               {cat.icon} {cat.label}
             </div>
           ))}
         </div>
 
-        {/* Active state chip row — shown only when a state is selected */}
+        {/* Active state chip row */}
         {selectedState!=="all"&&(
           <div style={{display:"flex",alignItems:"center",gap:6,paddingBottom:10,flexWrap:"wrap"}}>
-            {/* State name chip with X dismiss */}
             <div style={{display:"flex",alignItems:"center",gap:5,background:SAFFRON+"14",border:`1px solid ${SAFFRON}40`,borderRadius:20,padding:"4px 10px"}}>
               <span style={{fontSize:11}}>📍</span>
               <span style={{fontSize:11,fontWeight:600,color:SAFFRON,fontFamily:bf}}>{selectedState}</span>
               <span onClick={()=>{haptic();setSelectedState("all");}} style={{fontSize:14,color:SAFFRON,cursor:"pointer",marginLeft:2,lineHeight:1,fontWeight:700}}>✕</span>
             </div>
-            {/* State schemes count pill — clickable, scrolls to state section */}
-            <div
-              onClick={()=>{if(stateSchemes.length>0){haptic(30);scrollToRef(stateHeaderRef);}}}
-              style={{display:"flex",alignItems:"center",gap:4,background:stateSchemes.length>0?"#FEF9C3":"#f5f5f0",border:`1.5px solid ${stateSchemes.length>0?"#d97706":"#e0e0e0"}`,borderRadius:20,padding:"4px 10px",cursor:stateSchemes.length>0?"pointer":"default",opacity:stateSchemes.length>0?1:0.55,transition:"transform 0.15s,box-shadow 0.15s",boxShadow:stateSchemes.length>0?"0 1px 4px #d9770620":"none"}}
-              onMouseDown={e=>{if(stateSchemes.length>0)e.currentTarget.style.transform="scale(0.95)";}}
-              onMouseUp={e=>{e.currentTarget.style.transform="scale(1)";}}
-              onTouchStart={e=>{if(stateSchemes.length>0)e.currentTarget.style.transform="scale(0.95)";}}
-              onTouchEnd={e=>{e.currentTarget.style.transform="scale(1)";}}>
+            <div onClick={()=>{if(stateSchemes.length>0){haptic(30);scrollToRef(stateHeaderRef);}}}
+              style={{display:"flex",alignItems:"center",gap:4,
+                background:stateSchemes.length>0?"#FEF9C3":"#f5f5f0",
+                border:`1.5px solid ${stateSchemes.length>0?"#d97706":"#e0e0e0"}`,
+                borderRadius:20,padding:"4px 10px",
+                cursor:stateSchemes.length>0?"pointer":"default",
+                opacity:stateSchemes.length>0?1:0.55}}>
               <span style={{fontSize:11}}>📍</span>
               <span style={{fontSize:11,fontWeight:700,color:stateSchemes.length>0?"#92400e":"#999",fontFamily:bf}}>
                 {isHindi?"राज्य":"State"} ({stateSchemes.length})
               </span>
               {stateSchemes.length>0&&<span style={{fontSize:9,color:"#b45309",marginLeft:1}}>↓</span>}
             </div>
-            {/* Central schemes count pill — clickable, scrolls to central section */}
-            <div
-              onClick={()=>{if(national.length>0){haptic(30);scrollToRef(centralHeaderRef);}}}
-              style={{display:"flex",alignItems:"center",gap:4,background:"#EFF6FF",border:"1.5px solid #3b82f6",borderRadius:20,padding:"4px 10px",cursor:national.length>0?"pointer":"default",transition:"transform 0.15s,box-shadow 0.15s",boxShadow:"0 1px 4px #3b82f620"}}
-              onMouseDown={e=>{e.currentTarget.style.transform="scale(0.95)";}}
-              onMouseUp={e=>{e.currentTarget.style.transform="scale(1)";}}
-              onTouchStart={e=>{e.currentTarget.style.transform="scale(0.95)";}}
-              onTouchEnd={e=>{e.currentTarget.style.transform="scale(1)";}}>
+            <div onClick={()=>{if(national.length>0){haptic(30);scrollToRef(centralHeaderRef);}}}
+              style={{display:"flex",alignItems:"center",gap:4,
+                background:"#EFF6FF",border:"1.5px solid #3b82f6",
+                borderRadius:20,padding:"4px 10px",
+                cursor:national.length>0?"pointer":"default"}}>
               <span style={{fontSize:11}}>🇮🇳</span>
               <span style={{fontSize:11,fontWeight:700,color:"#1D4ED8",fontFamily:bf}}>
                 {isHindi?"केंद्रीय":"Central"} ({national.length})
@@ -1232,10 +1304,10 @@ function SchemesTab({lang,dark=false}){
         )}
       </div>
 
-      {/* Scheme list — State first, then Central */}
+      {/* ── SCHEME LIST ── */}
       <div ref={scrollContainerRef} style={{padding:"12px 16px 80px",overflowY:"auto",flex:1}}>
 
-        {/* ── LINK HINT BANNER ── */}
+        {/* Hint banner */}
         <div style={{display:"flex",alignItems:"flex-start",gap:8,background:dark?"#1c1300":"#FFFBEB",borderRadius:12,padding:"9px 12px",marginBottom:14,border:`1px solid ${dark?"#78350f40":"#FDE68A"}`}}>
           <span style={{fontSize:13,flexShrink:0,marginTop:1}}>💡</span>
           <span style={{fontSize:11,color:dark?"#fbbf24":"#92400e",lineHeight:1.5,fontFamily:bf}}>
@@ -1245,52 +1317,84 @@ function SchemesTab({lang,dark=false}){
           </span>
         </div>
 
-        {/* ── STATE SCHEMES (shown first) ── */}
-        {stateSchemes.length>0&&(
-          <>
-            <div ref={stateHeaderRef} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-              <div style={{height:1,flex:1,background:th.border2}}/>
-              <span style={{fontSize:11,fontWeight:700,color:"#92400e",background:"#FEF9C3",borderRadius:20,padding:"3px 10px",border:"1px solid #d97706"}}>
-                📍 {t.stateSchemes} ({stateSchemes.length})
-              </span>
-              <div style={{height:1,flex:1,background:th.border2}}/>
-            </div>
-            {stateSchemes.map(s=>(
-              <SchemeCard key={s.id} scheme={s} lang={lang} dark={dark}
-                expanded={expandedId===s.id}
-                onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>
-            ))}
-          </>
-        )}
+        {/* Skeleton shimmer cards */}
+        {skeletonCount>0&&Array.from({length:skeletonCount}).map((_,i)=>(
+          <SkeletonCard key={`sk-${i}`} dark={dark}/>
+        ))}
 
-        {/* ── CENTRAL SCHEMES (shown after state) ── */}
-        {national.length>0&&(
-          <>
-            <div ref={centralHeaderRef} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,marginTop:stateSchemes.length>0?16:0}}>
-              <div style={{height:1,flex:1,background:th.border2}}/>
-              <span style={{fontSize:11,fontWeight:700,color:"#1D4ED8",background:"#EFF6FF",borderRadius:20,padding:"3px 10px",border:"1px solid #3b82f6"}}>
-                🇮🇳 {t.centralSchemes} ({national.length})
-              </span>
-              <div style={{height:1,flex:1,background:th.border2}}/>
-            </div>
-            {national.map(s=>(
-              <SchemeCard key={s.id} scheme={s} lang={lang} dark={dark}
-                expanded={expandedId===s.id}
-                onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>
-            ))}
-          </>
-        )}
+        {/* Real cards — fade in once ready */}
+        <div style={{
+          opacity:isReady&&!isStale?1:0,
+          transition:"opacity 0.2s ease",
+          pointerEvents:isStale?"none":"auto",
+        }}>
 
-        {filtered.length===0&&(
-          <div style={{textAlign:"center",padding:"40px 20px",color:"#aaa"}}>
-            <div style={{fontSize:44,marginBottom:12}}>🔍</div>
-            <div style={{fontSize:14,fontWeight:600,fontFamily:bf,color:th.text}}>{t.noMatchTitle}</div>
-            <div style={{fontSize:12,color:th.textSub,marginTop:6,fontFamily:bf}}>{t.noMatchSub}</div>
-          </div>
-        )}
+          {/* STATE SCHEMES */}
+          {visibleState.length>0&&(
+            <>
+              <div ref={stateHeaderRef} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                <div style={{height:1,flex:1,background:th.border2}}/>
+                <span style={{fontSize:11,fontWeight:700,color:"#92400e",background:"#FEF9C3",borderRadius:20,padding:"3px 10px",border:"1px solid #d97706"}}>
+                  📍 {t.stateSchemes} ({stateSchemes.length})
+                </span>
+                <div style={{height:1,flex:1,background:th.border2}}/>
+              </div>
+              {visibleState.map(s=>(
+                <SchemeCard key={s.id} scheme={s} lang={lang} dark={dark}
+                  expanded={expandedId===s.id}
+                  onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>
+              ))}
+            </>
+          )}
+
+          {/* CENTRAL SCHEMES */}
+          {visibleNat.length>0&&(
+            <>
+              <div ref={centralHeaderRef} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,marginTop:visibleState.length>0?16:0}}>
+                <div style={{height:1,flex:1,background:th.border2}}/>
+                <span style={{fontSize:11,fontWeight:700,color:"#1D4ED8",background:"#EFF6FF",borderRadius:20,padding:"3px 10px",border:"1px solid #3b82f6"}}>
+                  🇮🇳 {t.centralSchemes} ({national.length})
+                </span>
+                <div style={{height:1,flex:1,background:th.border2}}/>
+              </div>
+              {visibleNat.map(s=>(
+                <SchemeCard key={s.id} scheme={s} lang={lang} dark={dark}
+                  expanded={expandedId===s.id}
+                  onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>
+              ))}
+            </>
+          )}
+
+          {/* Auto-load-more sentinel */}
+          {hasMore&&(
+            <div ref={loadMoreRef} style={{padding:"18px 0",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <AshokaChakra size={15} color={SAFFRON} spinning={true}/>
+                <span style={{fontSize:12,color:th.textSub,fontFamily:bf}}>
+                  {isHindi?"और योजनाएं लोड हो रही हैं...":"Loading more schemes..."}
+                </span>
+              </div>
+              <span style={{fontSize:11,color:th.textLight,fontFamily:bf}}>
+                {isHindi
+                  ?`${totalVisible} / ${filtered.length} दिखाई जा रही हैं`
+                  :`Showing ${totalVisible} of ${filtered.length}`}
+              </span>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {filtered.length===0&&(
+            <div style={{textAlign:"center",padding:"40px 20px",color:"#aaa"}}>
+              <div style={{fontSize:44,marginBottom:12}}>🔍</div>
+              <div style={{fontSize:14,fontWeight:600,fontFamily:bf,color:th.text}}>{t.noMatchTitle}</div>
+              <div style={{fontSize:12,color:th.textSub,marginTop:6,fontFamily:bf}}>{t.noMatchSub}</div>
+            </div>
+          )}
+
+        </div>
       </div>
 
-      {/* State picker bottom sheet */}
+      {/* State picker */}
       {showStatePicker&&(
         <StatePickerSheet
           selectedState={selectedState}
