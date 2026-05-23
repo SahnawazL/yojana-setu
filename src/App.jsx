@@ -13,7 +13,7 @@ import AdminDashboard from "./AdminDashboard.jsx";
 
 // ─── ADMIN UID ─────────────────────────────────────────────────────────────────
 // Replace with your Firebase UID. Find it: Firebase Console → Auth → Users → copy UID
-const ADMIN_UID = "YOUR_ADMIN_UID_HERE";
+const ADMIN_UID = "A3V8OsHYFAZPv8WNfh5a2ueOl632";
 
 // ─── COUNT-UP HOOK ─────────────────────────────────────────────────────────────
 function useCountUp(targets, trigger, duration=1400){
