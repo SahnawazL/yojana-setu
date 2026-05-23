@@ -549,16 +549,16 @@ function SchemeCoverageTab({ dark }) {
   const [sortMode, setSortMode] = useState("count"); // "count" | "alpha"
 
   // Build per-state and central counts from SCHEME_DB
+  // Structure: scope:"national" → central | scope:"state" + state:"State Name" → per-state
   const { centralCount, stateCounts, totalSchemes } = useMemo(() => {
     const counts = {};
     let central = 0;
     const all = Array.isArray(SCHEME_DB) ? SCHEME_DB : Object.values(SCHEME_DB || {});
     all.forEach(scheme => {
-      const scope = scheme.scope || scheme.state || "";
-      if (scope === "national" || scope === "" || scope === "central") {
+      if (scheme.scope === "national") {
         central++;
-      } else {
-        counts[scope] = (counts[scope] || 0) + 1;
+      } else if (scheme.scope === "state" && scheme.state) {
+        counts[scheme.state] = (counts[scheme.state] || 0) + 1;
       }
     });
     return { centralCount: central, stateCounts: counts, totalSchemes: all.length };
