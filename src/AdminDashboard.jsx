@@ -3,7 +3,7 @@
 // sorting, pagination, filtered CSV export, refresh, more metrics
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase.js";
 import { SCHEME_DB, INDIA_STATES } from "./schemesData.js";
 
@@ -43,7 +43,17 @@ const INC_LABELS = {
 const AGE_LABELS = {
   below18:"< 18", "18to35":"18–35", "35to60":"35–60", above60:"60+",
 };
-const AREA_LABELS = { rural:"Rural", urban:"Urban", semi:"Semi-Urban" };
+const AREA_LABELS     = { rural:"Rural", urban:"Urban", semi:"Semi-Urban" };
+const GENDER_LABELS   = { male:"Male 👨", female:"Female 👩", other:"Other 🧑" };
+const RATION_LABELS   = { none:"None / N/A 🚫", apl:"APL", bpl:"BPL 🟡", aay:"AAY — Antyodaya 🔴" };
+const MARITAL_LABELS  = { single:"Single", married:"Married 💍", widowed:"Widowed 🕊️", divorced:"Divorced" };
+const HOUSE_LABELS    = { yes:"Owns House ✅", no:"Needs Housing ❌", kutcha:"Kutcha / Temporary" };
+const DISAB_LABELS    = { none:"No Disability ✅", physical:"Physical 🦽", visual:"Visual 👁", hearing:"Hearing 🦻", intellectual:"Intellectual 🧠" };
+const CHILDREN_LABELS = { "0":"No children", "1":"1 child", "2":"2 children", "3plus":"3 or more" };
+const LAND_LABELS     = { below1:"< 1 Acre", "1to2":"1–2 Acres", "2to5":"2–5 Acres", "5plus":"5+ Acres" };
+const KISAN_LABELS    = { yes:"Has KCC ✅", no:"No KCC" };
+const EDUC_LABELS     = { class1to8:"Class 1–8", class9to12:"Class 9–12", undergrad:"Undergraduate", postgrad:"Postgraduate" };
+const INST_LABELS     = { government:"Government 🏛️", private:"Private 🏫" };
 
 const DONUT_COLORS = [NAVY, SAFFRON, IND_GREEN, VIOLET, PINK, GOOGLE_B, "#F59E0B", "#10B981"];
 
@@ -256,18 +266,45 @@ function UserDrawer({ user, dark, onClose }) {
   if (!user) return null;
   const initial = (user.name || "?").charAt(0).toUpperCase();
 
+  const isFarmer  = user.occupation === "farmer";
+  const isStudent = user.occupation === "student";
+
   const fields = [
-    { label:"Phone",      value: user.phone   || "—" },
-    { label:"Email",      value: user.email   || "—" },
-    { label:"State",      value: user.state   || "—" },
-    { label:"Occupation", value: OCC_LABELS[user.occupation] || user.occupation || "—" },
-    { label:"Income",     value: INC_LABELS[user.income]     || user.income     || "—" },
-    { label:"Age Group",  value: AGE_LABELS[user.age]        || user.age        || "—" },
-    { label:"Area",       value: AREA_LABELS[user.area]      || user.area       || "—" },
-    { label:"Housing",    value: user.house === "yes" ? "Owns House" : user.house === "no" ? "No House" : "—" },
-    { label:"Language",   value: user.lang    || "—" },
-    { label:"Joined",     value: formatDate(user.createdAt) },
-    { label:"Last Seen",  value: formatDate(user.lastSeen) },
+    // ── Contact ──────────────────────────────────────────────────────────
+    { label:"📱 Phone",      value: user.phone  ? `+91 ${user.phone}` : "—",  highlight: !!user.phone },
+    { label:"✉️ Email",      value: user.email  || "—" },
+    // ── Personal ─────────────────────────────────────────────────────────
+    { label:"⚧ Gender",     value: GENDER_LABELS[user.gender]  || user.gender  || "—" },
+    { label:"🎂 Age Group",  value: AGE_LABELS[user.age]        || user.age     || "—" },
+    { label:"💍 Marital",   value: MARITAL_LABELS[user.marital] || user.marital || "—" },
+    // ── Location ─────────────────────────────────────────────────────────
+    { label:"📍 State",      value: user.state  || "—" },
+    { label:"🏘️ Area",       value: AREA_LABELS[user.area]     || user.area    || "—" },
+    // ── Socio-economic ───────────────────────────────────────────────────
+    { label:"💼 Occupation", value: OCC_LABELS[user.occupation] || user.occupation || "—" },
+    { label:"💰 Income",     value: INC_LABELS[user.income]     || user.income     || "—" },
+    { label:"🏠 Housing",    value: HOUSE_LABELS[user.house]    || user.house      || "—" },
+    { label:"🪪 Ration Card",value: RATION_LABELS[user.ration]  || user.ration     || "—" },
+    // ── Welfare ──────────────────────────────────────────────────────────
+    { label:"♿ Disability",  value: DISAB_LABELS[user.disability]  || user.disability  || "—" },
+    // ── Family ───────────────────────────────────────────────────────────
+    { label:"👨‍👩‍👧 Children",   value: CHILDREN_LABELS[user.numChildren] || user.numChildren || "—" },
+    ...(user.numChildren && user.numChildren !== "0"
+      ? [{ label:"👧 Girl Child", value: user.hasGirls === "yes" ? "Yes ✅" : user.hasGirls === "no" ? "No" : "—" }]
+      : []),
+    // ── Farmer-specific ──────────────────────────────────────────────────
+    ...(isFarmer ? [
+      { label:"🌾 Land Holding", value: LAND_LABELS[user.landHolding]  || user.landHolding  || "—" },
+      { label:"💳 Kisan Card",   value: KISAN_LABELS[user.kisanCard]   || user.kisanCard    || "—" },
+    ] : []),
+    // ── Student-specific ─────────────────────────────────────────────────
+    ...(isStudent ? [
+      { label:"🎓 Education",    value: EDUC_LABELS[user.educationLevel]  || user.educationLevel  || "—" },
+      { label:"🏫 Institution",  value: INST_LABELS[user.institutionType] || user.institutionType || "—" },
+    ] : []),
+    // ── Account ──────────────────────────────────────────────────────────
+    { label:"🗓 Joined",     value: formatDate(user.createdAt) },
+    { label:"🟢 Last Seen",  value: formatDate(user.lastSeen)  },
   ];
 
   return (
@@ -327,14 +364,24 @@ function UserDrawer({ user, dark, onClose }) {
 
         {/* Fields grid */}
         <div style={{ padding:"16px 20px", display:"flex", flexDirection:"column", gap:0 }}>
-          {fields.map(({ label, value }) => (
+          {fields.map(({ label, value, highlight }) => (
             <div key={label} style={{
-              display:"flex", justifyContent:"space-between",
+              display:"flex", justifyContent:"space-between", alignItems:"center",
               padding:"10px 0",
               borderBottom:`1px solid ${th.border}`,
+              background: highlight ? (dark?"rgba(255,153,51,0.07)":"rgba(255,153,51,0.05)") : "transparent",
+              marginLeft: highlight ? -8 : 0,
+              marginRight: highlight ? -8 : 0,
+              paddingLeft: highlight ? 8 : 0,
+              paddingRight: highlight ? 8 : 0,
+              borderRadius: highlight ? 8 : 0,
             }}>
               <div style={{ fontSize:12, color:th.textSub }}>{label}</div>
-              <div style={{ fontSize:12, fontWeight:600, color:th.text, textAlign:"right", maxWidth:"55%" }}>
+              <div style={{
+                fontSize:12, fontWeight: highlight ? 700 : 600,
+                color: highlight ? SAFFRON : th.text,
+                textAlign:"right", maxWidth:"60%",
+              }}>
                 {value}
               </div>
             </div>
@@ -787,6 +834,292 @@ function SchemeCoverageTab({ dark }) {
   );
 }
 
+// ─── REPORTS SECTION ─────────────────────────────────────────────────────────
+const TYPE_META = {
+  issue:          { icon:"🐛", label:"Bug / Issue",       color:"#DC2626" },
+  scheme_request: { icon:"📋", label:"Scheme Request",    color:NAVY      },
+  query:          { icon:"❓", label:"Query",             color:IND_GREEN },
+  feedback:       { icon:"💡", label:"Feedback",          color:SAFFRON   },
+};
+const STATUS_META = {
+  open:        { label:"Open",        color:"#DC2626",  bg:"#FEF2F2" },
+  in_progress: { label:"In Progress", color:"#D97706",  bg:"#FFFBEB" },
+  resolved:    { label:"Resolved",    color:IND_GREEN,  bg:"#F0FDF4" },
+};
+
+function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
+  const th = THEME[dark ? "dark" : "light"];
+  const [filter, setFilter] = useState("all");      // "all" | "open" | "in_progress" | "resolved"
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [expanded, setExpanded] = useState(null);   // expanded report id
+
+  const filtered = useMemo(() => {
+    return reports.filter(r => {
+      const matchStatus = filter === "all" || r.status === filter;
+      const matchType   = typeFilter === "all" || r.type === typeFilter;
+      return matchStatus && matchType;
+    });
+  }, [reports, filter, typeFilter]);
+
+  const openCount     = reports.filter(r => r.status === "open").length;
+  const progressCount = reports.filter(r => r.status === "in_progress").length;
+  const resolvedCount = reports.filter(r => r.status === "resolved").length;
+
+  if (loading) {
+    return (
+      <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", padding:40, flexDirection:"column", gap:12 }}>
+        <div style={{ fontSize:28, animation:"spin 1s linear infinite" }}>⏳</div>
+        <div style={{ color:th.textMid, fontSize:13 }}>Loading reports…</div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding:"16px 14px", display:"flex", flexDirection:"column", gap:14 }}>
+
+      {/* Summary stats */}
+      <div style={{ display:"flex", gap:8 }}>
+        {[
+          { label:"Total",       value:reports.length,  color:NAVY      },
+          { label:"Open",        value:openCount,       color:"#DC2626" },
+          { label:"In Progress", value:progressCount,   color:"#D97706" },
+          { label:"Resolved",    value:resolvedCount,   color:IND_GREEN },
+        ].map(({ label, value, color }) => (
+          <div key={label} style={{
+            flex:1, background:th.card, border:`1.5px solid ${th.border}`,
+            borderRadius:12, padding:"10px 10px 8px",
+            borderTop:`3px solid ${color}`,
+          }}>
+            <div style={{ fontSize:20, fontWeight:800, color:th.text }}>{value}</div>
+            <div style={{ fontSize:9, color:th.textSub, marginTop:2, fontWeight:500 }}>{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Refresh button */}
+      <div style={{ display:"flex", justifyContent:"flex-end" }}>
+        <div onClick={onRefresh} style={{
+          padding:"7px 14px", borderRadius:10, fontSize:11,
+          fontWeight:700, cursor:"pointer",
+          background:th.card, border:`1.5px solid ${th.border}`, color:th.textMid,
+          display:"flex", alignItems:"center", gap:5,
+        }}>
+          ↻ Refresh
+        </div>
+      </div>
+
+      {/* Status filter pills */}
+      <div style={{ display:"flex", gap:7, flexWrap:"wrap" }}>
+        {[
+          { v:"all",         l:"All"        },
+          { v:"open",        l:"🔴 Open"    },
+          { v:"in_progress", l:"🟡 In Progress" },
+          { v:"resolved",    l:"✅ Resolved" },
+        ].map(({ v, l }) => (
+          <div key={v} onClick={() => setFilter(v)} style={{
+            padding:"6px 13px", borderRadius:20, fontSize:11, fontWeight:700,
+            cursor:"pointer", flexShrink:0,
+            background: filter === v ? NAVY : th.border,
+            color:      filter === v ? "#fff" : th.textMid,
+            border:     filter === v ? `1.5px solid ${NAVY}` : `1.5px solid transparent`,
+            transition:"all 0.18s",
+          }}>
+            {l}
+          </div>
+        ))}
+      </div>
+
+      {/* Type filter pills */}
+      <div style={{ display:"flex", gap:7, flexWrap:"wrap" }}>
+        <div onClick={() => setTypeFilter("all")} style={{
+          padding:"5px 11px", borderRadius:20, fontSize:10, fontWeight:700,
+          cursor:"pointer",
+          background: typeFilter === "all" ? SAFFRON : th.border,
+          color:      typeFilter === "all" ? "#fff"   : th.textMid,
+          transition:"all 0.18s",
+        }}>All Types</div>
+        {Object.entries(TYPE_META).map(([v, meta]) => (
+          <div key={v} onClick={() => setTypeFilter(v)} style={{
+            padding:"5px 11px", borderRadius:20, fontSize:10, fontWeight:700,
+            cursor:"pointer",
+            background: typeFilter === v ? meta.color : th.border,
+            color:      typeFilter === v ? "#fff"     : th.textMid,
+            transition:"all 0.18s",
+          }}>
+            {meta.icon} {meta.label}
+          </div>
+        ))}
+      </div>
+
+      {/* Empty state */}
+      {filtered.length === 0 && (
+        <div style={{
+          background:th.card, border:`1.5px solid ${th.border}`,
+          borderRadius:16, padding:"36px 20px",
+          textAlign:"center",
+        }}>
+          <div style={{ fontSize:36, marginBottom:10 }}>📭</div>
+          <div style={{ fontSize:14, fontWeight:700, color:th.text }}>No reports found</div>
+          <div style={{ fontSize:11, color:th.textSub, marginTop:5 }}>
+            {filter === "all" ? "Users haven't submitted any reports yet." : `No ${filter} reports.`}
+          </div>
+        </div>
+      )}
+
+      {/* Report cards */}
+      {filtered.map(report => {
+        const typeMeta   = TYPE_META[report.type]   || { icon:"📝", label:report.type, color:NAVY };
+        const statusMeta = STATUS_META[report.status] || STATUS_META.open;
+        const isExpanded = expanded === report.id;
+
+        return (
+          <div key={report.id} style={{
+            background:th.card,
+            border:`1.5px solid ${isExpanded ? typeMeta.color : th.border}`,
+            borderRadius:16, overflow:"hidden",
+            transition:"border-color 0.2s",
+            boxShadow: isExpanded ? `0 4px 20px ${typeMeta.color}22` : "none",
+          }}>
+            {/* Card header — always visible */}
+            <div
+              onClick={() => setExpanded(isExpanded ? null : report.id)}
+              style={{ padding:"14px 16px", cursor:"pointer", display:"flex", gap:12, alignItems:"flex-start" }}
+            >
+              {/* Type icon */}
+              <div style={{
+                width:38, height:38, borderRadius:11, flexShrink:0,
+                background: dark ? `${typeMeta.color}22` : `${typeMeta.color}12`,
+                border:`1.5px solid ${typeMeta.color}44`,
+                display:"flex", alignItems:"center", justifyContent:"center", fontSize:17,
+              }}>
+                {typeMeta.icon}
+              </div>
+
+              <div style={{ flex:1, minWidth:0 }}>
+                {/* Row: type + status */}
+                <div style={{ display:"flex", alignItems:"center", gap:7, marginBottom:4 }}>
+                  <span style={{
+                    fontSize:10, fontWeight:700, color:typeMeta.color,
+                    background: dark ? `${typeMeta.color}22` : `${typeMeta.color}12`,
+                    border:`1px solid ${typeMeta.color}33`,
+                    borderRadius:6, padding:"2px 7px",
+                  }}>
+                    {typeMeta.label}
+                  </span>
+                  <span style={{
+                    fontSize:10, fontWeight:700,
+                    color: dark ? statusMeta.color : statusMeta.color,
+                    background: dark ? `${statusMeta.color}22` : statusMeta.bg,
+                    border:`1px solid ${statusMeta.color}44`,
+                    borderRadius:6, padding:"2px 7px",
+                  }}>
+                    {statusMeta.label}
+                  </span>
+                </div>
+
+                {/* Subject or message preview */}
+                <div style={{
+                  fontSize:13, fontWeight:700, color:th.text,
+                  overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+                  marginBottom:3,
+                }}>
+                  {report.subject || report.message?.slice(0,60) || "No subject"}
+                </div>
+
+                {/* User + time */}
+                <div style={{ fontSize:10, color:th.textSub, display:"flex", gap:8 }}>
+                  <span>👤 {report.userName || "Anonymous"}</span>
+                  <span>🕐 {timeAgo(report.createdAt)}</span>
+                  {report.lang && <span>🌐 {report.lang === "hi" ? "Hindi" : "English"}</span>}
+                </div>
+              </div>
+
+              <div style={{ color:th.textSub, fontSize:16, flexShrink:0, transition:"transform 0.2s", transform:isExpanded?"rotate(90deg)":"rotate(0deg)" }}>›</div>
+            </div>
+
+            {/* Expanded detail */}
+            {isExpanded && (
+              <div style={{ borderTop:`1px solid ${th.border}`, padding:"14px 16px", display:"flex", flexDirection:"column", gap:12 }}>
+
+                {/* Full message */}
+                <div style={{
+                  background: dark ? "rgba(255,255,255,0.04)" : "#f8f9fa",
+                  border:`1px solid ${th.border}`, borderRadius:12,
+                  padding:"12px 14px",
+                }}>
+                  <div style={{ fontSize:10, fontWeight:700, color:th.textSub, marginBottom:6, letterSpacing:0.4 }}>MESSAGE</div>
+                  <div style={{ fontSize:13, color:th.text, lineHeight:1.65, whiteSpace:"pre-wrap" }}>
+                    {report.message || "—"}
+                  </div>
+                </div>
+
+                {/* User contact info */}
+                <div style={{
+                  background: dark ? "rgba(255,255,255,0.04)" : "#f8f9fa",
+                  border:`1px solid ${th.border}`, borderRadius:12,
+                  padding:"12px 14px", display:"flex", flexDirection:"column", gap:6,
+                }}>
+                  <div style={{ fontSize:10, fontWeight:700, color:th.textSub, marginBottom:2, letterSpacing:0.4 }}>SUBMITTED BY</div>
+                  {[
+                    { icon:"👤", label:report.userName || "Anonymous" },
+                    report.userPhone && { icon:"📱", label:`+91 ${report.userPhone}` },
+                    report.userEmail && { icon:"✉️", label:report.userEmail },
+                    { icon:"🆔", label:report.uid || "—", mono:true },
+                    { icon:"🗓", label:report.createdAt?.seconds
+                        ? new Date(report.createdAt.seconds * 1000).toLocaleString("en-IN", {
+                            day:"numeric", month:"short", year:"numeric",
+                            hour:"2-digit", minute:"2-digit",
+                          })
+                        : "—"
+                    },
+                  ].filter(Boolean).map(({ icon, label, mono }, i) => (
+                    <div key={i} style={{ display:"flex", alignItems:"center", gap:8 }}>
+                      <span style={{ fontSize:13, flexShrink:0 }}>{icon}</span>
+                      <span style={{
+                        fontSize:12, color:th.text, fontWeight:600,
+                        fontFamily: mono ? "monospace" : "inherit",
+                        wordBreak:"break-all",
+                      }}>
+                        {label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Status changer */}
+                <div>
+                  <div style={{ fontSize:10, fontWeight:700, color:th.textSub, marginBottom:8, letterSpacing:0.4 }}>
+                    UPDATE STATUS
+                  </div>
+                  <div style={{ display:"flex", gap:7 }}>
+                    {Object.entries(STATUS_META).map(([v, meta]) => (
+                      <div key={v} onClick={() => onStatusChange(report.id, v)} style={{
+                        flex:1, padding:"9px 6px",
+                        borderRadius:10, textAlign:"center",
+                        fontSize:10, fontWeight:700, cursor:"pointer",
+                        background: report.status === v
+                          ? (dark ? `${meta.color}30` : meta.bg)
+                          : th.border,
+                        color:  report.status === v ? meta.color : th.textMid,
+                        border: `1.5px solid ${report.status === v ? meta.color : "transparent"}`,
+                        transition:"all 0.18s",
+                      }}>
+                        {meta.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      <div style={{ height:8 }} />
+    </div>
+  );
+}
+
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const PAGE_SIZE = 20;
 
@@ -794,6 +1127,8 @@ export default function AdminDashboard({ onClose, dark = false }) {
   const th = THEME[dark ? "dark" : "light"];
 
   const [users,         setUsers]         = useState([]);
+  const [reports,       setReports]       = useState([]);
+  const [reportsLoading,setReportsLoading]= useState(false);
   const [loading,       setLoading]       = useState(true);
   const [refreshing,    setRefreshing]    = useState(false);
   const [error,         setError]         = useState("");
@@ -827,6 +1162,25 @@ export default function AdminDashboard({ onClose, dark = false }) {
   }, []);
 
   useEffect(() => { fetchUsers(); }, []);
+
+  // ── Fetch Reports ─────────────────────────────────────────────────────────
+  const fetchReports = useCallback(async () => {
+    setReportsLoading(true);
+    try {
+      const snap = await getDocs(collection(db, "reports"));
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setReports(data);
+    } catch (err) {
+      console.error("Failed to load reports:", err);
+    } finally {
+      setReportsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeSection === "reports" && reports.length === 0) fetchReports();
+  }, [activeSection]);
 
   // ── Computed stats ────────────────────────────────────────────────────────
   const stats = useMemo(() => {
@@ -890,9 +1244,24 @@ export default function AdminDashboard({ onClose, dark = false }) {
       : 0;
 
     const googleUsers  = users.filter(u => u.photo).length;
+    const withPhone    = users.filter(u => u.phone && u.phone.length > 0).length;
     const statesCount  = Object.keys(byState).length;
     const housedUsers  = users.filter(u => u.house === "yes").length;
     const needHousing  = users.filter(u => u.house === "no").length;
+
+    const byGender  = groupBy(users, "gender");
+    const byRation  = groupBy(users, "ration");
+    const byMarital = groupBy(users, "marital");
+    const byDisab   = groupBy(users.map(u => ({...u, disability: u.disability==="none"||!u.disability?"none":u.disability})), "disability");
+
+    const genderData = Object.entries(byGender)
+      .map(([key, value]) => ({ label: GENDER_LABELS[key]?.replace(/[👨👩🧑]/gu,"").trim() || key, value }));
+    const rationData = Object.entries(byRation)
+      .map(([key, value]) => ({ label: RATION_LABELS[key]?.replace(/[🚫🟡🔴]/gu,"").trim() || key, value }));
+    const maritalData = Object.entries(byMarital)
+      .map(([key, value]) => ({ label: MARITAL_LABELS[key]?.replace(/[💍🕊️]/gu,"").trim() || key, value }));
+    const disabData = Object.entries(byDisab)
+      .map(([key, value]) => ({ label: DISAB_LABELS[key]?.replace(/[✅🦽👁🦻🧠]/gu,"").trim() || key, value }));
 
     // 7-day signup sparkline
     const spark = Array.from({ length:7 }, (_, i) => {
@@ -909,7 +1278,8 @@ export default function AdminDashboard({ onClose, dark = false }) {
       topStates, occData, incData, areaData, ageData,
       occDonut, areaDonut,
       activeToday, activeWeek, newThisWeek, weekGrowth,
-      googleUsers, statesCount, housedUsers, needHousing, spark,
+      googleUsers, withPhone, statesCount, housedUsers, needHousing, spark,
+      genderData, rationData, maritalData, disabData,
     };
   }, [users]);
 
@@ -965,20 +1335,41 @@ export default function AdminDashboard({ onClose, dark = false }) {
 
   // ── CSV Export (filtered) ─────────────────────────────────────────────────
   const exportCSV = useCallback((list = users) => {
-    const headers = ["Name","Phone","Email","State","Occupation","Income","Age","Area","Housing","Joined","Last Seen"];
+    const headers = [
+      "Name","Phone","Email","Gender","Age Group",
+      "Marital Status","State","Area","Occupation","Income",
+      "Housing","Ration Card","Disability",
+      "Children","Girl Child",
+      "Land Holding (Farmer)","Kisan Card (Farmer)",
+      "Education Level (Student)","Institution (Student)",
+      "Joined","Last Seen","UID",
+    ];
     const rows = list.map(u => [
-      u.name || "", u.phone || "", u.email || "", u.state || "",
-      OCC_LABELS[u.occupation] || u.occupation || "",
-      INC_LABELS[u.income]     || u.income     || "",
-      AGE_LABELS[u.age]        || u.age        || "",
-      AREA_LABELS[u.area]      || u.area       || "",
-      u.house === "yes" ? "Owns House" : "Needs Housing",
-      formatDate(u.createdAt), formatDate(u.lastSeen),
+      u.name    || "",
+      u.phone   || "",
+      u.email   || "",
+      GENDER_LABELS[u.gender]?.replace(/[👨👩🧑]/gu,"").trim()       || u.gender     || "",
+      AGE_LABELS[u.age]                                               || u.age        || "",
+      MARITAL_LABELS[u.marital]?.replace(/[💍🕊️]/gu,"").trim()      || u.marital    || "",
+      u.state   || "",
+      AREA_LABELS[u.area]                                             || u.area       || "",
+      OCC_LABELS[u.occupation]                                        || u.occupation || "",
+      INC_LABELS[u.income]                                            || u.income     || "",
+      HOUSE_LABELS[u.house]?.replace(/[✅❌]/gu,"").trim()           || u.house      || "",
+      RATION_LABELS[u.ration]?.replace(/[🚫🟡🔴]/gu,"").trim()      || u.ration     || "",
+      DISAB_LABELS[u.disability]?.replace(/[✅🦽👁🦻🧠]/gu,"").trim() || u.disability || "",
+      CHILDREN_LABELS[u.numChildren]                                  || u.numChildren || "",
+      u.numChildren && u.numChildren !== "0" ? (u.hasGirls === "yes" ? "Yes" : "No") : "N/A",
+      u.occupation === "farmer"  ? (LAND_LABELS[u.landHolding]           || u.landHolding  || "") : "N/A",
+      u.occupation === "farmer"  ? (KISAN_LABELS[u.kisanCard]            || u.kisanCard    || "") : "N/A",
+      u.occupation === "student" ? (EDUC_LABELS[u.educationLevel]        || u.educationLevel  || "") : "N/A",
+      u.occupation === "student" ? (INST_LABELS[u.institutionType]       || u.institutionType || "") : "N/A",
+      formatDate(u.createdAt), formatDate(u.lastSeen), u.id || "",
     ]);
     const csv = [headers, ...rows]
       .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
       .join("\n");
-    const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + csv], { type:"text/csv;charset=utf-8;" });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement("a");
     a.href = url;
@@ -994,6 +1385,7 @@ export default function AdminDashboard({ onClose, dark = false }) {
     ["analytics", "🧮 Analytics"],
     ["activity",  "🕐 Activity"],
     ["schemes",   "🗺️ Schemes"],
+    ["reports",   "📬 Reports"],
   ];
 
   return (
@@ -1051,23 +1443,39 @@ export default function AdminDashboard({ onClose, dark = false }) {
 
         {/* Tabs */}
         <div style={{ display:"flex", gap:6, marginTop:14, overflowX:"auto", paddingBottom:1 }}>
-          {TABS.map(([id, label]) => (
-            <div key={id} onClick={() => setActiveSection(id)} style={{
-              padding:"7px 13px", borderRadius:"20px 20px 0 0",
-              fontSize:11, fontWeight:700, cursor:"pointer", flexShrink:0,
-              background: activeSection === id
-                ? "rgba(255,255,255,0.22)"
-                : "rgba(255,255,255,0.08)",
-              borderTop: activeSection === id ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent",
-              borderLeft: activeSection === id ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent",
-              borderRight: activeSection === id ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent",
-              color: activeSection === id ? "#fff" : "rgba(255,255,255,0.6)",
-              transition:"all 0.2s",
-              marginBottom: activeSection === id ? -1 : 0,
-            }}>
-              {label}
-            </div>
-          ))}
+          {TABS.map(([id, label]) => {
+            const openCount = id === "reports" ? reports.filter(r => r.status === "open").length : 0;
+            return (
+              <div key={id} onClick={() => setActiveSection(id)} style={{
+                padding:"7px 13px", borderRadius:"20px 20px 0 0",
+                fontSize:11, fontWeight:700, cursor:"pointer", flexShrink:0,
+                background: activeSection === id
+                  ? "rgba(255,255,255,0.22)"
+                  : "rgba(255,255,255,0.08)",
+                borderTop: activeSection === id ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent",
+                borderLeft: activeSection === id ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent",
+                borderRight: activeSection === id ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent",
+                color: activeSection === id ? "#fff" : "rgba(255,255,255,0.6)",
+                transition:"all 0.2s",
+                marginBottom: activeSection === id ? -1 : 0,
+                position:"relative",
+              }}>
+                {label}
+                {openCount > 0 && (
+                  <span style={{
+                    position:"absolute", top:2, right:2,
+                    minWidth:14, height:14,
+                    background:"#DC2626", color:"#fff",
+                    borderRadius:7, fontSize:8, fontWeight:800,
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    padding:"0 3px",
+                  }}>
+                    {openCount}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -1327,16 +1735,19 @@ export default function AdminDashboard({ onClose, dark = false }) {
               { label:"Google Sign-ins", value:stats.googleUsers,
                 pct: users.length ? Math.round(stats.googleUsers/users.length*100) : 0,
                 color:GOOGLE_B },
+              { label:"📱 Have Phone", value:stats.withPhone,
+                pct: users.length ? Math.round(stats.withPhone/users.length*100) : 0,
+                color:IND_GREEN },
               { label:"Own House", value:stats.housedUsers,
                 pct: users.length ? Math.round(stats.housedUsers/users.length*100) : 0,
-                color:IND_GREEN },
+                color:SAFFRON },
               { label:"Need Housing", value:stats.needHousing,
                 pct: users.length ? Math.round(stats.needHousing/users.length*100) : 0,
-                color:SAFFRON },
+                color:VIOLET },
             ].map(({ label, value, pct, color }) => (
               <div key={label} style={{
                 background:th.card, border:`1.5px solid ${th.border}`,
-                borderRadius:12, padding:"10px 14px", flex:1, minWidth:100,
+                borderRadius:12, padding:"10px 14px", flex:1, minWidth:90,
                 borderLeft:`3px solid ${color}`,
               }}>
                 <div style={{ fontSize:18, fontWeight:800, color:th.text }}>{value}</div>
@@ -1344,6 +1755,38 @@ export default function AdminDashboard({ onClose, dark = false }) {
                 <div style={{ fontSize:9, color, fontWeight:700, marginTop:2 }}>{pct}%</div>
               </div>
             ))}
+          </div>
+
+          {/* Gender breakdown */}
+          {stats.genderData.length > 0 && (
+            <div style={{ background:th.card, border:`1.5px solid ${th.border}`, borderRadius:16, padding:"14px 16px" }}>
+              <div style={{ fontSize:13, fontWeight:800, color:th.text, marginBottom:12 }}>⚧ Gender Breakdown</div>
+              <DonutChart data={stats.genderData} dark={dark} />
+            </div>
+          )}
+
+          {/* Ration Card breakdown */}
+          {stats.rationData.length > 0 && (
+            <div style={{ background:th.card, border:`1.5px solid ${th.border}`, borderRadius:16, padding:"14px 16px" }}>
+              <div style={{ fontSize:13, fontWeight:800, color:th.text, marginBottom:12 }}>🪪 Ration Card Types</div>
+              <BarChart data={stats.rationData} color={SAFFRON} dark={dark} />
+            </div>
+          )}
+
+          {/* Marital + Disability side by side */}
+          <div style={{ display:"flex", gap:12 }}>
+            {stats.maritalData.length > 0 && (
+              <div style={{ flex:1, background:th.card, border:`1.5px solid ${th.border}`, borderRadius:16, padding:"14px 14px" }}>
+                <div style={{ fontSize:12, fontWeight:800, color:th.text, marginBottom:10 }}>💍 Marital Status</div>
+                <BarChart data={stats.maritalData} color={PINK} dark={dark} />
+              </div>
+            )}
+            {stats.disabData.length > 0 && (
+              <div style={{ flex:1, background:th.card, border:`1.5px solid ${th.border}`, borderRadius:16, padding:"14px 14px" }}>
+                <div style={{ fontSize:12, fontWeight:800, color:th.text, marginBottom:10 }}>♿ Disability</div>
+                <BarChart data={stats.disabData} color={VIOLET} dark={dark} />
+              </div>
+            )}
           </div>
 
           {/* Occupation × Area cross-tab */}
@@ -1458,6 +1901,29 @@ export default function AdminDashboard({ onClose, dark = false }) {
       {/* ══ SCHEMES COVERAGE ══ */}
       {!loading && !error && activeSection === "schemes" && (
         <SchemeCoverageTab dark={dark} />
+      )}
+
+      {/* ══ REPORTS / QUERIES ══ */}
+      {activeSection === "reports" && (
+        <ReportsSection
+          reports={reports}
+          loading={reportsLoading}
+          dark={dark}
+          onRefresh={fetchReports}
+          onStatusChange={async (reportId, newStatus) => {
+            try {
+              await updateDoc(doc(db, "reports", reportId), {
+                status: newStatus,
+                updatedAt: serverTimestamp(),
+              });
+              setReports(prev =>
+                prev.map(r => r.id === reportId ? { ...r, status: newStatus } : r)
+              );
+            } catch (err) {
+              console.error("Status update failed:", err);
+            }
+          }}
+        />
       )}
 
       {/* User Detail Drawer */}

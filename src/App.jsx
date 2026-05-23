@@ -7,9 +7,10 @@ import {
 } from "./schemesData.js";
 import { auth, db } from "./firebase.js";
 import { RecaptchaVerifier, signInWithPhoneNumber, signOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
-import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp, collection, addDoc } from "firebase/firestore";
 import AIChat from "./AIChat.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
+import ReportIssueSheet from "./ReportIssueSheet.jsx";
 
 // ─── ADMIN UID ─────────────────────────────────────────────────────────────────
 // Replace with your Firebase UID. Find it: Firebase Console → Auth → Users → copy UID
@@ -334,6 +335,8 @@ const PT = {
     invalidEmail:"Please enter a valid email address",
     darkLabel:"Dark Mode",
     darkSub:(on)=>on?"On":"Off",
+    reportLabel:"Report / Query",
+    reportSub:"Share an issue or ask something",
     loginBenefits:[
       {icon:"🎯", title:"Matched Schemes Saved",    sub:"Your qualifying schemes auto-saved to account"},
       {icon:"🤖", title:"Personalized AI Answers",  sub:"AI knows your profile, gives tailored replies"},
@@ -443,6 +446,8 @@ const PT = {
     invalidEmail:"कृपया सही ईमेल दर्ज करें",
     darkLabel:"डार्क मोड",
     darkSub:(on)=>on?"चालू":"बंद",
+    reportLabel:"रिपोर्ट / सवाल",
+    reportSub:"कोई समस्या बताएं या सवाल पूछें",
     loginBenefits:[
       {icon:"🎯", title:"मिलान योजनाएं सेव",        sub:"पात्र योजनाएं अकाउंट में ऑटो-सेव"},
       {icon:"🤖", title:"पर्सनल AI जवाब",           sub:"AI प्रोफाइल देखकर सटीक जवाब देता है"},
@@ -1729,6 +1734,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   const [showPassword,setShowPassword]=useState(false);
   const [emailTab,setEmailTab]=useState("signin"); // "signin" | "signup"
   const [emailLoading,setEmailLoading]=useState(false);
+  const [showReport,setShowReport]=useState(false);
   const otpRefs=useRef([]);
   const verifierRef=useRef(null);
   const confirmationRef=useRef(null);
@@ -2969,6 +2975,24 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
             <div style={{color:"#ccc",fontSize:18}}>›</div>
           </div>
 
+          {/* Report / Query — visible to all logged-in users */}
+          {auth.currentUser&&(
+            <div onClick={()=>{haptic();setShowReport(true);}}
+              style={{padding:"13px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:36,height:36,borderRadius:10,
+                  background:"linear-gradient(135deg,rgba(255,153,51,0.15),rgba(0,53,128,0.12))",
+                  border:"1.5px solid rgba(255,153,51,0.3)",
+                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>📬</div>
+                <div>
+                  <div style={{fontSize:14,fontWeight:600,color:th.text,fontFamily:bf}}>{pt.reportLabel}</div>
+                  <div style={{fontSize:10,color:th.textSub,marginTop:1}}>{pt.reportSub}</div>
+                </div>
+              </div>
+              <div style={{color:th.textSub,fontSize:18}}>›</div>
+            </div>
+          )}
+
           {/* Admin Panel — only visible to admin */}
           {isAdmin&&(
             <div onClick={()=>{haptic();onAdminOpen?.();}}
@@ -2998,6 +3022,16 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           </div>
         </div>
       </div>
+
+      {/* Report / Query Sheet */}
+      {showReport&&(
+        <ReportIssueSheet
+          lang={lang}
+          dark={dark}
+          userProfile={profile}
+          onClose={()=>setShowReport(false)}
+        />
+      )}
     </div>
   );
 }
