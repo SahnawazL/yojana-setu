@@ -1860,6 +1860,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   };
 
   const handleEdit=()=>{
+    setPhone(profile?.phone||"");            // restore phone for editing
     setSetupName(profile?.name||"");setSetupGender(profile?.gender||"");
     setSetupState(profile?.state||"");setStateSearch(profile?.state||"");
     setSetupCat(profile?.occupation||"");
@@ -2300,6 +2301,54 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
               })}
             </div>
           </div>
+
+          {/* Optional phone number — shown for Google/email users; read-only for phone-auth users */}
+          {(()=>{
+            const isPhoneUser=auth.currentUser?.providerData?.some(p=>p.providerId==="phone");
+            const phoneValid=phone.length===0||phone.length===10;
+            return(
+              <div style={{marginBottom:22}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                  <div style={{fontSize:12,fontWeight:700,color:th.textMid,fontFamily:bf,letterSpacing:0.3}}>
+                    📱 {isHindi?"मोबाइल नंबर":"Mobile Number"}
+                  </div>
+                  {!isPhoneUser&&(
+                    <span style={{fontSize:10,fontWeight:500,color:th.textSub,background:th.pillBg,borderRadius:20,padding:"1px 8px",border:`1px solid ${th.border3}`}}>
+                      {isHindi?"वैकल्पिक":"optional"}
+                    </span>
+                  )}
+                </div>
+                {!isPhoneUser&&(
+                  <div style={{fontSize:10.5,color:th.textSub,marginBottom:8,fontFamily:bf,lineHeight:1.45}}>
+                    {isHindi?"योजना की समय-सीमा के SMS अलर्ट पाने के लिए जोड़ें":"Add to receive SMS alerts about scheme deadlines"}
+                  </div>
+                )}
+                {isPhoneUser?(
+                  /* Phone-auth users: show their number read-only */
+                  <div style={{display:"flex",alignItems:"center",border:`2px solid ${th.border3}`,borderRadius:14,overflow:"hidden",background:th.card2,opacity:0.75}}>
+                    <div style={{padding:"13px 12px",borderRight:`1.5px solid ${th.border3}`,fontSize:14,fontWeight:700,color:th.textMid,flexShrink:0}}>+91</div>
+                    <div style={{flex:1,padding:"13px 14px",fontSize:15,color:th.text,fontFamily:"monospace",letterSpacing:1}}>
+                      {phone||"—"}
+                    </div>
+                    <div style={{paddingRight:12,fontSize:13,fontWeight:700,color:"#138808"}}>🔒</div>
+                  </div>
+                ):(
+                  /* Google/email users: optional editable field */
+                  <div style={{display:"flex",alignItems:"center",border:`2px solid ${phone.length===10?"#138808":phone.length>0&&!phoneValid?"#e53e3e":th.border3}`,borderRadius:14,overflow:"hidden",transition:"border-color 0.2s"}}>
+                    <div style={{padding:"13px 12px",borderRight:`1.5px solid ${th.border3}`,background:th.card2,fontSize:14,fontWeight:700,color:th.textMid,flexShrink:0}}>+91</div>
+                    <input
+                      type="tel" inputMode="numeric" maxLength={10}
+                      value={phone}
+                      onChange={e=>setPhone(e.target.value.replace(/\D/g,"").slice(0,10))}
+                      placeholder={isHindi?"10 अंकों का नंबर":"10-digit number"}
+                      style={{flex:1,border:"none",outline:"none",fontSize:15,padding:"13px 14px",background:"transparent",fontFamily:bf,color:th.text,letterSpacing:1}}
+                    />
+                    {phone.length===10&&<div style={{paddingRight:12,fontSize:16,color:"#138808"}}>✓</div>}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           <div onClick={()=>{if(canNext)haptic();handleSetup1Next();}}
             style={{background:canNext?"linear-gradient(135deg,#FF9933,#FF8C00)":"#ddd",borderRadius:14,padding:15,textAlign:"center",fontSize:15,fontWeight:700,color:"#fff",cursor:canNext?"pointer":"default",fontFamily:bf,boxShadow:canNext?"0 6px 22px rgba(255,153,51,0.42)":"none",transition:"all 0.22s"}}>
@@ -2775,11 +2824,12 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
 
   // ── STAGE: DASHBOARD ─────────────────────────────────────────────────────────
   const initials=(profile?.name||"U").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
-  const maskedPhone=profile?.phone
-    ?`+91 ${profile.phone.slice(0,5)} ••••••`
-    :profile?.email
-      ?profile.email
-      :`+91 ${phone.slice(0,5)||"•••••"} ••••••`;
+  const maskedPhone=
+    profile?.phone
+      ?`+91 ${profile.phone.slice(0,5)} ••••••`
+      :profile?.email
+        ?profile.email
+        :null;  // nothing to show if no phone and no email
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",background:th.appBg,overflowY:"auto"}}>
       {/* Dashboard header */}
@@ -2790,12 +2840,14 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
 
         {/* Avatar row */}
         <div style={{display:"flex",alignItems:"center",gap:15,marginBottom:18}}>
-          <div style={{width:62,height:62,borderRadius:"50%",background:"linear-gradient(135deg,#FF9933,#FF8C00)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:800,color:"#fff",border:"3px solid rgba(255,255,255,0.38)",boxShadow:"0 4px 18px rgba(0,0,0,0.22)",flexShrink:0,letterSpacing:-1}}>
-            {initials}
+          <div style={{width:62,height:62,borderRadius:"50%",overflow:"hidden",background:"linear-gradient(135deg,#FF9933,#FF8C00)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:800,color:"#fff",border:"3px solid rgba(255,255,255,0.38)",boxShadow:"0 4px 18px rgba(0,0,0,0.22)",flexShrink:0,letterSpacing:-1}}>
+            {profile?.photo
+              ?<img src={profile.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              :initials}
           </div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{color:"#fff",fontSize:18,fontWeight:800,fontFamily:bf,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile?.name}</div>
-            <div style={{color:"rgba(255,255,255,0.68)",fontSize:12,marginTop:4,letterSpacing:0.4,fontFamily:"monospace"}}>{maskedPhone}</div>
+            {maskedPhone&&<div style={{color:"rgba(255,255,255,0.68)",fontSize:12,marginTop:4,letterSpacing:0.4,fontFamily:"monospace"}}>{maskedPhone}</div>}
           </div>
         </div>
 
