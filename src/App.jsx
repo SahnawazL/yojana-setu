@@ -337,13 +337,16 @@ const PT = {
 };
 
 // ─── LANG TOGGLE ───────────────────────────────────────────────────────────────
-function LangToggle({lang,onToggle}){
+function LangToggle({lang,onToggle,dark=false}){
   const isHindi=lang==="hi";
+  const trackBg  = dark ? "rgba(255,255,255,0.15)" : "#e4e4e4";
+  const trackBdr = dark ? "rgba(255,255,255,0.35)" : "#c8c8c8";
+  const inactiveC= dark ? "rgba(255,255,255,0.6)"  : "#999";
   return(
-    <button onClick={()=>{haptic();onToggle();}} style={{display:"flex",alignItems:"center",background:"rgba(255,255,255,0.15)",border:"1.5px solid rgba(255,255,255,0.35)",borderRadius:22,padding:"3px 4px",cursor:"pointer",height:34,width:72,position:"relative",overflow:"hidden",flexShrink:0}}>
-      <div style={{position:"absolute",top:3,left:isHindi?"calc(50% - 2px)":3,width:"calc(50% - 2px)",bottom:3,background:"#fff",borderRadius:16,transition:"left 0.28s",boxShadow:"0 1px 4px rgba(0,0,0,0.2)",zIndex:0}}/>
-      <span style={{flex:1,textAlign:"center",fontSize:11,fontWeight:700,color:!isHindi?"#FF8C00":"rgba(255,255,255,0.7)",position:"relative",zIndex:1}}>EN</span>
-      <span style={{flex:1,textAlign:"center",fontSize:11,fontWeight:700,color:isHindi?"#FF8C00":"rgba(255,255,255,0.7)",position:"relative",zIndex:1}}>हिं</span>
+    <button onClick={()=>{haptic();onToggle();}} style={{display:"flex",alignItems:"center",background:trackBg,border:`1.5px solid ${trackBdr}`,borderRadius:22,padding:"3px 4px",cursor:"pointer",height:34,width:72,position:"relative",overflow:"hidden",flexShrink:0}}>
+      <div style={{position:"absolute",top:3,left:isHindi?"calc(50% - 2px)":3,width:"calc(50% - 2px)",bottom:3,background:"#fff",borderRadius:16,transition:"left 0.28s",boxShadow:"0 1px 6px rgba(0,0,0,0.2)",zIndex:0}}/>
+      <span style={{flex:1,textAlign:"center",fontSize:11,fontWeight:700,color:!isHindi?"#FF8C00":inactiveC,position:"relative",zIndex:1}}>EN</span>
+      <span style={{flex:1,textAlign:"center",fontSize:11,fontWeight:700,color:isHindi?"#FF8C00":inactiveC,position:"relative",zIndex:1}}>हिं</span>
     </button>
   );
 }
@@ -2137,7 +2140,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                 <div style={{fontSize:11,color:th.textSub,marginTop:1}}>{lang==="en"?"English":"हिंदी"}</div>
               </div>
             </div>
-            <LangToggle lang={lang} onToggle={toggleLang}/>
+            <LangToggle lang={lang} onToggle={toggleLang} dark={dark}/>
           </div>
 
           {/* Dark Mode */}
@@ -2788,7 +2791,7 @@ export default function YojanaSetu(){
                   <div style={{color:"rgba(255,255,255,0.75)",fontSize:10.5}}>🇮🇳 {t.appSub}</div>
                 </div>
               </div>
-              <LangToggle lang={lang} onToggle={toggleLang}/>
+              <LangToggle lang={lang} onToggle={toggleLang} dark={true}/>
             </div>
             <div style={{padding:"0 20px 16px"}}>
               <div style={{color:"rgba(255,255,255,0.85)",fontSize:13,marginBottom:2}}>{t.greeting(profile?.name)}</div>
