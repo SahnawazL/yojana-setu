@@ -246,9 +246,34 @@ const PT = {
     demoNote:"Enter any 6-digit OTP (UI Demo)",
     step1Title:"Your Name & Gender",
     step2Title:"State & Category",
-    step1of2:"STEP 1 OF 2",step2of2:"STEP 2 OF 2",
+    step1of3:"STEP 1 OF 3",step2of3:"STEP 2 OF 3",step3of3:"STEP 3 OF 3",
+    step3Title:"Welfare Details",
     fillOnce:"Fill once · Used everywhere",
     prefilled:"Pre-filled from your eligibility check ✓",
+    rationLabel:"Ration Card Type",
+    rations:[
+      {v:"none",l:"None / Not Applicable 🚫"},
+      {v:"apl", l:"APL — Above Poverty Line"},
+      {v:"bpl", l:"BPL — Below Poverty Line 🟡"},
+      {v:"aay", l:"AAY — Antyodaya (Poorest) 🔴"},
+    ],
+    disabilityLabel:"Any Disability in Family?",
+    disabilityNone:"No Disability",
+    disabilityYes:"Yes — Has Disability ♿",
+    disabilityTypeLabel:"Disability Type",
+    disabilityTypes:[
+      {v:"physical",    l:"Physical / Locomotor 🦽"},
+      {v:"visual",      l:"Visual Impairment 👁"},
+      {v:"hearing",     l:"Hearing / Speech 🦻"},
+      {v:"intellectual",l:"Intellectual / Mental 🧠"},
+    ],
+    maritalLabel:"Marital Status",
+    maritals:[
+      {v:"single",   l:"Single / Unmarried"},
+      {v:"married",  l:"Married 💍"},
+      {v:"widowed",  l:"Widowed 🕊️"},
+      {v:"divorced", l:"Divorced / Separated"},
+    ],
     nameLabel:"Full Name",namePh:"Enter your full name",
     genderLabel:"Gender",
     genders:[{v:"male",l:"Male 👨"},{v:"female",l:"Female 👩"},{v:"other",l:"Other 🧑"}],
@@ -297,9 +322,34 @@ const PT = {
     demoNote:"कोई भी 6 अंक दर्ज करें (UI Demo)",
     step1Title:"आपका नाम और लिंग",
     step2Title:"राज्य और श्रेणी",
-    step1of2:"चरण 1 / 2",step2of2:"चरण 2 / 2",
+    step1of3:"चरण 1 / 3",step2of3:"चरण 2 / 3",step3of3:"चरण 3 / 3",
+    step3Title:"कल्याण विवरण",
     fillOnce:"एक बार भरें · हर जगह काम आएगा",
     prefilled:"पात्रता जांच से पहले से भरा गया ✓",
+    rationLabel:"राशन कार्ड प्रकार",
+    rations:[
+      {v:"none",l:"कोई नहीं / लागू नहीं 🚫"},
+      {v:"apl", l:"APL — गरीबी रेखा से ऊपर"},
+      {v:"bpl", l:"BPL — गरीबी रेखा से नीचे 🟡"},
+      {v:"aay", l:"AAY — अंत्योदय (अतिगरीब) 🔴"},
+    ],
+    disabilityLabel:"परिवार में कोई दिव्यांग?",
+    disabilityNone:"कोई दिव्यांगता नहीं",
+    disabilityYes:"हाँ — दिव्यांगता है ♿",
+    disabilityTypeLabel:"दिव्यांगता का प्रकार",
+    disabilityTypes:[
+      {v:"physical",    l:"शारीरिक / अस्थि 🦽"},
+      {v:"visual",      l:"दृष्टि बाधित 👁"},
+      {v:"hearing",     l:"श्रवण / वाणी 🦻"},
+      {v:"intellectual",l:"बौद्धिक / मानसिक 🧠"},
+    ],
+    maritalLabel:"वैवाहिक स्थिति",
+    maritals:[
+      {v:"single",   l:"अविवाहित"},
+      {v:"married",  l:"विवाहित 💍"},
+      {v:"widowed",  l:"विधवा / विधुर 🕊️"},
+      {v:"divorced", l:"तलाकशुदा / अलग"},
+    ],
     nameLabel:"पूरा नाम",namePh:"अपना पूरा नाम लिखें",
     genderLabel:"लिंग",
     genders:[{v:"male",l:"पुरुष 👨"},{v:"female",l:"महिला 👩"},{v:"other",l:"अन्य 🧑"}],
@@ -1483,6 +1533,9 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   const [setupState,setSetupState]=useState(profile?.state||"");
   const [stateSearch,setStateSearch]=useState(profile?.state||"");
   const [setupCat,setSetupCat]=useState(profile?.occupation||"");
+  const [setupRation,    setSetupRation]    =useState(profile?.ration    ||"");
+  const [setupDisability,setSetupDisability]=useState(profile?.disability||"none");
+  const [setupMarital,   setSetupMarital]   =useState(profile?.marital   ||"");
   const [authLoading,setAuthLoading]=useState(false);
   const [authError,setAuthError]=useState("");
   const [googleLoading,setGoogleLoading]=useState(false);
@@ -1571,8 +1624,13 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setStage("setup2");
   };
 
-  const handleSetup2Save=async()=>{
+  const handleSetup2Next=()=>{
     if(!setupState||!setupCat)return;
+    setStage("setup3");
+  };
+
+  const handleSetup3Save=async()=>{
+    if(!setupRation||!setupDisability||!setupMarital)return;
     const isNewUser=!profile;
     const profileData={
       name:setupName.trim(),phone,gender:setupGender,
@@ -1581,6 +1639,9 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       house:savedAnswers?.house||"no",
       age:savedAnswers?.age||"18to35",
       area:savedAnswers?.area||"rural",
+      ration:setupRation,
+      disability:setupDisability,
+      marital:setupMarital,
       ...(googleEmail?{email:googleEmail}:{}),
       ...(googlePhoto?{photo:googlePhoto}:{}),
     };
@@ -1604,6 +1665,9 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setSetupName(profile?.name||"");setSetupGender(profile?.gender||"");
     setSetupState(profile?.state||"");setStateSearch(profile?.state||"");
     setSetupCat(profile?.occupation||"");
+    setSetupRation(profile?.ration||"");
+    setSetupDisability(profile?.disability||"none");
+    setSetupMarital(profile?.marital||"");
     setStage("setup1");
   };
 
@@ -1612,6 +1676,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setProfile(null);
     setPhone("");setOtp(["","","","","",""]);
     setSetupName("");setSetupGender("");setSetupState("");setStateSearch("");setSetupCat("");
+    setSetupRation("");setSetupDisability("none");setSetupMarital("");
     setGoogleEmail("");setGooglePhoto("");setEmailInput("");setPasswordInput("");setShowPassword(false);setEmailTab("signin");
     setStage("phone");
   };
@@ -1959,12 +2024,13 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     return(
       <div style={{flex:1,display:"flex",flexDirection:"column",background:th.appBg,overflowY:"auto"}}>
         <TriHeader bg="linear-gradient(135deg,#003580 0%,#1a56db 100%)">
-          {/* Progress bar */}
+          {/* Progress bar — 3 steps */}
           <div style={{display:"flex",gap:6,marginBottom:18}}>
             <div style={{height:4,flex:1,borderRadius:4,background:"#FF9933",boxShadow:"0 0 8px rgba(255,153,51,0.5)"}}/>
             <div style={{height:4,flex:1,borderRadius:4,background:"rgba(255,255,255,0.22)"}}/>
+            <div style={{height:4,flex:1,borderRadius:4,background:"rgba(255,255,255,0.22)"}}/>
           </div>
-          <div style={{color:"rgba(255,255,255,0.65)",fontSize:10.5,fontWeight:700,letterSpacing:0.9,marginBottom:5,textTransform:"uppercase"}}>{pt.step1of2}</div>
+          <div style={{color:"rgba(255,255,255,0.65)",fontSize:10.5,fontWeight:700,letterSpacing:0.9,marginBottom:5,textTransform:"uppercase"}}>{pt.step1of3}</div>
           <div style={{color:"#fff",fontSize:20,fontWeight:800,fontFamily:bf,marginBottom:3}}>{pt.step1Title}</div>
           <div style={{color:"rgba(255,255,255,0.65)",fontSize:12,fontFamily:bf}}>{pt.fillOnce}</div>
         </TriHeader>
@@ -2012,8 +2078,9 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           <div style={{display:"flex",gap:6,marginBottom:18}}>
             <div style={{height:4,flex:1,borderRadius:4,background:"#FF9933",boxShadow:"0 0 8px rgba(255,153,51,0.5)"}}/>
             <div style={{height:4,flex:1,borderRadius:4,background:"#FF9933",boxShadow:"0 0 8px rgba(255,153,51,0.5)"}}/>
+            <div style={{height:4,flex:1,borderRadius:4,background:"rgba(255,255,255,0.22)"}}/>
           </div>
-          <div style={{color:"rgba(255,255,255,0.65)",fontSize:10.5,fontWeight:700,letterSpacing:0.9,marginBottom:5,textTransform:"uppercase"}}>{pt.step2of2}</div>
+          <div style={{color:"rgba(255,255,255,0.65)",fontSize:10.5,fontWeight:700,letterSpacing:0.9,marginBottom:5,textTransform:"uppercase"}}>{pt.step2of3}</div>
           <div style={{color:"#fff",fontSize:20,fontWeight:800,fontFamily:bf,marginBottom:3}}>{pt.step2Title}</div>
           {hasPrefill&&<div style={{color:"rgba(255,220,100,0.92)",fontSize:11,fontFamily:bf,marginTop:4}}>✓ {pt.prefilled}</div>}
         </TriHeader>
@@ -2061,7 +2128,164 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
               style={{flex:1,padding:14,borderRadius:14,border:`1.5px solid ${th.border3}`,background:th.card,textAlign:"center",fontSize:13,fontWeight:600,color:th.textMid,cursor:"pointer",fontFamily:bf}}>
               {pt.backBtn}
             </div>
-            <div onClick={()=>{if(canSave)haptic([50,60,50]);handleSetup2Save();}}
+            <div onClick={()=>{if(canSave)haptic();handleSetup2Next();}}
+              style={{flex:2,background:canSave?"linear-gradient(135deg,#FF9933,#FF8C00)":"#ddd",borderRadius:14,padding:14,textAlign:"center",fontSize:14,fontWeight:700,color:"#fff",cursor:canSave?"pointer":"default",fontFamily:bf,boxShadow:canSave?"0 6px 22px rgba(255,153,51,0.42)":"none",transition:"all 0.22s"}}>
+              {pt.nextBtn}
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // ── STAGE: SETUP 3 — Ration Card + Disability + Marital Status ──────────────
+  if(stage==="setup3"){
+    const hasDisability=setupDisability!=="none"&&setupDisability!=="";
+    const canSave=!!setupRation&&!!setupDisability&&!!setupMarital;
+    return(
+      <div style={{flex:1,display:"flex",flexDirection:"column",background:th.appBg,overflowY:"auto"}}>
+        <TriHeader bg="linear-gradient(135deg,#138808 0%,#16a34a 60%,#003580 100%)">
+          {/* Progress bar — all 3 filled */}
+          <div style={{display:"flex",gap:6,marginBottom:18}}>
+            <div style={{height:4,flex:1,borderRadius:4,background:"#FF9933",boxShadow:"0 0 8px rgba(255,153,51,0.5)"}}/>
+            <div style={{height:4,flex:1,borderRadius:4,background:"#FF9933",boxShadow:"0 0 8px rgba(255,153,51,0.5)"}}/>
+            <div style={{height:4,flex:1,borderRadius:4,background:"#FF9933",boxShadow:"0 0 8px rgba(255,153,51,0.5)"}}/>
+          </div>
+          <div style={{color:"rgba(255,255,255,0.65)",fontSize:10.5,fontWeight:700,letterSpacing:0.9,marginBottom:5,textTransform:"uppercase"}}>{pt.step3of3}</div>
+          <div style={{color:"#fff",fontSize:20,fontWeight:800,fontFamily:bf,marginBottom:3}}>{pt.step3Title}</div>
+          <div style={{color:"rgba(255,255,255,0.65)",fontSize:12,fontFamily:bf}}>
+            {isHindi?"ये जानकारी सटीक योजना मिलान के लिए ज़रूरी है":"Required for accurate scheme matching"}
+          </div>
+        </TriHeader>
+
+        <Card dark={dark}>
+
+          {/* ── Ration Card ── */}
+          <div style={{marginBottom:22}}>
+            <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:10,fontFamily:bf,letterSpacing:0.3}}>
+              🪪 {pt.rationLabel}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              {pt.rations.map(r=>{
+                const a=setupRation===r.v;
+                const accentColor=r.v==="aay"?"#DC2626":r.v==="bpl"?"#D97706":r.v==="apl"?"#2563EB":"#6B7280";
+                return(
+                  <div key={r.v} onClick={()=>{haptic();setSetupRation(r.v);}}
+                    style={{
+                      padding:"12px 10px",borderRadius:13,cursor:"pointer",fontFamily:bf,
+                      border:`2px solid ${a?accentColor:th.border3}`,
+                      background:a?(dark?`${accentColor}22`:`${accentColor}10`):th.optionBg,
+                      fontSize:11.5,fontWeight:a?700:400,
+                      color:a?accentColor:th.textMid,
+                      transition:"all 0.18s",
+                      boxShadow:a?`0 4px 14px ${accentColor}33`:"none",
+                      textAlign:"center",lineHeight:1.4,
+                    }}>
+                    {r.l}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── Disability ── */}
+          <div style={{marginBottom:22}}>
+            <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:10,fontFamily:bf,letterSpacing:0.3}}>
+              ♿ {pt.disabilityLabel}
+            </div>
+            {/* Yes / No toggle */}
+            <div style={{display:"flex",gap:8,marginBottom: hasDisability?12:0}}>
+              {[
+                {v:"none", l:pt.disabilityNone, color:"#138808"},
+                {v:"_yes", l:pt.disabilityYes,  color:"#7C3AED"},
+              ].map(opt=>{
+                const isYes=opt.v==="_yes";
+                const isActive=isYes?hasDisability:setupDisability==="none";
+                return(
+                  <div key={opt.v} onClick={()=>{haptic();if(isYes){if(!hasDisability)setSetupDisability("physical");}else{setSetupDisability("none");}}}
+                    style={{
+                      flex:1,padding:"12px 8px",borderRadius:13,cursor:"pointer",
+                      border:`2px solid ${isActive?opt.color:th.border3}`,
+                      background:isActive?(dark?`${opt.color}22`:`${opt.color}12`):th.optionBg,
+                      fontSize:12,fontWeight:isActive?700:400,
+                      color:isActive?opt.color:th.textMid,
+                      fontFamily:bf,transition:"all 0.18s",
+                      boxShadow:isActive?`0 4px 14px ${opt.color}33`:"none",
+                      textAlign:"center",
+                    }}>
+                    {opt.l}
+                  </div>
+                );
+              })}
+            </div>
+            {/* Disability type — shown only when "Yes" */}
+            {hasDisability&&(
+              <div style={{
+                background:dark?"rgba(124,58,237,0.1)":"rgba(124,58,237,0.05)",
+                border:`1.5px solid ${dark?"rgba(124,58,237,0.4)":"rgba(124,58,237,0.2)"}`,
+                borderRadius:14,padding:"12px 12px 10px",
+              }}>
+                <div style={{fontSize:11,fontWeight:700,color:"#7C3AED",marginBottom:10,fontFamily:bf,letterSpacing:0.4}}>
+                  {pt.disabilityTypeLabel}
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
+                  {pt.disabilityTypes.map(dt=>{
+                    const a=setupDisability===dt.v;
+                    return(
+                      <div key={dt.v} onClick={()=>{haptic();setSetupDisability(dt.v);}}
+                        style={{
+                          padding:"10px 8px",borderRadius:11,cursor:"pointer",fontFamily:bf,
+                          border:`2px solid ${a?"#7C3AED":th.border3}`,
+                          background:a?(dark?"rgba(124,58,237,0.22)":"rgba(124,58,237,0.1)"):th.optionBg,
+                          fontSize:11.5,fontWeight:a?700:400,
+                          color:a?"#7C3AED":th.textMid,
+                          transition:"all 0.18s",textAlign:"center",lineHeight:1.4,
+                          boxShadow:a?"0 4px 12px rgba(124,58,237,0.28)":"none",
+                        }}>
+                        {dt.l}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── Marital Status ── */}
+          <div style={{marginBottom:26}}>
+            <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:10,fontFamily:bf,letterSpacing:0.3}}>
+              💍 {pt.maritalLabel}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              {pt.maritals.map(m=>{
+                const a=setupMarital===m.v;
+                const accentColor=m.v==="widowed"?"#DC2626":m.v==="married"?"#FF9933":"#003580";
+                return(
+                  <div key={m.v} onClick={()=>{haptic();setSetupMarital(m.v);}}
+                    style={{
+                      padding:"12px 10px",borderRadius:13,cursor:"pointer",fontFamily:bf,
+                      border:`2px solid ${a?accentColor:th.border3}`,
+                      background:a?(dark?`${accentColor}22`:`${accentColor}10`):th.optionBg,
+                      fontSize:12,fontWeight:a?700:400,
+                      color:a?accentColor:th.textMid,
+                      transition:"all 0.18s",
+                      boxShadow:a?`0 4px 14px ${accentColor}33`:"none",
+                      textAlign:"center",lineHeight:1.4,
+                    }}>
+                    {m.l}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div style={{display:"flex",gap:8}}>
+            <div onClick={()=>{haptic();setStage("setup2");}}
+              style={{flex:1,padding:14,borderRadius:14,border:`1.5px solid ${th.border3}`,background:th.card,textAlign:"center",fontSize:13,fontWeight:600,color:th.textMid,cursor:"pointer",fontFamily:bf}}>
+              {pt.backBtn}
+            </div>
+            <div onClick={()=>{if(canSave)haptic([50,60,50]);handleSetup3Save();}}
               style={{flex:2,background:canSave?"linear-gradient(135deg,#138808,#16a34a)":"#ddd",borderRadius:14,padding:14,textAlign:"center",fontSize:14,fontWeight:700,color:"#fff",cursor:canSave?"pointer":"default",fontFamily:bf,boxShadow:canSave?"0 6px 22px rgba(19,136,8,0.38)":"none",transition:"all 0.22s"}}>
               {pt.saveBtn}
             </div>
@@ -2124,6 +2348,54 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           </div>
           <div style={{width:38,height:38,background:"rgba(255,255,255,0.2)",borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,color:"#fff",border:"1.5px solid rgba(255,255,255,0.28)",flexShrink:0}}>→</div>
         </div>
+
+        {/* ── Welfare Profile Summary card ── */}
+        {(profile?.ration||profile?.marital||profile?.disability)&&(()=>{
+          const rationLabel=pt.rations.find(r=>r.v===profile.ration)?.l||null;
+          const maritalLabel=pt.maritals.find(m=>m.v===profile.marital)?.l||null;
+          const disabilityLabel=profile.disability==="none"
+            ?pt.disabilityNone
+            :(pt.disabilityTypes.find(d=>d.v===profile.disability)?.l||pt.disabilityYes);
+          const rationColor=profile.ration==="aay"?"#DC2626":profile.ration==="bpl"?"#D97706":profile.ration==="apl"?"#2563EB":"#6B7280";
+          const maritalColor=profile.marital==="widowed"?"#DC2626":profile.marital==="married"?"#FF9933":"#003580";
+          const disabilityColor=profile.disability==="none"?"#138808":"#7C3AED";
+          return(
+            <div style={{background:th.card,borderRadius:18,border:`1.5px solid ${th.border}`,padding:"13px 16px 14px",marginBottom:16,boxShadow:dark?"0 2px 14px rgba(0,0,0,0.25)":"0 2px 14px rgba(0,0,0,0.05)"}}>
+              <div style={{fontSize:10.5,fontWeight:700,color:th.textSub,letterSpacing:0.9,textTransform:"uppercase",fontFamily:bf,marginBottom:12}}>
+                {isHindi?"कल्याण प्रोफाइल":"Welfare Profile"}
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:9}}>
+                {rationLabel&&(
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:34,height:34,borderRadius:10,background:`${rationColor}15`,border:`1.5px solid ${rationColor}35`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>🪪</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:10.5,color:th.textSub,fontFamily:bf}}>{pt.rationLabel}</div>
+                      <div style={{fontSize:13,fontWeight:700,color:rationColor,fontFamily:bf,marginTop:1}}>{rationLabel}</div>
+                    </div>
+                  </div>
+                )}
+                {maritalLabel&&(
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:34,height:34,borderRadius:10,background:`${maritalColor}15`,border:`1.5px solid ${maritalColor}35`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>💍</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:10.5,color:th.textSub,fontFamily:bf}}>{pt.maritalLabel}</div>
+                      <div style={{fontSize:13,fontWeight:700,color:maritalColor,fontFamily:bf,marginTop:1}}>{maritalLabel}</div>
+                    </div>
+                  </div>
+                )}
+                {profile.disability!==undefined&&(
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:34,height:34,borderRadius:10,background:`${disabilityColor}15`,border:`1.5px solid ${disabilityColor}35`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>♿</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:10.5,color:th.textSub,fontFamily:bf}}>{pt.disabilityLabel}</div>
+                      <div style={{fontSize:13,fontWeight:700,color:disabilityColor,fontFamily:bf,marginTop:1}}>{disabilityLabel}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Settings card */}
         <div style={{background:th.card,borderRadius:18,overflow:"hidden",border:`1.5px solid ${th.border}`,boxShadow:dark?"0 2px 14px rgba(0,0,0,0.25)":"0 2px 14px rgba(0,0,0,0.05)"}}>
