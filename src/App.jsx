@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback, useDeferredValue } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   INDIA_STATES,
   SCHEME_DB,
@@ -1117,7 +1117,6 @@ function StatePickerSheet({selectedState,onSelect,onClose,lang,dark=false}){
 }
 
 // ─── SCHEME SKELETON CARD ──────────────────────────────────────────────────────
-// Shimmer placeholder shown while schemes are loading / filtering
 function SkeletonCard({dark=false}){
   const th=THEME[dark?"dark":"light"];
   return(
@@ -1131,8 +1130,7 @@ function SkeletonCard({dark=false}){
           animation:sk-shimmer 1.4s infinite}
       `}</style>
       <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
-        <div className="sk-s" style={{width:42,height:42,borderRadius:13,flexShrink:0,
-          background:dark?"#2c2c2e":"#eeeeea"}}/>
+        <div className="sk-s" style={{width:42,height:42,borderRadius:13,flexShrink:0,background:dark?"#2c2c2e":"#eeeeea"}}/>
         <div style={{flex:1}}>
           <div style={{display:"flex",gap:6,marginBottom:8}}>
             <div className="sk-s" style={{width:58,height:16,borderRadius:8,background:dark?"#2c2c2e":"#eeeeea"}}/>
@@ -1147,7 +1145,6 @@ function SkeletonCard({dark=false}){
 }
 
 // ─── ALL SCHEMES TAB ───────────────────────────────────────────────────────────
-// Paginated + skeleton + deferred-filter for instant tab open
 const PAGE_SIZE=20;
 
 function SchemesTab({lang,dark=false}){
@@ -1164,18 +1161,15 @@ function SchemesTab({lang,dark=false}){
   const [isReady,setIsReady]=useState(false);
 
   const cats=useMemo(()=>CATEGORIES[lang],[lang]);
-
   const scrollContainerRef=useRef(null);
   const stateHeaderRef=useRef(null);
   const centralHeaderRef=useRef(null);
   const loadMoreRef=useRef(null);
 
-  // Deferred values: pill taps are instant; heavy filtering runs async
   const deferredFilter=useDeferredValue(filter);
   const deferredState=useDeferredValue(selectedState);
   const isStale=filter!==deferredFilter||selectedState!==deferredState;
 
-  // Delay first paint by 1 frame so tab slide animation fires first
   useEffect(()=>{
     const id=requestAnimationFrame(()=>setIsReady(true));
     return()=>cancelAnimationFrame(id);
@@ -1192,17 +1186,14 @@ function SchemesTab({lang,dark=false}){
   const national=useMemo(()=>filtered.filter(s=>s.scope==="national"),[filtered]);
   const stateSchemes=useMemo(()=>filtered.filter(s=>s.scope==="state"),[filtered]);
 
-  // Reset pagination when filter changes
   useEffect(()=>{setVisibleCount(PAGE_SIZE);setExpandedId(null);},[filter,selectedState]);
 
-  // Paginated slices — state schemes first, then central
   const visibleState=useMemo(()=>stateSchemes.slice(0,Math.min(visibleCount,stateSchemes.length)),[stateSchemes,visibleCount]);
   const centralBudget=Math.max(0,visibleCount-stateSchemes.length);
   const visibleNat=useMemo(()=>national.slice(0,centralBudget),[national,centralBudget]);
   const totalVisible=visibleState.length+visibleNat.length;
   const hasMore=totalVisible<filtered.length;
 
-  // IntersectionObserver: silently load next page when sentinel scrolls into view
   useEffect(()=>{
     if(!hasMore||!loadMoreRef.current)return;
     const obs=new IntersectionObserver(([entry])=>{
@@ -1225,18 +1216,11 @@ function SchemesTab({lang,dark=false}){
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",overflowY:"auto",background:th.appBg}}>
 
-      {/* ── STICKY HEADER ── */}
       <div style={{background:th.card,padding:"16px 16px 0",position:"sticky",top:0,zIndex:10,borderBottom:`1px solid ${th.border}`}}>
-
-        {/* Title row */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <div style={{fontSize:17,fontWeight:800,color:th.text,fontFamily:bf}}>{t.allSchemes||"All Schemes"}</div>
-            {isStale&&(
-              <div style={{width:16,height:16,flexShrink:0}}>
-                <AshokaChakra size={16} color={SAFFRON} spinning={true}/>
-              </div>
-            )}
+            {isStale&&<div style={{width:16,height:16,flexShrink:0}}><AshokaChakra size={16} color={SAFFRON} spinning={true}/></div>}
           </div>
           <div onClick={()=>{haptic();setShowStatePicker(true);}}
             style={{display:"flex",alignItems:"center",gap:5,background:selectedState!=="all"?SAFFRON+"18":th.pillBg,border:`1.5px solid ${selectedState!=="all"?SAFFRON:th.border2}`,borderRadius:20,padding:"5px 11px",cursor:"pointer",flexShrink:0,transition:"background 0.2s"}}>
@@ -1248,27 +1232,19 @@ function SchemesTab({lang,dark=false}){
           </div>
         </div>
 
-        {/* Category filter pills */}
         <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:12,scrollbarWidth:"none"}}>
           <div onClick={()=>{haptic();setFilter("all");}}
-            style={{flexShrink:0,padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:700,
-              background:filter==="all"?"#003580":th.pillBg,
-              color:filter==="all"?"#fff":th.textMid,cursor:"pointer",
-              border:`1.5px solid ${filter==="all"?"#003580":th.border2}`}}>
+            style={{flexShrink:0,padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:700,background:filter==="all"?"#003580":th.pillBg,color:filter==="all"?"#fff":th.textMid,cursor:"pointer",border:`1.5px solid ${filter==="all"?"#003580":th.border2}`}}>
             {isHindi?"सभी":"All"} ({filtered.length})
           </div>
           {cats.map(cat=>(
             <div key={cat.filterKey} onClick={()=>{haptic();setFilter(cat.filterKey);}}
-              style={{flexShrink:0,padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:700,
-                background:filter===cat.filterKey?cat.color:th.pillBg,
-                color:filter===cat.filterKey?"#fff":th.textMid,cursor:"pointer",
-                border:`1.5px solid ${filter===cat.filterKey?cat.color:th.border2}`}}>
+              style={{flexShrink:0,padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:700,background:filter===cat.filterKey?cat.color:th.pillBg,color:filter===cat.filterKey?"#fff":th.textMid,cursor:"pointer",border:`1.5px solid ${filter===cat.filterKey?cat.color:th.border2}`}}>
               {cat.icon} {cat.label}
             </div>
           ))}
         </div>
 
-        {/* Active state chip row */}
         {selectedState!=="all"&&(
           <div style={{display:"flex",alignItems:"center",gap:6,paddingBottom:10,flexWrap:"wrap"}}>
             <div style={{display:"flex",alignItems:"center",gap:5,background:SAFFRON+"14",border:`1px solid ${SAFFRON}40`,borderRadius:20,padding:"4px 10px"}}>
@@ -1277,12 +1253,7 @@ function SchemesTab({lang,dark=false}){
               <span onClick={()=>{haptic();setSelectedState("all");}} style={{fontSize:14,color:SAFFRON,cursor:"pointer",marginLeft:2,lineHeight:1,fontWeight:700}}>✕</span>
             </div>
             <div onClick={()=>{if(stateSchemes.length>0){haptic(30);scrollToRef(stateHeaderRef);}}}
-              style={{display:"flex",alignItems:"center",gap:4,
-                background:stateSchemes.length>0?"#FEF9C3":"#f5f5f0",
-                border:`1.5px solid ${stateSchemes.length>0?"#d97706":"#e0e0e0"}`,
-                borderRadius:20,padding:"4px 10px",
-                cursor:stateSchemes.length>0?"pointer":"default",
-                opacity:stateSchemes.length>0?1:0.55}}>
+              style={{display:"flex",alignItems:"center",gap:4,background:stateSchemes.length>0?"#FEF9C3":"#f5f5f0",border:`1.5px solid ${stateSchemes.length>0?"#d97706":"#e0e0e0"}`,borderRadius:20,padding:"4px 10px",cursor:stateSchemes.length>0?"pointer":"default",opacity:stateSchemes.length>0?1:0.55}}>
               <span style={{fontSize:11}}>📍</span>
               <span style={{fontSize:11,fontWeight:700,color:stateSchemes.length>0?"#92400e":"#999",fontFamily:bf}}>
                 {isHindi?"राज्य":"State"} ({stateSchemes.length})
@@ -1290,10 +1261,7 @@ function SchemesTab({lang,dark=false}){
               {stateSchemes.length>0&&<span style={{fontSize:9,color:"#b45309",marginLeft:1}}>↓</span>}
             </div>
             <div onClick={()=>{if(national.length>0){haptic(30);scrollToRef(centralHeaderRef);}}}
-              style={{display:"flex",alignItems:"center",gap:4,
-                background:"#EFF6FF",border:"1.5px solid #3b82f6",
-                borderRadius:20,padding:"4px 10px",
-                cursor:national.length>0?"pointer":"default"}}>
+              style={{display:"flex",alignItems:"center",gap:4,background:"#EFF6FF",border:"1.5px solid #3b82f6",borderRadius:20,padding:"4px 10px",cursor:national.length>0?"pointer":"default"}}>
               <span style={{fontSize:11}}>🇮🇳</span>
               <span style={{fontSize:11,fontWeight:700,color:"#1D4ED8",fontFamily:bf}}>
                 {isHindi?"केंद्रीय":"Central"} ({national.length})
@@ -1304,10 +1272,7 @@ function SchemesTab({lang,dark=false}){
         )}
       </div>
 
-      {/* ── SCHEME LIST ── */}
       <div ref={scrollContainerRef} style={{padding:"12px 16px 80px",overflowY:"auto",flex:1}}>
-
-        {/* Hint banner */}
         <div style={{display:"flex",alignItems:"flex-start",gap:8,background:dark?"#1c1300":"#FFFBEB",borderRadius:12,padding:"9px 12px",marginBottom:14,border:`1px solid ${dark?"#78350f40":"#FDE68A"}`}}>
           <span style={{fontSize:13,flexShrink:0,marginTop:1}}>💡</span>
           <span style={{fontSize:11,color:dark?"#fbbf24":"#92400e",lineHeight:1.5,fontFamily:bf}}>
@@ -1317,19 +1282,12 @@ function SchemesTab({lang,dark=false}){
           </span>
         </div>
 
-        {/* Skeleton shimmer cards */}
         {skeletonCount>0&&Array.from({length:skeletonCount}).map((_,i)=>(
           <SkeletonCard key={`sk-${i}`} dark={dark}/>
         ))}
 
-        {/* Real cards — fade in once ready */}
-        <div style={{
-          opacity:isReady&&!isStale?1:0,
-          transition:"opacity 0.2s ease",
-          pointerEvents:isStale?"none":"auto",
-        }}>
+        <div style={{opacity:isReady&&!isStale?1:0,transition:"opacity 0.2s ease",pointerEvents:isStale?"none":"auto"}}>
 
-          {/* STATE SCHEMES */}
           {visibleState.length>0&&(
             <>
               <div ref={stateHeaderRef} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
@@ -1347,7 +1305,6 @@ function SchemesTab({lang,dark=false}){
             </>
           )}
 
-          {/* CENTRAL SCHEMES */}
           {visibleNat.length>0&&(
             <>
               <div ref={centralHeaderRef} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,marginTop:visibleState.length>0?16:0}}>
@@ -1365,7 +1322,6 @@ function SchemesTab({lang,dark=false}){
             </>
           )}
 
-          {/* Auto-load-more sentinel */}
           {hasMore&&(
             <div ref={loadMoreRef} style={{padding:"18px 0",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -1375,14 +1331,11 @@ function SchemesTab({lang,dark=false}){
                 </span>
               </div>
               <span style={{fontSize:11,color:th.textLight,fontFamily:bf}}>
-                {isHindi
-                  ?`${totalVisible} / ${filtered.length} दिखाई जा रही हैं`
-                  :`Showing ${totalVisible} of ${filtered.length}`}
+                {isHindi?`${totalVisible} / ${filtered.length} दिखाई जा रही हैं`:`Showing ${totalVisible} of ${filtered.length}`}
               </span>
             </div>
           )}
 
-          {/* Empty state */}
           {filtered.length===0&&(
             <div style={{textAlign:"center",padding:"40px 20px",color:"#aaa"}}>
               <div style={{fontSize:44,marginBottom:12}}>🔍</div>
@@ -1394,15 +1347,8 @@ function SchemesTab({lang,dark=false}){
         </div>
       </div>
 
-      {/* State picker */}
       {showStatePicker&&(
-        <StatePickerSheet
-          selectedState={selectedState}
-          onSelect={setSelectedState}
-          onClose={()=>setShowStatePicker(false)}
-          lang={lang}
-          dark={dark}
-        />
+        <StatePickerSheet selectedState={selectedState} onSelect={setSelectedState} onClose={()=>setShowStatePicker(false)} lang={lang} dark={dark}/>
       )}
     </div>
   );
@@ -1741,8 +1687,8 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   // Sync stage if profile changes (e.g. after save or sign-out)
   useEffect(()=>{
     if(profile) setStage("dashboard");
-    else if(stage==="dashboard") setStage("phone");
-  },[profile,stage]);
+    else setStage("phone");
+  },[profile]); // stage excluded intentionally: adding it breaks handleEdit (resets to dashboard immediately)
 
   // OTP countdown timer
   useEffect(()=>{
