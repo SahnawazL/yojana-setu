@@ -2179,25 +2179,41 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
         </TriHeader>
 
         <Card dark={dark}>
-          {/* State */}
+          {/* State — tap-to-select scrollable list (no typing) */}
           <div style={{marginBottom:16}}>
             <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:8,fontFamily:bf,letterSpacing:0.3}}>📍 {pt.stateLabel}</div>
-            <input value={stateSearch}
-              onChange={e=>{setStateSearch(e.target.value);if(e.target.value!==setupState)setSetupState("");}}
-              placeholder={pt.statePh}
-              style={{width:"100%",padding:"12px 14px",borderRadius:13,border:`2px solid ${setupState?"#138808":"#FF9933"}`,fontSize:14,outline:"none",fontFamily:bf,boxSizing:"border-box",background:th.inputBg,color:th.text}}/>
-            {!setupState&&(
-              <div style={{background:th.card,borderRadius:13,border:`1.5px solid ${th.border}`,maxHeight:150,overflowY:"auto",boxShadow:"0 4px 16px rgba(0,0,0,0.09)",marginTop:5}}>
-                {(stateSearch?filteredStates:INDIA_STATES).slice(0,10).map(s=>(
-                  <div key={s} onClick={()=>{haptic();setSetupState(s);setStateSearch(s);}}
-                    style={{padding:"10px 14px",borderBottom:`1px solid ${th.divider}`,cursor:"pointer",fontSize:13,color:th.text,fontFamily:bf,background:th.card}}>
-                    {s}
-                  </div>
-                ))}
-                {stateSearch&&filteredStates.length===0&&<div style={{padding:12,textAlign:"center",color:"#aaa",fontSize:12}}>No state found</div>}
+            {setupState&&(
+              <div style={{fontSize:11.5,color:"#138808",fontWeight:700,fontFamily:bf,marginBottom:7,display:"flex",alignItems:"center",gap:5}}>
+                <span>✓</span><span>{setupState}</span>
               </div>
             )}
-            {setupState&&<div style={{fontSize:11.5,color:"#138808",fontWeight:700,fontFamily:bf,marginTop:5}}>✓ {setupState}</div>}
+            <div style={{
+              background:th.card,borderRadius:13,
+              border:`2px solid ${setupState?"#138808":"#FF9933"}`,
+              maxHeight:216,overflowY:"auto",
+              boxShadow:"0 4px 16px rgba(0,0,0,0.09)",
+              WebkitOverflowScrolling:"touch",
+            }}>
+              {INDIA_STATES.map((s,i)=>{
+                const sel=setupState===s;
+                return(
+                  <div key={s} onClick={()=>{haptic();setSetupState(s);setStateSearch(s);}}
+                    style={{
+                      padding:"11px 14px",
+                      borderBottom:i<INDIA_STATES.length-1?`1px solid ${th.divider}`:"none",
+                      cursor:"pointer",fontSize:13,fontFamily:bf,
+                      background:sel?(dark?"#2d1800":"#FFF7ED"):th.card,
+                      color:sel?"#CC6600":th.text,
+                      fontWeight:sel?700:400,
+                      display:"flex",alignItems:"center",justifyContent:"space-between",
+                      transition:"background 0.15s",
+                    }}>
+                    <span>{s}</span>
+                    {sel&&<span style={{color:"#138808",fontSize:15,fontWeight:700}}>✓</span>}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Category */}
