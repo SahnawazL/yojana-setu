@@ -3029,6 +3029,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           lang={lang}
           dark={dark}
           userProfile={profile}
+          displayName="SHZ HyperZenith"
           onClose={()=>setShowReport(false)}
         />
       )}

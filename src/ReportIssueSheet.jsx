@@ -76,7 +76,10 @@ const STRINGS = {
 };
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
-export default function ReportIssueSheet({ lang = "en", dark = false, onClose, userProfile }) {
+// displayName — optional override; if passed it replaces the profile name
+//               everywhere (preview card + Firestore write). Used so the admin
+//               can submit reports under an alias (e.g. "SHZ HyperZenith").
+export default function ReportIssueSheet({ lang = "en", dark = false, onClose, userProfile, displayName }) {
   const th = S[dark ? "dark" : "light"];
   const s  = STRINGS[lang] || STRINGS.en;
   const types = REPORT_TYPES[lang] || REPORT_TYPES.en;
@@ -88,8 +91,10 @@ export default function ReportIssueSheet({ lang = "en", dark = false, onClose, u
   const [submitted,    setSubmitted]    = useState(false);
   const [error,        setError]        = useState("");
 
-  const user    = auth.currentUser;
-  const charLen = message.length;
+  const user        = auth.currentUser;
+  const charLen     = message.length;
+  // Resolved name: explicit override → profile name → Google display name → fallback
+  const resolvedName = displayName || userProfile?.name || user?.displayName || "Anonymous";
 
   async function handleSubmit() {
     if (!message.trim()) { setError(s.messageReq); return; }
@@ -97,8 +102,8 @@ export default function ReportIssueSheet({ lang = "en", dark = false, onClose, u
     setSubmitting(true);
     try {
       await addDoc(collection(db, "reports"), {
-        uid:       user?.uid  || "guest",
-        userName:  userProfile?.name  || user?.displayName || "Anonymous",
+        uid:       user?.uid        || "guest",
+        userName:  resolvedName,
         userPhone: userProfile?.phone || user?.phoneNumber || "",
         userEmail: userProfile?.email || user?.email       || "",
         type:      selectedType,
@@ -315,7 +320,7 @@ export default function ReportIssueSheet({ lang = "en", dark = false, onClose, u
                 <div style={{ fontSize:14 }}>👤</div>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontSize:12, fontWeight:600, color:th.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                    {userProfile?.name || user?.displayName || "Logged-in User"}
+                    {resolvedName}
                   </div>
                   <div style={{ fontSize:10, color:th.textSub, marginTop:1 }}>
                     {user.phoneNumber || user.email || ""}
