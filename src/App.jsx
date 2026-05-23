@@ -284,7 +284,40 @@ const PT = {
       {v:"women",l:"Homemaker 👩"},{v:"senior",l:"Senior Citizen 👴"},
       {v:"business",l:"Business Owner 💼"},{v:"general",l:"General Citizen 🧑"},
     ],
-    nextBtn:"Next →",backBtn:"← Back",saveBtn:"Save & Continue →",
+    nextBtn:"Next →",backBtn:"← Back",saveBtn:"Save Profile ✓",
+    step1of4:"STEP 1 OF 4",step2of4:"STEP 2 OF 4",step3of4:"STEP 3 OF 4",step4of4:"STEP 4 OF 4",
+    step4Title:"More About You",
+    landHoldingLabel:"Farm Land Holding",
+    landHoldings:[
+      {v:"below1",l:"Below 1 Acre"},{v:"1to2",l:"1–2 Acres"},
+      {v:"2to5",l:"2–5 Acres"},{v:"5plus",l:"5+ Acres"},
+    ],
+    kisanCardLabel:"Do you have a Kisan Credit Card (KCC)?",
+    kisanCards:[
+      {v:"yes",l:"Yes — I have KCC ✅"},{v:"no",l:"No — I don't have one"},
+    ],
+    educationLevelLabel:"Current Education Level",
+    educationLevels:[
+      {v:"class1to8",l:"Class 1–8 (Primary / Middle)"},
+      {v:"class9to12",l:"Class 9–12 (Secondary / Sr. Secondary)"},
+      {v:"undergrad",l:"Undergraduate (Degree / Diploma)"},
+      {v:"postgrad",l:"Postgraduate (Masters / PhD)"},
+    ],
+    institutionTypeLabel:"Type of Institution",
+    institutionTypes:[
+      {v:"government",l:"Government Institution 🏛️"},
+      {v:"private",l:"Private Institution 🏫"},
+    ],
+    numChildrenLabel:"Number of Children",
+    numChildrenOpts:[
+      {v:"0",l:"No children"},{v:"1",l:"1 child"},
+      {v:"2",l:"2 children"},{v:"3plus",l:"3 or more"},
+    ],
+    hasGirlsLabel:"Any Girl Children?",
+    hasGirlsOpts:[
+      {v:"yes",l:"Yes — I have girl child/children 👧"},
+      {v:"no",l:"No girl children"},
+    ],
     dashTitle:"My Profile",
     viewSchemes:"View My Matched Schemes",
     schemesMatched:"Schemes",stateLabel2:"State",catLabel2:"Category",
@@ -360,7 +393,40 @@ const PT = {
       {v:"women",l:"गृहिणी 👩"},{v:"senior",l:"वरिष्ठ नागरिक 👴"},
       {v:"business",l:"व्यापारी 💼"},{v:"general",l:"सामान्य नागरिक 🧑"},
     ],
-    nextBtn:"अगला →",backBtn:"← वापस",saveBtn:"सहेजें →",
+    nextBtn:"अगला →",backBtn:"← वापस",saveBtn:"सहेजें ✓",
+    step1of4:"चरण 1 / 4",step2of4:"चरण 2 / 4",step3of4:"चरण 3 / 4",step4of4:"चरण 4 / 4",
+    step4Title:"और जानकारी",
+    landHoldingLabel:"कृषि भूमि",
+    landHoldings:[
+      {v:"below1",l:"1 एकड़ से कम"},{v:"1to2",l:"1–2 एकड़"},
+      {v:"2to5",l:"2–5 एकड़"},{v:"5plus",l:"5+ एकड़"},
+    ],
+    kisanCardLabel:"क्या आपके पास किसान क्रेडिट कार्ड (KCC) है?",
+    kisanCards:[
+      {v:"yes",l:"हाँ — KCC है ✅"},{v:"no",l:"नहीं — नहीं है"},
+    ],
+    educationLevelLabel:"वर्तमान शिक्षा स्तर",
+    educationLevels:[
+      {v:"class1to8",l:"कक्षा 1–8 (प्राथमिक / माध्यमिक)"},
+      {v:"class9to12",l:"कक्षा 9–12 (माध्यमिक / उच्च माध्यमिक)"},
+      {v:"undergrad",l:"स्नातक (डिग्री / डिप्लोमा)"},
+      {v:"postgrad",l:"स्नातकोत्तर (M.A. / PhD)"},
+    ],
+    institutionTypeLabel:"संस्था का प्रकार",
+    institutionTypes:[
+      {v:"government",l:"सरकारी संस्था 🏛️"},
+      {v:"private",l:"निजी संस्था 🏫"},
+    ],
+    numChildrenLabel:"बच्चों की संख्या",
+    numChildrenOpts:[
+      {v:"0",l:"कोई बच्चा नहीं"},{v:"1",l:"1 बच्चा"},
+      {v:"2",l:"2 बच्चे"},{v:"3plus",l:"3 या अधिक"},
+    ],
+    hasGirlsLabel:"क्या कोई बेटी है?",
+    hasGirlsOpts:[
+      {v:"yes",l:"हाँ — बेटी है 👧"},
+      {v:"no",l:"नहीं"},
+    ],
     dashTitle:"मेरी प्रोफाइल",
     viewSchemes:"मेरी मिलान योजनाएं देखें",
     schemesMatched:"योजनाएं",stateLabel2:"राज्य",catLabel2:"श्रेणी",
@@ -1536,6 +1602,13 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   const [setupRation,    setSetupRation]    =useState(profile?.ration    ||"");
   const [setupDisability,setSetupDisability]=useState(profile?.disability||"none");
   const [setupMarital,   setSetupMarital]   =useState(profile?.marital   ||"");
+  // ── Step 4 — occupation-conditional + children fields ──────────────────────
+  const [setupLandHolding,    setSetupLandHolding]    =useState(profile?.landHolding    ||"");
+  const [setupKisanCard,      setSetupKisanCard]      =useState(profile?.kisanCard      ||"");
+  const [setupEducationLevel, setSetupEducationLevel] =useState(profile?.educationLevel ||"");
+  const [setupInstitutionType,setSetupInstitutionType]=useState(profile?.institutionType||"");
+  const [setupNumChildren,    setSetupNumChildren]    =useState(profile?.numChildren    ||"");
+  const [setupHasGirls,       setSetupHasGirls]       =useState(profile?.hasGirls       ||"");
   const [authLoading,setAuthLoading]=useState(false);
   const [authError,setAuthError]=useState("");
   const [googleLoading,setGoogleLoading]=useState(false);
@@ -1629,8 +1702,14 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setStage("setup3");
   };
 
-  const handleSetup3Save=async()=>{
+  const handleSetup3Next=()=>{
     if(!setupRation||!setupDisability||!setupMarital)return;
+    setStage("setup4");
+  };
+
+  const handleSetup4Save=async()=>{
+    if(!setupNumChildren)return;
+    if(setupNumChildren!=="0"&&!setupHasGirls)return;
     const isNewUser=!profile;
     const profileData={
       name:setupName.trim(),phone,gender:setupGender,
@@ -1642,12 +1721,15 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       ration:setupRation,
       disability:setupDisability,
       marital:setupMarital,
+      numChildren:setupNumChildren,
+      hasGirls:setupNumChildren!=="0"?setupHasGirls:"no",
+      ...(setupCat==="farmer"?{landHolding:setupLandHolding,kisanCard:setupKisanCard}:{}),
+      ...(setupCat==="student"?{educationLevel:setupEducationLevel,institutionType:setupInstitutionType}:{}),
       ...(googleEmail?{email:googleEmail}:{}),
       ...(googlePhoto?{photo:googlePhoto}:{}),
     };
     setProfile(profileData);
     setStage("dashboard");
-    // Save to Firestore — non-blocking, silent fail so UI stays instant
     try{
       const uid=auth.currentUser?.uid;
       if(uid){
@@ -1668,6 +1750,12 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setSetupRation(profile?.ration||"");
     setSetupDisability(profile?.disability||"none");
     setSetupMarital(profile?.marital||"");
+    setSetupLandHolding(profile?.landHolding||"");
+    setSetupKisanCard(profile?.kisanCard||"");
+    setSetupEducationLevel(profile?.educationLevel||"");
+    setSetupInstitutionType(profile?.institutionType||"");
+    setSetupNumChildren(profile?.numChildren||"");
+    setSetupHasGirls(profile?.hasGirls||"");
     setStage("setup1");
   };
 
@@ -1677,6 +1765,9 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setPhone("");setOtp(["","","","","",""]);
     setSetupName("");setSetupGender("");setSetupState("");setStateSearch("");setSetupCat("");
     setSetupRation("");setSetupDisability("none");setSetupMarital("");
+    setSetupLandHolding("");setSetupKisanCard("");
+    setSetupEducationLevel("");setSetupInstitutionType("");
+    setSetupNumChildren("");setSetupHasGirls("");
     setGoogleEmail("");setGooglePhoto("");setEmailInput("");setPasswordInput("");setShowPassword(false);setEmailTab("signin");
     setStage("phone");
   };
@@ -2024,13 +2115,14 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     return(
       <div style={{flex:1,display:"flex",flexDirection:"column",background:th.appBg,overflowY:"auto"}}>
         <TriHeader bg="linear-gradient(135deg,#003580 0%,#1a56db 100%)">
-          {/* Progress bar — 3 steps */}
+          {/* Progress bar — 4 steps */}
           <div style={{display:"flex",gap:6,marginBottom:18}}>
             <div style={{height:4,flex:1,borderRadius:4,background:"#FF9933",boxShadow:"0 0 8px rgba(255,153,51,0.5)"}}/>
             <div style={{height:4,flex:1,borderRadius:4,background:"rgba(255,255,255,0.22)"}}/>
             <div style={{height:4,flex:1,borderRadius:4,background:"rgba(255,255,255,0.22)"}}/>
+            <div style={{height:4,flex:1,borderRadius:4,background:"rgba(255,255,255,0.22)"}}/>
           </div>
-          <div style={{color:"rgba(255,255,255,0.65)",fontSize:10.5,fontWeight:700,letterSpacing:0.9,marginBottom:5,textTransform:"uppercase"}}>{pt.step1of3}</div>
+          <div style={{color:"rgba(255,255,255,0.65)",fontSize:10.5,fontWeight:700,letterSpacing:0.9,marginBottom:5,textTransform:"uppercase"}}>{pt.step1of4}</div>
           <div style={{color:"#fff",fontSize:20,fontWeight:800,fontFamily:bf,marginBottom:3}}>{pt.step1Title}</div>
           <div style={{color:"rgba(255,255,255,0.65)",fontSize:12,fontFamily:bf}}>{pt.fillOnce}</div>
         </TriHeader>
@@ -2079,8 +2171,9 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
             <div style={{height:4,flex:1,borderRadius:4,background:"#FF9933",boxShadow:"0 0 8px rgba(255,153,51,0.5)"}}/>
             <div style={{height:4,flex:1,borderRadius:4,background:"#FF9933",boxShadow:"0 0 8px rgba(255,153,51,0.5)"}}/>
             <div style={{height:4,flex:1,borderRadius:4,background:"rgba(255,255,255,0.22)"}}/>
+            <div style={{height:4,flex:1,borderRadius:4,background:"rgba(255,255,255,0.22)"}}/>
           </div>
-          <div style={{color:"rgba(255,255,255,0.65)",fontSize:10.5,fontWeight:700,letterSpacing:0.9,marginBottom:5,textTransform:"uppercase"}}>{pt.step2of3}</div>
+          <div style={{color:"rgba(255,255,255,0.65)",fontSize:10.5,fontWeight:700,letterSpacing:0.9,marginBottom:5,textTransform:"uppercase"}}>{pt.step2of4}</div>
           <div style={{color:"#fff",fontSize:20,fontWeight:800,fontFamily:bf,marginBottom:3}}>{pt.step2Title}</div>
           {hasPrefill&&<div style={{color:"rgba(255,220,100,0.92)",fontSize:11,fontFamily:bf,marginTop:4}}>✓ {pt.prefilled}</div>}
         </TriHeader>
@@ -2145,13 +2238,14 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     return(
       <div style={{flex:1,display:"flex",flexDirection:"column",background:th.appBg,overflowY:"auto"}}>
         <TriHeader bg="linear-gradient(135deg,#138808 0%,#16a34a 60%,#003580 100%)">
-          {/* Progress bar — all 3 filled */}
+          {/* Progress bar — 3 of 4 filled */}
           <div style={{display:"flex",gap:6,marginBottom:18}}>
             <div style={{height:4,flex:1,borderRadius:4,background:"#FF9933",boxShadow:"0 0 8px rgba(255,153,51,0.5)"}}/>
             <div style={{height:4,flex:1,borderRadius:4,background:"#FF9933",boxShadow:"0 0 8px rgba(255,153,51,0.5)"}}/>
             <div style={{height:4,flex:1,borderRadius:4,background:"#FF9933",boxShadow:"0 0 8px rgba(255,153,51,0.5)"}}/>
+            <div style={{height:4,flex:1,borderRadius:4,background:"rgba(255,255,255,0.22)"}}/>
           </div>
-          <div style={{color:"rgba(255,255,255,0.65)",fontSize:10.5,fontWeight:700,letterSpacing:0.9,marginBottom:5,textTransform:"uppercase"}}>{pt.step3of3}</div>
+          <div style={{color:"rgba(255,255,255,0.65)",fontSize:10.5,fontWeight:700,letterSpacing:0.9,marginBottom:5,textTransform:"uppercase"}}>{pt.step3of4}</div>
           <div style={{color:"#fff",fontSize:20,fontWeight:800,fontFamily:bf,marginBottom:3}}>{pt.step3Title}</div>
           <div style={{color:"rgba(255,255,255,0.65)",fontSize:12,fontFamily:bf}}>
             {isHindi?"ये जानकारी सटीक योजना मिलान के लिए ज़रूरी है":"Required for accurate scheme matching"}
@@ -2285,7 +2379,160 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
               style={{flex:1,padding:14,borderRadius:14,border:`1.5px solid ${th.border3}`,background:th.card,textAlign:"center",fontSize:13,fontWeight:600,color:th.textMid,cursor:"pointer",fontFamily:bf}}>
               {pt.backBtn}
             </div>
-            <div onClick={()=>{if(canSave)haptic([50,60,50]);handleSetup3Save();}}
+            <div onClick={()=>{if(canSave)haptic();handleSetup3Next();}}
+              style={{flex:2,background:canSave?"linear-gradient(135deg,#FF9933,#FF8C00)":"#ddd",borderRadius:14,padding:14,textAlign:"center",fontSize:14,fontWeight:700,color:"#fff",cursor:canSave?"pointer":"default",fontFamily:bf,boxShadow:canSave?"0 6px 22px rgba(255,153,51,0.38)":"none",transition:"all 0.22s"}}>
+              {pt.nextBtn}
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // ── STAGE: SETUP 4 — Occupation-conditional + Children ──────────────────────
+  if(stage==="setup4"){
+    const isFarmer=setupCat==="farmer";
+    const isStudent=setupCat==="student";
+    const hasChildren=setupNumChildren&&setupNumChildren!=="0";
+    const occupationValid=
+      isFarmer?(setupLandHolding&&setupKisanCard):
+      isStudent?(setupEducationLevel&&setupInstitutionType):
+      true;
+    const canSave=occupationValid&&setupNumChildren&&(hasChildren?!!setupHasGirls:true);
+    return(
+      <div style={{flex:1,display:"flex",flexDirection:"column",background:th.appBg,overflowY:"auto"}}>
+        <TriHeader bg="linear-gradient(135deg,#138808 0%,#16a34a 60%,#003580 100%)">
+          {/* Progress bar — all 4 filled */}
+          <div style={{display:"flex",gap:6,marginBottom:18}}>
+            {[0,1,2,3].map(i=>(
+              <div key={i} style={{height:4,flex:1,borderRadius:4,background:"#FF9933",boxShadow:"0 0 8px rgba(255,153,51,0.5)"}}/>
+            ))}
+          </div>
+          <div style={{color:"rgba(255,255,255,0.65)",fontSize:10.5,fontWeight:700,letterSpacing:0.9,marginBottom:5,textTransform:"uppercase"}}>{pt.step4of4}</div>
+          <div style={{color:"#fff",fontSize:20,fontWeight:800,fontFamily:bf,marginBottom:3}}>{pt.step4Title}</div>
+          <div style={{color:"rgba(255,255,255,0.65)",fontSize:12,fontFamily:bf}}>
+            {isHindi?"AI को सटीक योजनाएं सुझाने में मदद करता है":"Helps AI suggest the most accurate schemes"}
+          </div>
+        </TriHeader>
+
+        <Card dark={dark}>
+          {/* ── Farmer: Land Holding ── */}
+          {isFarmer&&(
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:8,fontFamily:bf,letterSpacing:0.3}}>🌾 {pt.landHoldingLabel}</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                {pt.landHoldings.map(o=>{
+                  const a=setupLandHolding===o.v;
+                  return(
+                    <div key={o.v} onClick={()=>{haptic();setSetupLandHolding(o.v);}}
+                      style={{padding:"12px 10px",borderRadius:13,cursor:"pointer",border:`2px solid ${a?"#FF9933":th.border3}`,background:a?th.optionActive:th.optionBg,fontSize:12.5,fontWeight:a?700:400,color:a?"#CC6600":th.textMid,textAlign:"center",fontFamily:bf,transition:"all 0.18s",boxShadow:a?"0 4px 14px rgba(255,153,51,0.22)":"none"}}>
+                      {o.l}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── Farmer: Kisan Credit Card ── */}
+          {isFarmer&&(
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:8,fontFamily:bf,letterSpacing:0.3}}>💳 {pt.kisanCardLabel}</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                {pt.kisanCards.map(o=>{
+                  const a=setupKisanCard===o.v;
+                  return(
+                    <div key={o.v} onClick={()=>{haptic();setSetupKisanCard(o.v);}}
+                      style={{padding:"12px 10px",borderRadius:13,cursor:"pointer",border:`2px solid ${a?"#FF9933":th.border3}`,background:a?th.optionActive:th.optionBg,fontSize:12.5,fontWeight:a?700:400,color:a?"#CC6600":th.textMid,textAlign:"center",fontFamily:bf,transition:"all 0.18s",boxShadow:a?"0 4px 14px rgba(255,153,51,0.22)":"none"}}>
+                      {o.l}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── Student: Education Level ── */}
+          {isStudent&&(
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:8,fontFamily:bf,letterSpacing:0.3}}>📚 {pt.educationLevelLabel}</div>
+              {pt.educationLevels.map(o=>{
+                const a=setupEducationLevel===o.v;
+                return(
+                  <div key={o.v} onClick={()=>{haptic();setSetupEducationLevel(o.v);}}
+                    style={{padding:"12px 14px",borderRadius:13,cursor:"pointer",marginBottom:8,border:`2px solid ${a?"#FF9933":th.border3}`,background:a?th.optionActive:th.optionBg,fontSize:12.5,fontWeight:a?700:400,color:a?"#CC6600":th.textMid,fontFamily:bf,transition:"all 0.18s",boxShadow:a?"0 4px 14px rgba(255,153,51,0.22)":"none"}}>
+                    {o.l}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ── Student: Institution Type ── */}
+          {isStudent&&(
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:8,fontFamily:bf,letterSpacing:0.3}}>🏫 {pt.institutionTypeLabel}</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                {pt.institutionTypes.map(o=>{
+                  const a=setupInstitutionType===o.v;
+                  return(
+                    <div key={o.v} onClick={()=>{haptic();setSetupInstitutionType(o.v);}}
+                      style={{padding:"12px 10px",borderRadius:13,cursor:"pointer",border:`2px solid ${a?"#FF9933":th.border3}`,background:a?th.optionActive:th.optionBg,fontSize:12.5,fontWeight:a?700:400,color:a?"#CC6600":th.textMid,textAlign:"center",fontFamily:bf,transition:"all 0.18s",boxShadow:a?"0 4px 14px rgba(255,153,51,0.22)":"none"}}>
+                      {o.l}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── Number of Children (all occupations) ── */}
+          <div style={{marginBottom:20}}>
+            <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:4,fontFamily:bf,letterSpacing:0.3}}>👶 {pt.numChildrenLabel}</div>
+            <div style={{fontSize:10.5,color:th.textSub,marginBottom:8,fontFamily:bf}}>
+              {isHindi?"सुकन्या समृद्धि, बेटी बचाओ, लाडली योजनाओं के लिए":"Unlocks Sukanya Samriddhi, Beti Bachao, Ladli & more"}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              {pt.numChildrenOpts.map(o=>{
+                const a=setupNumChildren===o.v;
+                return(
+                  <div key={o.v} onClick={()=>{haptic();setSetupNumChildren(o.v);if(o.v==="0")setSetupHasGirls("no");}}
+                    style={{padding:"12px 10px",borderRadius:13,cursor:"pointer",border:`2px solid ${a?"#FF9933":th.border3}`,background:a?th.optionActive:th.optionBg,fontSize:12.5,fontWeight:a?700:400,color:a?"#CC6600":th.textMid,textAlign:"center",fontFamily:bf,transition:"all 0.18s",boxShadow:a?"0 4px 14px rgba(255,153,51,0.22)":"none"}}>
+                    {o.l}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── Has Girl Children (shown only when numChildren > 0) ── */}
+          {hasChildren&&(
+            <div style={{marginBottom:24}}>
+              <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:4,fontFamily:bf,letterSpacing:0.3}}>👧 {pt.hasGirlsLabel}</div>
+              <div style={{fontSize:10.5,color:th.textSub,marginBottom:8,fontFamily:bf}}>
+                {isHindi?"NSP, किशोरी शक्ति योजना की पात्रता के लिए":"For NSP, Kishori Shakti Yojana eligibility"}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                {pt.hasGirlsOpts.map(o=>{
+                  const a=setupHasGirls===o.v;
+                  return(
+                    <div key={o.v} onClick={()=>{haptic();setSetupHasGirls(o.v);}}
+                      style={{padding:"12px 10px",borderRadius:13,cursor:"pointer",border:`2px solid ${a?"#FF9933":th.border3}`,background:a?th.optionActive:th.optionBg,fontSize:12.5,fontWeight:a?700:400,color:a?"#CC6600":th.textMid,textAlign:"center",fontFamily:bf,transition:"all 0.18s",boxShadow:a?"0 4px 14px rgba(255,153,51,0.22)":"none"}}>
+                      {o.l}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Back + Save buttons */}
+          <div style={{display:"flex",gap:8}}>
+            <div onClick={()=>{haptic();setStage("setup3");}}
+              style={{flex:1,padding:14,borderRadius:14,border:`1.5px solid ${th.border3}`,background:th.card,textAlign:"center",fontSize:13,fontWeight:600,color:th.textMid,cursor:"pointer",fontFamily:bf}}>
+              {pt.backBtn}
+            </div>
+            <div onClick={()=>{if(canSave){haptic([50,60,50]);handleSetup4Save();}}}
               style={{flex:2,background:canSave?"linear-gradient(135deg,#138808,#16a34a)":"#ddd",borderRadius:14,padding:14,textAlign:"center",fontSize:14,fontWeight:700,color:"#fff",cursor:canSave?"pointer":"default",fontFamily:bf,boxShadow:canSave?"0 6px 22px rgba(19,136,8,0.38)":"none",transition:"all 0.22s"}}>
               {pt.saveBtn}
             </div>
