@@ -498,7 +498,7 @@ function InputBar({ input, setInput, onSend, onKeyDown, loading, dark, lang, tex
 
 // ─── Feature 10: Markdown renderer ───────────────────────────────────────────
 // renderInline handles bold (**text**) and clickable links within a single line.
-function renderInline(line, lineIdx, isUser, th) {
+function renderInline(line, lineIdx, isUser, th, dark) {
   const parts = [];
   // Group 1: **bold**
   // Group 2: email address (must come BEFORE url group so user@gmail.com is caught whole)
@@ -524,6 +524,16 @@ function renderInline(line, lineIdx, isUser, th) {
           style={
             isUser
               ? { color:"#ffe0a0", textDecoration:"underline", wordBreak:"break-all" }
+              : dark
+              ? {
+                  display:"inline-flex", alignItems:"center", gap:3,
+                  background:"rgba(100,160,255,0.15)",
+                  border:"1px solid rgba(100,160,255,0.35)",
+                  borderRadius:5, padding:"1px 7px",
+                  color:"#7bb8ff", textDecoration:"none",
+                  fontWeight:600, fontSize:"0.88em",
+                  wordBreak:"break-all", verticalAlign:"middle", lineHeight:1.5,
+                }
               : {
                   display:"inline-flex", alignItems:"center", gap:3,
                   background:"rgba(0,53,128,0.08)",
@@ -547,6 +557,20 @@ function renderInline(line, lineIdx, isUser, th) {
           <a key={`l-${lineIdx}-${match.index}`} href={href} target="_blank" rel="noopener noreferrer"
             style={{ color:"#ffe0a0", textDecoration:"underline", wordBreak:"break-all" }}>
             {raw}
+          </a>
+        ) : dark ? (
+          <a key={`l-${lineIdx}-${match.index}`} href={href} target="_blank" rel="noopener noreferrer"
+            style={{
+              display:"inline-flex", alignItems:"center", gap:3,
+              background:"rgba(100,160,255,0.15)",
+              border:"1px solid rgba(100,160,255,0.35)",
+              borderRadius:5, padding:"1px 7px",
+              color:"#7bb8ff", textDecoration:"none",
+              fontWeight:600, fontSize:"0.88em",
+              wordBreak:"break-all", verticalAlign:"middle", lineHeight:1.5,
+            }}>
+            {raw}
+            <span style={{ fontSize:9, opacity:0.7, flexShrink:0 }}>↗</span>
           </a>
         ) : (
           <a key={`l-${lineIdx}-${match.index}`} href={href} target="_blank" rel="noopener noreferrer"
@@ -573,7 +597,7 @@ function renderInline(line, lineIdx, isUser, th) {
 
 // renderContent handles block-level structure: numbered lists, bullet lists,
 // empty-line spacers, and falls back to inline rendering for regular text.
-function renderContent(text, isUser, th) {
+function renderContent(text, isUser, th, dark) {
   const lines  = text.split("\n");
   const result = [];
 
@@ -603,7 +627,7 @@ function renderContent(text, isUser, th) {
             {num}
           </span>
           <span style={{ flex:1, lineHeight:1.65 }}>
-            {renderInline(content, li, isUser, th)}
+            {renderInline(content, li, isUser, th, dark)}
           </span>
         </div>
       );
@@ -627,7 +651,7 @@ function renderContent(text, isUser, th) {
             •
           </span>
           <span style={{ flex:1, lineHeight:1.65 }}>
-            {renderInline(content, li, isUser, th)}
+            {renderInline(content, li, isUser, th, dark)}
           </span>
         </div>
       );
@@ -643,7 +667,7 @@ function renderContent(text, isUser, th) {
     // ── Regular text line ──────────────────────────────────────────────────
     result.push(
       <span key={`line-${li}`}>
-        {renderInline(line, li, isUser, th)}
+        {renderInline(line, li, isUser, th, dark)}
         {!isLast && "\n"}
       </span>
     );
@@ -776,6 +800,41 @@ function ChatBubble({ msg, lang, dark, isNew }) {
       : "0 4px 20px rgba(255,153,51,0.11), 0 1px 8px rgba(0,0,0,0.09)",
   } : {};
 
+  // ── User bubble: 3D premium style — same tricolor palette, raised/embossed ─
+  // Diagonal gradient: saffron (top-left) → indigo → deep navy (bottom-right),
+  // matching the AI border gradient but rendered as a solid 3D surface.
+  // Layered box-shadows simulate:
+  //   • warm saffron ambient glow (spread)
+  //   • deep lift shadow beneath the bubble
+  //   • sharp lower-right edge for depth
+  //   • inset top highlight (light source from top-left)
+  //   • inset left highlight (same light source)
+  //   • inset bottom-dark edge (shadow side)
+  const userBubbleStyle = isUser ? {
+    background: dark
+      ? "linear-gradient(148deg, #e8820a 0%, #FF9933 16%, #7c7cf8 50%, #2243a8 76%, #003580 100%)"
+      : "linear-gradient(148deg, #FFB347 0%, #FF9933 20%, #6366f1 52%, #1a4db5 78%, #003580 100%)",
+    border: "1px solid rgba(255,255,255,0.18)",
+    boxShadow: dark
+      ? [
+          "0 10px 32px rgba(255,120,0,0.4)",
+          "0 5px 16px rgba(0,0,0,0.55)",
+          "0 2px 5px rgba(0,0,0,0.4)",
+          "inset 0 1.5px 0 rgba(255,210,100,0.48)",
+          "inset 0 -1px 0 rgba(0,0,0,0.38)",
+          "inset 1px 0 0 rgba(255,210,100,0.22)",
+        ].join(", ")
+      : [
+          "0 10px 28px rgba(255,120,0,0.32)",
+          "0 5px 14px rgba(0,53,128,0.3)",
+          "0 2px 5px rgba(0,0,0,0.16)",
+          "inset 0 1.5px 0 rgba(255,235,150,0.55)",
+          "inset 0 -1px 0 rgba(0,30,100,0.24)",
+          "inset 1px 0 0 rgba(255,235,150,0.28)",
+        ].join(", "),
+    textShadow: "0 1px 3px rgba(0,0,0,0.28)",
+  } : {};
+
   return (
     <div className={isUser ? "ai-msg-bubble-user" : "ai-msg-bubble-ai"}
       style={{ display:"flex", flexDirection:isUser?"row-reverse":"row", alignItems:"flex-end", gap:6, marginBottom:14 }}>
@@ -788,15 +847,14 @@ function ChatBubble({ msg, lang, dark, isNew }) {
       )}
       <div style={{
         maxWidth:"88%",
-        background: isUser ? "linear-gradient(135deg,#003580,#1a56db)" : th.card,
+        background: isUser ? undefined : th.card,
         color: isUser ? "#fff" : th.text,
         borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
         padding:"11px 15px", fontSize:13.5, lineHeight:1.65, fontFamily:bf,
-        boxShadow: isUser ? "0 4px 16px rgba(0,53,128,0.28)" : undefined,
-        border: isUser ? "none" : undefined,
         whiteSpace:"pre-wrap", wordBreak:"break-word",
         transition:"box-shadow 0.3s",
         ...aiBubbleStyle,
+        ...userBubbleStyle,
       }}>
         {/* ── Feature 5: AI bubble sender header ───────────────────────── */}
         {!isUser && (
@@ -825,7 +883,7 @@ function ChatBubble({ msg, lang, dark, isNew }) {
         )}
 
         {isDone
-          ? renderContent(msg.content, isUser, th)
+          ? renderContent(msg.content, isUser, th, dark)
           : (
             <>
               {stripMd(displayed)}
