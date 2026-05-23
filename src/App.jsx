@@ -5,9 +5,15 @@ import {
   CATEGORIES,
   getSchemesForCategory,
 } from "./schemesData.js";
-import { auth } from "./firebase.js";
+import { auth, db } from "./firebase.js";
 import { RecaptchaVerifier, signInWithPhoneNumber, signOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import AIChat from "./AIChat.jsx";
+import AdminDashboard from "./AdminDashboard.jsx";
+
+// ─── ADMIN UID ─────────────────────────────────────────────────────────────────
+// Replace with your Firebase UID. Find it: Firebase Console → Auth → Users → copy UID
+const ADMIN_UID = "YOUR_ADMIN_UID_HERE";
 
 // ─── COUNT-UP HOOK ─────────────────────────────────────────────────────────────
 function useCountUp(targets, trigger, duration=1400){
@@ -1457,7 +1463,7 @@ function Card({children,mt=-20,dark=false}){
 }
 
 // ─── PROFILE TAB ──────────────────────────────────────────────────────────────
-function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false,toggleDark}){
+function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false,toggleDark,isAdmin=false,onAdminOpen}){
   const th=THEME[dark?"dark":"light"];
   const pt=PT[lang];
   const bf=fontFamily(lang);
@@ -1478,6 +1484,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   const [authError,setAuthError]=useState("");
   const [googleLoading,setGoogleLoading]=useState(false);
   const [googleEmail,setGoogleEmail]=useState("");
+  const [googlePhoto,setGooglePhoto]=useState("");
   const [emailInput,setEmailInput]=useState("");
   const [passwordInput,setPasswordInput]=useState("");
   const [showPassword,setShowPassword]=useState(false);
@@ -1561,9 +1568,10 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setStage("setup2");
   };
 
-  const handleSetup2Save=()=>{
+  const handleSetup2Save=async()=>{
     if(!setupState||!setupCat)return;
-    setProfile({
+    const isNewUser=!profile;
+    const profileData={
       name:setupName.trim(),phone,gender:setupGender,
       state:setupState,occupation:setupCat,
       income:savedAnswers?.income||"1to3",
@@ -1571,8 +1579,22 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       age:savedAnswers?.age||"18to35",
       area:savedAnswers?.area||"rural",
       ...(googleEmail?{email:googleEmail}:{}),
-    });
+      ...(googlePhoto?{photo:googlePhoto}:{}),
+    };
+    setProfile(profileData);
     setStage("dashboard");
+    // Save to Firestore — non-blocking, silent fail so UI stays instant
+    try{
+      const uid=auth.currentUser?.uid;
+      if(uid){
+        await setDoc(doc(db,"users",uid),{
+          ...profileData,
+          uid,
+          ...(isNewUser?{createdAt:serverTimestamp()}:{}),
+          lastSeen:serverTimestamp(),
+        },{merge:true});
+      }
+    }catch(err){console.warn("Firestore save failed:",err);}
   };
 
   const handleEdit=()=>{
@@ -1587,7 +1609,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setProfile(null);
     setPhone("");setOtp(["","","","","",""]);
     setSetupName("");setSetupGender("");setSetupState("");setStateSearch("");setSetupCat("");
-    setGoogleEmail("");setEmailInput("");setPasswordInput("");setShowPassword(false);setEmailTab("signin");
+    setGoogleEmail("");setGooglePhoto("");setEmailInput("");setPasswordInput("");setShowPassword(false);setEmailTab("signin");
     setStage("phone");
   };
 
@@ -1599,6 +1621,8 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       const user=result.user;
       // Store email so profile knows this is a Google login
       setGoogleEmail(user.email||"");
+      // Save Google profile photo for avatar display
+      setGooglePhoto(user.photoURL||"");
       // Pre-fill name from Google account
       if(user.displayName) setSetupName(user.displayName);
       // Pre-fill state/category from any saved eligibility answers
@@ -2140,6 +2164,24 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
             <div style={{color:"#ccc",fontSize:18}}>›</div>
           </div>
 
+          {/* Admin Panel — only visible to admin */}
+          {isAdmin&&(
+            <div onClick={()=>{haptic();onAdminOpen?.();}}
+              style={{padding:"13px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",
+                borderBottom:`1px solid ${th.border}`}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:36,height:36,borderRadius:10,
+                  background:"linear-gradient(135deg,#003580,rgba(255,153,51,0.9))",
+                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🛡️</div>
+                <div>
+                  <div style={{fontSize:14,fontWeight:700,color:th.text,fontFamily:bf}}>Admin Dashboard</div>
+                  <div style={{fontSize:10,color:th.textSub}}>View users, stats & export data</div>
+                </div>
+              </div>
+              <div style={{color:th.textSub,fontSize:18}}>›</div>
+            </div>
+          )}
+
           {/* Sign Out */}
           <div onClick={()=>{haptic([50,60,50]);handleSignOut();}}
             style={{padding:"13px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
@@ -2608,6 +2650,7 @@ export default function YojanaSetu(){
   const [lang,setLang]=useState(()=>localStorage.getItem("yojana_lang")||"en");
   const [dark,setDark]=useState(()=>localStorage.getItem("yojana_dark")==="true");
   const [activeTab,setActiveTab]=useState("home");
+  const [showAdmin,setShowAdmin]=useState(false);
   const [searchFocused,setSearchFocused]=useState(false);
   const [searchText,setSearchText]=useState("");
   const [loaded,setLoaded]=useState(false);
@@ -2631,10 +2674,12 @@ export default function YojanaSetu(){
   },[profile]);
 
   // If Firebase session expires or user signs out from another tab → clear profile
+  // Also silently updates lastSeen each time the app is opened
   useEffect(()=>{
-    const unsub=onAuthStateChanged(auth,(user)=>{
-      if(!user) setProfile(null);
-      // If user exists, localStorage profile already loaded above — nothing to do
+    const unsub=onAuthStateChanged(auth,async(user)=>{
+      if(!user){ setProfile(null); return; }
+      // Update lastSeen — silent fail, don't block
+      try{ await updateDoc(doc(db,"users",user.uid),{lastSeen:serverTimestamp()}); }catch{}
     });
     return()=>unsub();
   },[]);
@@ -2927,6 +2972,8 @@ export default function YojanaSetu(){
               onViewChecker={()=>setShowChecker(true)}
               dark={dark}
               toggleDark={toggleDark}
+              isAdmin={auth.currentUser?.uid===ADMIN_UID}
+              onAdminOpen={()=>setShowAdmin(true)}
             />
           )}
         </div>
@@ -2969,6 +3016,9 @@ export default function YojanaSetu(){
       </div>
 
       {/* ── OVERLAYS ── */}
+      {showAdmin&&(
+        <AdminDashboard onClose={()=>setShowAdmin(false)} dark={dark}/>
+      )}
       {showChecker&&(
         <EligibilityChecker lang={lang} onClose={()=>setShowChecker(false)} prefilledAnswers={profileAnswers||undefined} dark={dark}/>
       )}
