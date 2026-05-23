@@ -811,10 +811,16 @@ function ChatBubble({ msg, lang, dark, isNew }) {
   //   • inset left highlight (same light source)
   //   • inset bottom-dark edge (shadow side)
   const userBubbleStyle = isUser ? {
+    // Gradient border via padding-box / border-box trick:
+    // Content gradient sits on padding-box; border gradient on border-box.
+    // Border colour: bright gold top-left (light source) → dim navy bottom-right (shadow side).
+    // This reinforces the 3D raised effect — the lit rim catches the eye.
+    border: "1.5px solid transparent",
     background: dark
-      ? "linear-gradient(148deg, #e8820a 0%, #FF9933 16%, #7c7cf8 50%, #2243a8 76%, #003580 100%)"
-      : "linear-gradient(148deg, #FFB347 0%, #FF9933 20%, #6366f1 52%, #1a4db5 78%, #003580 100%)",
-    border: "1px solid rgba(255,255,255,0.18)",
+      ? `linear-gradient(148deg, #e8820a 0%, #FF9933 16%, #7c7cf8 50%, #2243a8 76%, #003580 100%) padding-box,
+         linear-gradient(148deg, rgba(255,220,100,0.9) 0%, rgba(255,160,40,0.65) 35%, rgba(160,160,255,0.3) 65%, rgba(60,60,160,0.15) 100%) border-box`
+      : `linear-gradient(148deg, #FFB347 0%, #FF9933 20%, #6366f1 52%, #1a4db5 78%, #003580 100%) padding-box,
+         linear-gradient(148deg, rgba(255,240,160,0.95) 0%, rgba(255,200,80,0.7) 35%, rgba(180,180,255,0.3) 65%, rgba(80,80,180,0.12) 100%) border-box`,
     boxShadow: dark
       ? [
           "0 10px 32px rgba(255,120,0,0.4)",
