@@ -5,6 +5,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "./firebase.js";
+import { SCHEME_DB, INDIA_STATES } from "./schemesData.js";
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const THEME = {
@@ -541,6 +542,251 @@ function ActivityFeed({ users, dark }) {
   );
 }
 
+// ─── SCHEME COVERAGE TAB ──────────────────────────────────────────────────────
+function SchemeCoverageTab({ dark }) {
+  const th = THEME[dark ? "dark" : "light"];
+  const [query, setQuery] = useState("");
+  const [sortMode, setSortMode] = useState("count"); // "count" | "alpha"
+
+  // Build per-state and central counts from SCHEME_DB
+  const { centralCount, stateCounts, totalSchemes } = useMemo(() => {
+    const counts = {};
+    let central = 0;
+    const all = Array.isArray(SCHEME_DB) ? SCHEME_DB : Object.values(SCHEME_DB || {});
+    all.forEach(scheme => {
+      const scope = scheme.scope || scheme.state || "";
+      if (scope === "national" || scope === "" || scope === "central") {
+        central++;
+      } else {
+        counts[scope] = (counts[scope] || 0) + 1;
+      }
+    });
+    return { centralCount: central, stateCounts: counts, totalSchemes: all.length };
+  }, []);
+
+  // Build full list: every state from INDIA_STATES gets a row (even if 0)
+  const rows = useMemo(() => {
+    const stateList = Array.isArray(INDIA_STATES) ? INDIA_STATES : Object.values(INDIA_STATES || {});
+    return stateList.map(state => ({
+      name: state,
+      count: stateCounts[state] || 0,
+    }));
+  }, [stateCounts]);
+
+  const maxCount = useMemo(() => Math.max(...rows.map(r => r.count), 1), [rows]);
+
+  const filtered = useMemo(() => {
+    const q = query.toLowerCase();
+    const list = q ? rows.filter(r => r.name.toLowerCase().includes(q)) : rows;
+    return [...list].sort((a, b) =>
+      sortMode === "count" ? b.count - a.count : a.name.localeCompare(b.name)
+    );
+  }, [rows, query, sortMode]);
+
+  // Summary buckets
+  const withSchemes  = rows.filter(r => r.count > 0).length;
+  const noSchemes    = rows.filter(r => r.count === 0).length;
+  const highCoverage = rows.filter(r => r.count >= 5).length;
+
+  function coverageColor(count) {
+    if (count === 0)  return "#E53E3E";
+    if (count <= 2)   return SAFFRON;
+    if (count <= 5)   return "#F59E0B";
+    return IND_GREEN;
+  }
+  function coverageLabel(count) {
+    if (count === 0)  return "None";
+    if (count <= 2)   return "Low";
+    if (count <= 5)   return "Medium";
+    return "Good";
+  }
+
+  return (
+    <div style={{ padding:"16px 14px", display:"flex", flexDirection:"column", gap:12 }}>
+
+      {/* Summary pills */}
+      <div style={{ display:"flex", gap:8 }}>
+        {[
+          { label:"Total Schemes", value:totalSchemes, color:NAVY },
+          { label:"🇮🇳 Central",    value:centralCount,  color:VIOLET },
+          { label:"States Active", value:withSchemes,  color:IND_GREEN },
+          { label:"States Empty",  value:noSchemes,    color:"#E53E3E" },
+        ].map(({ label, value, color }) => (
+          <div key={label} style={{
+            flex:1, background:th.card, border:`1.5px solid ${th.border}`,
+            borderRadius:12, padding:"10px 8px", textAlign:"center",
+            borderTop:`3px solid ${color}`, minWidth:0,
+          }}>
+            <div style={{ fontSize:18, fontWeight:800, color:th.text }}>{value}</div>
+            <div style={{ fontSize:9, color:th.textSub, marginTop:2, lineHeight:1.3 }}>{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Central schemes banner */}
+      <div style={{
+        background:`linear-gradient(135deg,${NAVY},#1a56db)`,
+        borderRadius:14, padding:"13px 16px",
+        display:"flex", alignItems:"center", gap:12,
+      }}>
+        <div style={{ fontSize:28 }}>🇮🇳</div>
+        <div style={{ flex:1 }}>
+          <div style={{ color:"#fff", fontSize:13, fontWeight:800 }}>
+            Central Government Schemes
+          </div>
+          <div style={{ color:"rgba(255,255,255,0.7)", fontSize:11, marginTop:2 }}>
+            Available to all states · Apply across India
+          </div>
+        </div>
+        <div style={{
+          background:"rgba(255,255,255,0.2)", borderRadius:10,
+          padding:"7px 13px", color:"#fff", fontSize:20, fontWeight:800,
+        }}>
+          {centralCount}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div style={{
+        background:th.card, border:`1.5px solid ${th.border}`,
+        borderRadius:12, padding:"10px 14px",
+        display:"flex", gap:12, flexWrap:"wrap", alignItems:"center",
+      }}>
+        <div style={{ fontSize:11, color:th.textSub, fontWeight:600, flexShrink:0 }}>Coverage:</div>
+        {[
+          { label:"None (0)",  color:"#E53E3E" },
+          { label:"Low (1–2)", color:SAFFRON },
+          { label:"Medium (3–5)", color:"#F59E0B" },
+          { label:"Good (6+)", color:IND_GREEN },
+        ].map(({ label, color }) => (
+          <div key={label} style={{ display:"flex", alignItems:"center", gap:5 }}>
+            <div style={{ width:10, height:10, borderRadius:3, background:color, flexShrink:0 }} />
+            <span style={{ fontSize:10, color:th.textMid }}>{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Search + sort controls */}
+      <div style={{ display:"flex", gap:8 }}>
+        <input
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="🔍  Search state…"
+          style={{
+            flex:1, padding:"9px 12px", borderRadius:10,
+            border:`1.5px solid ${th.border}`, background:th.inputBg,
+            color:th.text, fontSize:12, outline:"none", fontFamily:"inherit",
+          }}
+        />
+        <div style={{ display:"flex", gap:4 }}>
+          {[
+            { id:"count", label:"# Count" },
+            { id:"alpha", label:"A–Z" },
+          ].map(({ id, label }) => (
+            <div key={id} onClick={() => setSortMode(id)} style={{
+              padding:"8px 11px", borderRadius:10, fontSize:11, fontWeight:700,
+              cursor:"pointer", flexShrink:0,
+              background: sortMode === id ? NAVY : th.border,
+              color: sortMode === id ? "#fff" : th.textMid,
+              border: sortMode === id ? `1.5px solid ${NAVY}` : `1.5px solid ${th.border}`,
+            }}>
+              {label}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Results count */}
+      <div style={{ fontSize:11, color:th.textSub, fontWeight:600, marginTop:-4 }}>
+        Showing {filtered.length} of {rows.length} states
+      </div>
+
+      {/* State rows */}
+      <div style={{
+        background:th.card, border:`1.5px solid ${th.border}`,
+        borderRadius:16, padding:"4px 14px",
+      }}>
+        {filtered.length === 0 ? (
+          <div style={{ padding:"24px 0", textAlign:"center", color:th.textSub, fontSize:13 }}>
+            No states match "{query}"
+          </div>
+        ) : (
+          filtered.map(({ name, count }, idx) => {
+            const color = coverageColor(count);
+            const pct   = Math.round((count / maxCount) * 100);
+            return (
+              <div key={name} style={{
+                display:"flex", alignItems:"center", gap:10,
+                padding:"11px 0",
+                borderBottom: idx < filtered.length - 1 ? `1px solid ${th.border}` : "none",
+              }}>
+                {/* State name */}
+                <div style={{
+                  width:130, flexShrink:0,
+                  fontSize:12, fontWeight:600, color:th.text,
+                  overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+                }}>
+                  📍 {name}
+                </div>
+
+                {/* Progress bar */}
+                <div style={{
+                  flex:1, height:18, background:th.border,
+                  borderRadius:6, overflow:"hidden", position:"relative",
+                }}>
+                  <div style={{
+                    height:"100%", borderRadius:6,
+                    width: count > 0 ? `${Math.max(pct, 8)}%` : "0%",
+                    background:`linear-gradient(90deg,${color},${color}cc)`,
+                    transition:"width 0.5s cubic-bezier(0.22,1,0.36,1)",
+                    display:"flex", alignItems:"center", justifyContent:"flex-end",
+                    paddingRight:6,
+                  }}>
+                    {count > 0 && (
+                      <span style={{ fontSize:10, color:"#fff", fontWeight:700 }}>
+                        {count}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Count badge */}
+                <div style={{
+                  width:38, flexShrink:0, textAlign:"right",
+                  fontSize:13, fontWeight:800, color,
+                }}>
+                  {count}
+                </div>
+
+                {/* Coverage label */}
+                <div style={{
+                  width:50, flexShrink:0,
+                  fontSize:9, fontWeight:700, color,
+                  background:`${color}18`,
+                  borderRadius:6, padding:"2px 6px",
+                  textAlign:"center",
+                }}>
+                  {coverageLabel(count)}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Tip */}
+      <div style={{
+        background:th.card2, border:`1.5px dashed ${th.border}`,
+        borderRadius:12, padding:"12px 14px",
+        fontSize:11, color:th.textSub, lineHeight:1.6,
+      }}>
+        💡 <strong style={{ color:th.text }}>Tip:</strong> States in red have 0 schemes — focus your additions there.
+        Sort by <strong style={{ color:th.text }}>Count</strong> to instantly see the gaps.
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const PAGE_SIZE = 20;
 
@@ -747,6 +993,7 @@ export default function AdminDashboard({ onClose, dark = false }) {
     ["users",     "👥 Users"],
     ["analytics", "🧮 Analytics"],
     ["activity",  "🕐 Activity"],
+    ["schemes",   "🗺️ Schemes"],
   ];
 
   return (
@@ -1206,6 +1453,11 @@ export default function AdminDashboard({ onClose, dark = false }) {
             )}
           </div>
         </div>
+      )}
+
+      {/* ══ SCHEMES COVERAGE ══ */}
+      {!loading && !error && activeSection === "schemes" && (
+        <SchemeCoverageTab dark={dark} />
       )}
 
       {/* User Detail Drawer */}
