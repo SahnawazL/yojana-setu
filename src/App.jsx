@@ -2990,7 +2990,13 @@ export default function YojanaSetu(){
         visibility:activeTab==="ai"?"visible":"hidden",
         pointerEvents:activeTab==="ai"?"auto":"none",
       }}>
-        <AIChat lang={lang} dark={dark} profile={profile}/>
+        <AIChat
+          lang={lang}
+          dark={dark}
+          profile={profile}
+          uid={auth.currentUser?.uid || null}
+          key={auth.currentUser?.uid || "guest"}
+        />
       </div>
 
       {/* Bottom nav */}

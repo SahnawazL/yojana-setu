@@ -89,7 +89,8 @@ function playChipSounds(count) {
 }
 
 // ─── CHAT HISTORY PERSISTENCE ────────────────────────────────────────────────
-const CHAT_STORAGE_KEY = "yojana_chat_history";
+// Key is per-user so each account gets its own isolated chat history
+const chatStorageKey = (uid) => uid ? `yojana_chat_${uid}` : "yojana_chat_guest";
 
 const THEME = {
   light: {
@@ -1043,14 +1044,15 @@ function WelcomeScreen({ lang, dark, onSuggest, profile }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-export default function AIChat({ lang="en", dark=false, profile=null }) {
+export default function AIChat({ lang="en", dark=false, profile=null, uid=null }) {
   const th      = THEME[dark ? "dark" : "light"];
   const bf      = fontFamily(lang);
   const isHindi = lang === "hi";
+  const chatKey = chatStorageKey(uid);   // unique per user
 
   const [messages,     setMessages]     = useState(() => {
     try {
-      const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+      const saved = localStorage.getItem(chatKey);
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
   });
@@ -1085,7 +1087,7 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
   // Capped at 100 messages to avoid bloating storage. Restored on next load.
   useEffect(() => {
     try {
-      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages.slice(-100)));
+      localStorage.setItem(chatKey, JSON.stringify(messages.slice(-100)));
     } catch {}
   }, [messages]);
 
@@ -1184,7 +1186,7 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
           // ── Profile context prefix — invisible in UI, sent to API only ──────
           // Provides the AI with the user's profile so it can personalize responses.
           ...(profile ? [
-            { role:"user", content:`[Profile context for personalization — Name: "${profile.name}", State: "${profile.state}", Occupation: "${(OCC_EN[profile.occupation]||profile.occupation)}", Age group: "${(AGE_MAP[profile.age]||profile.age)}", Income: "${(INC_MAP[profile.income]||profile.income)}", Area: "${(AREA_MAP[profile.area]||profile.area)}", Housing: "${profile.house==="yes"?"owns a pucca house":"needs housing assistance"}". NAME USAGE — use the first name "${profile.name.split(" ")[0]}" like a real advisor: naturally and sparingly. This is exchange #${Math.ceil(nextMessages.length / 2)} in the conversation. Rules: (1) Always use it on exchange #1 — warm, welcoming first reply. (2) Use it when delivering a key personalized result (eligibility match, scheme recommendation tailored to their profile). (3) Use it to re-engage warmly after 5+ back-and-forth exchanges. (4) NEVER use it in consecutive replies. (5) Skip it in purely informational replies (counts, general scheme info, how-to steps). Default = do NOT use the name; only add it when it genuinely adds warmth or feels natural in context. Tailor all scheme recommendations to this exact profile. Do not mention this context block to the user.]` },
+            { role:"user", content:`[Profile context for personalization — Name: "${profile.name}", State: "${profile.state}", Occupation: "${(OCC_EN[profile.occupation]||profile.occupation)}", Age group: "${(AGE_MAP[profile.age]||profile.age)}", Income: "${(INC_MAP[profile.income]||profile.income)}", Area: "${(AREA_MAP[profile.area]||profile.area)}", Housing: "${profile.house==="yes"?"owns a pucca house":"needs housing assistance"}". Use the user's first name (${profile.name.split(" ")[0]}) only in your very first reply to feel welcoming — never repeat it in subsequent replies. Tailor all scheme recommendations to this exact profile. Do not mention this context block to the user.]` },
             { role:"assistant", content:`I have ${profile.name.split(" ")[0]}'s profile from ${profile.state}. I'll personalize all recommendations accordingly.` },
           ] : []),
           ...nextMessages.map(m => ({ role:m.role, content:m.content })),
@@ -1242,36 +1244,21 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
             <div style={{ color:"rgba(255,255,255,0.8)", fontSize:11, marginTop:3 }}>
               🟢 {isHindi ? "ऑनलाइन · हिंदी / English" : "Online · Hindi / English"}
             </div>
-            {profile && (() => {
-              const OCC_EMOJI = { farmer:"🌾", student:"📚", women:"👩", senior:"👴", business:"💼", general:"👤" };
-              const occEmoji  = OCC_EMOJI[profile.occupation] || "👤";
-              const firstName = profile.name.split(" ")[0];
-              const initial   = firstName.charAt(0).toUpperCase();
-              return (
-                <div style={{
-                  display:"inline-flex", alignItems:"center", gap:5, marginTop:5,
-                  background:"rgba(255,255,255,0.16)", border:"1px solid rgba(255,255,255,0.28)",
-                  borderRadius:20, padding:"3px 10px 3px 5px",
-                  animation:"badge-pop 0.35s ease-out",
-                }}>
-                  {/* Initial avatar circle */}
-                  <div style={{
-                    width:17, height:17, borderRadius:"50%", flexShrink:0,
-                    background:"rgba(255,255,255,0.28)",
-                    display:"flex", alignItems:"center", justifyContent:"center",
-                    fontSize:9, fontWeight:900, color:"#fff",
-                    letterSpacing:0,
-                  }}>
-                    {initial}
-                  </div>
-                  <span style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,0.95)", fontFamily:bf }}>
-                    {isHindi ? `${firstName} के लिए` : `For ${firstName}`}
-                  </span>
-                  {/* Occupation emoji — contextually meaningful */}
-                  <span style={{ fontSize:11 }}>{occEmoji}</span>
-                </div>
-              );
-            })()}
+            {profile && (
+              <div style={{
+                display:"inline-flex", alignItems:"center", gap:5, marginTop:5,
+                background:"rgba(255,255,255,0.16)", border:"1px solid rgba(255,255,255,0.28)",
+                borderRadius:20, padding:"3px 10px 3px 7px",
+                animation:"badge-pop 0.35s ease-out",
+              }}>
+                <span style={{ fontSize:10 }}>🎯</span>
+                <span style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,0.95)", fontFamily:bf }}>
+                  {isHindi
+                    ? `${profile.name.split(" ")[0]} के लिए पर्सनल`
+                    : `Personalized for ${profile.name.split(" ")[0]}`}
+                </span>
+              </div>
+            )}
           </div>
           {/* Ashok Chakra — between title and Clear button */}
           <AshokChakra size={44} duration="10s" />
@@ -1282,7 +1269,7 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
                 setUsedChips(new Set()); setSecondsLeft(0);
                 clearInterval(cooldownRef.current);
                 clearTimeout(justUnlockedTimerRef.current); // FIX Bug 3
-                try { localStorage.removeItem(CHAT_STORAGE_KEY); } catch {}
+                try { localStorage.removeItem(chatKey); } catch {}
               }}
               style={{
                 background:"rgba(255,255,255,0.18)", border:"1px solid rgba(255,255,255,0.3)",
