@@ -811,34 +811,29 @@ function ChatBubble({ msg, lang, dark, isNew }) {
   //   • inset left highlight (same light source)
   //   • inset bottom-dark edge (shadow side)
   const userBubbleStyle = isUser ? {
-    // Gradient border via padding-box / border-box trick:
-    // Content gradient sits on padding-box; border gradient on border-box.
-    // Border colour: bright gold top-left (light source) → dim navy bottom-right (shadow side).
-    // This reinforces the 3D raised effect — the lit rim catches the eye.
+    // Professional blue-indigo gradient — same navy family as the AI palette
+    // but without the loud saffron. Gradient border: soft white highlight at
+    // top-left (light source) fading to near-invisible at bottom-right.
     border: "1.5px solid transparent",
     background: dark
-      ? `linear-gradient(148deg, #e8820a 0%, #FF9933 16%, #7c7cf8 50%, #2243a8 76%, #003580 100%) padding-box,
-         linear-gradient(148deg, rgba(255,220,100,0.9) 0%, rgba(255,160,40,0.65) 35%, rgba(160,160,255,0.3) 65%, rgba(60,60,160,0.15) 100%) border-box`
-      : `linear-gradient(148deg, #FFB347 0%, #FF9933 20%, #6366f1 52%, #1a4db5 78%, #003580 100%) padding-box,
-         linear-gradient(148deg, rgba(255,240,160,0.95) 0%, rgba(255,200,80,0.7) 35%, rgba(180,180,255,0.3) 65%, rgba(80,80,180,0.12) 100%) border-box`,
+      ? `linear-gradient(148deg, #3b82f6 0%, #4a5ec8 42%, #2d4ea8 72%, #1a3a8a 100%) padding-box,
+         linear-gradient(148deg, rgba(255,255,255,0.32) 0%, rgba(200,218,255,0.18) 50%, rgba(100,130,220,0.08) 100%) border-box`
+      : `linear-gradient(148deg, #2563eb 0%, #3b4fb5 42%, #1e3a8a 72%, #003580 100%) padding-box,
+         linear-gradient(148deg, rgba(255,255,255,0.55) 0%, rgba(200,218,255,0.28) 50%, rgba(100,130,220,0.08) 100%) border-box`,
     boxShadow: dark
       ? [
-          "0 10px 32px rgba(255,120,0,0.4)",
-          "0 5px 16px rgba(0,0,0,0.55)",
-          "0 2px 5px rgba(0,0,0,0.4)",
-          "inset 0 1.5px 0 rgba(255,210,100,0.48)",
-          "inset 0 -1px 0 rgba(0,0,0,0.38)",
-          "inset 1px 0 0 rgba(255,210,100,0.22)",
+          "0 6px 20px rgba(37,99,235,0.38)",
+          "0 3px 10px rgba(0,0,0,0.4)",
+          "inset 0 1px 0 rgba(255,255,255,0.22)",
+          "inset 0 -1px 0 rgba(0,0,0,0.28)",
         ].join(", ")
       : [
-          "0 10px 28px rgba(255,120,0,0.32)",
-          "0 5px 14px rgba(0,53,128,0.3)",
-          "0 2px 5px rgba(0,0,0,0.16)",
-          "inset 0 1.5px 0 rgba(255,235,150,0.55)",
-          "inset 0 -1px 0 rgba(0,30,100,0.24)",
-          "inset 1px 0 0 rgba(255,235,150,0.28)",
+          "0 6px 18px rgba(37,99,235,0.3)",
+          "0 3px 8px rgba(0,53,128,0.22)",
+          "inset 0 1px 0 rgba(255,255,255,0.32)",
+          "inset 0 -1px 0 rgba(0,30,100,0.18)",
         ].join(", "),
-    textShadow: "0 1px 3px rgba(0,0,0,0.28)",
+    textShadow: "0 1px 2px rgba(0,0,0,0.22)",
   } : {};
 
   return (
