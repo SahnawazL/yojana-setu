@@ -2345,6 +2345,44 @@ function BenefitCalculatorCard({ allMatchedSchemes, lang, dark }) {
 // ─── DOCUMENT VAULT CARD ──────────────────────────────────────────────────────
 const DOC_VAULT_KEY = "yojana_doc_vault";
 
+// Canonical doc groups — order matters: aadhaar_pan must come before aadhaar
+const DOC_CANON = [
+  { key:"aadhaar_pan",   en:"Aadhaar & PAN Card",               hi:"आधार और पैन कार्ड",           kw:["aadhaar","pan"] },
+  { key:"aadhaar",       en:"Aadhaar Card",                     hi:"आधार कार्ड",                   kw:["aadhaar"] },
+  { key:"bank",          en:"Bank Account / Passbook",           hi:"बैंक खाता / पासबुक",           kw:["bank"] },
+  { key:"income",        en:"Income Certificate",                hi:"आय प्रमाण पत्र",               kw:["income"] },
+  { key:"ration",        en:"Ration Card",                      hi:"राशन कार्ड",                   kw:["ration"] },
+  { key:"bpl",           en:"BPL Certificate",                  hi:"बीपीएल प्रमाण पत्र",           kw:["bpl"] },
+  { key:"caste",         en:"Caste / Category Certificate",     hi:"जाति प्रमाण पत्र",             kw:["caste","category cert","obc","sc/st"] },
+  { key:"land",          en:"Land / Property Documents",        hi:"भूमि दस्तावेज़",               kw:["land","khasra","property"] },
+  { key:"photo",         en:"Passport Size Photos",             hi:"पासपोर्ट साइज़ फोटो",          kw:["photo"] },
+  { key:"address",       en:"Address Proof",                    hi:"पता प्रमाण",                   kw:["address"] },
+  { key:"marksheet",     en:"Mark Sheets / Academic Records",   hi:"मार्कशीट / शैक्षणिक प्रमाण",  kw:["mark sheet","marksheet","mark"] },
+  { key:"school_enroll", en:"School / Enrollment Certificate",  hi:"स्कूल / नामांकन प्रमाण",      kw:["school enroll","enrollment","school cert"] },
+  { key:"domicile",      en:"Domicile / Residence Certificate", hi:"निवास प्रमाण पत्र",            kw:["domicile","residence cert"] },
+  { key:"disability",    en:"Disability Certificate",           hi:"दिव्यांग प्रमाण पत्र",         kw:["disability"] },
+  { key:"mobile",        en:"Mobile Number (Aadhaar-linked)",   hi:"मोबाइल नंबर (आधार लिंक)",     kw:["mobile number"] },
+  { key:"self_decl",     en:"Self-Declaration",                 hi:"स्व-घोषणा पत्र",               kw:["self-declar","self declar"] },
+  { key:"business_plan", en:"Business Plan",                    hi:"व्यापार योजना",                kw:["business plan"] },
+  { key:"birth_cert",    en:"Birth Certificate",                hi:"जन्म प्रमाण पत्र",             kw:["birth cert","birth"] },
+  { key:"voter",         en:"Voter ID",                         hi:"मतदाता पहचान पत्र",            kw:["voter"] },
+  { key:"driving",       en:"Driving License",                  hi:"ड्राइविंग लाइसेंस",            kw:["driving"] },
+];
+
+// Returns a canonical key for any raw English doc name string.
+// Strips parentheticals, then maps to known groups. Falls back to slugified name.
+function canonicalDocKey(rawEn) {
+  const s = rawEn.toLowerCase().replace(/\s*\([^)]*\)/g,"").trim();
+  for (const g of DOC_CANON) {
+    if (g.key === "aadhaar_pan") {
+      if (s.includes("aadhaar") && s.includes("pan")) return g.key;
+      continue;
+    }
+    if (g.kw.some(kw => s.includes(kw))) return g.key;
+  }
+  return s.replace(/\s+/g,"_").slice(0,40);
+}
+
 function DocumentVaultCard({ allMatchedSchemes, lang, dark }) {
   const th = THEME[dark ? "dark" : "light"];
   const isHindi = lang === "hi";
@@ -2352,29 +2390,31 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark }) {
   const [showAll, setShowAll] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
 
-  // Build de-duped doc map: en-normalised key → { en, hi, schemes[] }
+  // Smart de-duped doc map: canonical key → { en, hi, schemes[] }
+  // Groups all Aadhaar variants → one entry, all Bank variants → one entry, etc.
   const docMap = useMemo(() => {
     const map = {};
     allMatchedSchemes.forEach(scheme => {
       const enDocs = scheme.docs?.en || [];
       const hiDocs = scheme.docs?.hi || [];
-      enDocs.forEach((doc, i) => {
-        const key = doc.toLowerCase().trim().replace(/\s+/g, " ");
-        if (!map[key]) {
-          map[key] = {
-            key,
-            en: doc,
-            hi: hiDocs[i] || doc,
+      enDocs.forEach((rawEn, i) => {
+        const ck = canonicalDocKey(rawEn);
+        if (!map[ck]) {
+          const canon = DOC_CANON.find(g => g.key === ck);
+          map[ck] = {
+            key:     ck,
+            en:      canon ? canon.en : rawEn.replace(/\s*\([^)]*\)/g,"").trim(),
+            hi:      canon ? canon.hi : (hiDocs[i] || rawEn),
             schemes: [],
           };
         }
-        // avoid duplicate scheme refs
-        if (!map[key].schemes.find(s => s.id === scheme.id)) {
-          map[key].schemes.push({ id: scheme.id, name: scheme.name, color: scheme.color, icon: scheme.icon });
+        if (!map[ck].schemes.find(s => s.id === scheme.id)) {
+          map[ck].schemes.push({ id:scheme.id, name:scheme.name, color:scheme.color, icon:scheme.icon });
         }
       });
     });
-    return Object.values(map);
+    // Sort by impact (scheme count) descending so most important docs are first
+    return Object.values(map).sort((a,b) => b.schemes.length - a.schemes.length);
   }, [allMatchedSchemes]);
 
   const [checked, setChecked] = useState(() => {
@@ -2391,21 +2431,25 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark }) {
   }, []);
 
   const checkedCount = docMap.filter(d => checked[d.key]).length;
-  const total = docMap.length;
-  const pct = total > 0 ? Math.round((checkedCount / total) * 100) : 0;
-  const allDone = checkedCount === total && total > 0;
+  const total        = docMap.length;
+  const pct          = total > 0 ? Math.round((checkedCount / total) * 100) : 0;
+  const allDone      = checkedCount === total && total > 0;
 
-  // Celebrate when all checked
   useEffect(() => {
     if (allDone) { setCelebrate(true); const t = setTimeout(() => setCelebrate(false), 2500); return () => clearTimeout(t); }
   }, [allDone]);
 
-  // Unchecked first, checked last
+  // Unchecked first (sorted by impact), checked last
   const sortedDocs = useMemo(() =>
-    [...docMap].sort((a, b) => (checked[a.key] ? 1 : 0) - (checked[b.key] ? 1 : 0)),
+    [...docMap].sort((a,b) => {
+      const ac = checked[a.key] ? 1 : 0;
+      const bc = checked[b.key] ? 1 : 0;
+      if (ac !== bc) return ac - bc;
+      return b.schemes.length - a.schemes.length;
+    }),
     [docMap, checked]
   );
-  const visibleDocs = showAll ? sortedDocs : sortedDocs.slice(0, 5);
+  const visibleDocs = showAll ? sortedDocs : sortedDocs.slice(0, 6);
 
   if (docMap.length === 0) return null;
 
@@ -2413,27 +2457,18 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark }) {
 
   return (
     <div style={{
-      background: th.card,
-      borderRadius: 20,
-      marginBottom: 16,
+      background: th.card, borderRadius: 20, marginBottom: 16,
       overflow: "hidden",
-      boxShadow: dark
-        ? "0 4px 24px rgba(0,0,0,0.25)"
-        : "0 4px 24px rgba(0,0,0,0.07)",
+      boxShadow: dark ? "0 4px 24px rgba(0,0,0,0.25)" : "0 4px 24px rgba(0,0,0,0.07)",
       border: `1.5px solid ${th.border}`,
     }}>
 
       {/* Header */}
       <div style={{
-        background: dark
-          ? "linear-gradient(135deg,#1a1a2e,#16213e)"
-          : "linear-gradient(135deg,#EFF6FF,#F0FDF4)",
-        padding: "16px 16px 14px",
-        borderBottom: `1px solid ${th.border}`,
-        position: "relative",
-        overflow: "hidden",
+        background: dark ? "linear-gradient(135deg,#1a1a2e,#16213e)" : "linear-gradient(135deg,#EFF6FF,#F0FDF4)",
+        padding: "16px 16px 14px", borderBottom: `1px solid ${th.border}`,
+        position: "relative", overflow: "hidden",
       }}>
-        {/* Decorative line */}
         <div style={{ position:"absolute", bottom:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${ASHOKA_BLUE},${IND_GREEN})` }}/>
 
         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
@@ -2442,12 +2477,12 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark }) {
           </div>
           <div style={{ flex:1 }}>
             <div style={{ fontSize:13, fontWeight:800, color:th.text, fontFamily:bf, lineHeight:1.2 }}>
-              {isHindi ? "दस्तावेज़ वॉल्ट" : "Document Vault"}
+              {isHindi ? "दस्तावेज़ चेकलिस्ट" : "Document Checklist"}
             </div>
             <div style={{ fontSize:10, color:th.textSub, marginTop:2 }}>
               {isHindi
-                ? `${allMatchedSchemes.length} योजनाओं के लिए ज़रूरी दस्तावेज़`
-                : `Required for your ${allMatchedSchemes.length} matched scheme${allMatchedSchemes.length !== 1 ? "s" : ""}`}
+                ? `${total} ज़रूरी दस्तावेज़ · ${allMatchedSchemes.length} योजनाओं के लिए`
+                : `${total} unique docs across your ${allMatchedSchemes.length} matched schemes`}
             </div>
           </div>
           {/* Progress pill */}
@@ -2455,8 +2490,7 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark }) {
             background: pct === 100 ? "#DCFCE7" : dark ? "#2c2c2e" : "#F1F5F9",
             border: `1.5px solid ${pct === 100 ? "#86EFAC" : th.border2}`,
             borderRadius: 20, padding: "5px 11px",
-            display:"flex", alignItems:"center", gap:5,
-            transition: "all 0.4s",
+            display:"flex", alignItems:"center", gap:5, transition:"all 0.4s",
           }}>
             <span style={{ fontSize:13 }}>{pct === 100 ? "🎉" : "📋"}</span>
             <div>
@@ -2473,45 +2507,32 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark }) {
         {/* Progress bar */}
         <div style={{ height:6, background:dark?"#2c2c2e":"#e8edf2", borderRadius:6, overflow:"hidden" }}>
           <div style={{
-            height:"100%",
-            width:`${pct}%`,
-            borderRadius:6,
-            background: pct === 100
-              ? "linear-gradient(90deg,#22c55e,#16a34a)"
-              : pct >= 60
-                ? "linear-gradient(90deg,#FF9933,#f97316)"
-                : "linear-gradient(90deg,#ef4444,#dc2626)",
-            transition: "width 0.7s cubic-bezier(0.22,1,0.36,1)",
-            boxShadow: `0 0 8px ${progressColor}66`,
+            height:"100%", width:`${pct}%`, borderRadius:6,
+            background: pct === 100 ? "linear-gradient(90deg,#22c55e,#16a34a)" : pct >= 60 ? "linear-gradient(90deg,#FF9933,#f97316)" : "linear-gradient(90deg,#ef4444,#dc2626)",
+            transition:"width 0.7s cubic-bezier(0.22,1,0.36,1)",
+            boxShadow:`0 0 8px ${progressColor}66`,
           }}/>
         </div>
         <div style={{ display:"flex", justifyContent:"space-between", marginTop:5 }}>
           <span style={{ fontSize:10, color:th.textSub, fontFamily:bf }}>
             {pct === 100
               ? (isHindi ? "✅ सभी दस्तावेज़ तैयार!" : "✅ All docs ready!")
-              : isHindi
-                ? `${total - checkedCount} दस्तावेज़ बाकी`
-                : `${total - checkedCount} doc${total - checkedCount !== 1 ? "s" : ""} remaining`}
+              : isHindi ? `${total - checkedCount} बाकी` : `${total - checkedCount} remaining`}
           </span>
-          <span style={{ fontSize:10, fontWeight:700, color: progressColor, transition:"color 0.4s" }}>{pct}%</span>
+          <span style={{ fontSize:10, fontWeight:700, color:progressColor, transition:"color 0.4s" }}>{pct}%</span>
         </div>
       </div>
 
       {/* Celebration banner */}
       {celebrate && (
-        <div style={{
-          background: "linear-gradient(135deg,#138808,#16a34a)",
-          padding: "10px 16px",
-          display: "flex", alignItems: "center", gap:10,
-          animation: "vault-slide-down 0.4s cubic-bezier(0.22,1,0.36,1)",
-        }}>
+        <div style={{ background:"linear-gradient(135deg,#138808,#16a34a)", padding:"10px 16px", display:"flex", alignItems:"center", gap:10 }}>
           <span style={{ fontSize:22 }}>🎉</span>
           <div>
             <div style={{ color:"#fff", fontSize:13, fontWeight:800, fontFamily:bf }}>
               {isHindi ? "शाबाश! सभी दस्तावेज़ तैयार हैं!" : "Amazing! All documents ready!"}
             </div>
             <div style={{ color:"rgba(255,255,255,0.8)", fontSize:10, marginTop:1 }}>
-              {isHindi ? "आप सभी योजनाओं के लिए आवेदन कर सकते हैं।" : "You're set to apply for all your schemes."}
+              {isHindi ? "आप सभी योजनाओं के लिए आवेदन कर सकते हैं।" : "You\'re set to apply for all your schemes."}
             </div>
           </div>
         </div>
@@ -2521,32 +2542,22 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark }) {
       <div style={{ padding:"8px 0 4px" }}>
         {visibleDocs.map((doc, i) => {
           const isChecked = !!checked[doc.key];
-          const docName = lang === "hi" ? doc.hi : doc.en;
+          const docName   = lang === "hi" ? doc.hi : doc.en;
+          const impact    = doc.schemes.length;
           return (
-            <div key={doc.key}
-              onClick={() => toggle(doc.key)}
-              style={{
-                display:"flex", alignItems:"flex-start", gap:12,
-                padding:"11px 16px",
-                borderBottom: i < visibleDocs.length - 1 ? `1px solid ${th.divider}` : "none",
-                cursor:"pointer",
-                background: isChecked
-                  ? (dark ? "rgba(19,136,8,0.08)" : "rgba(19,136,8,0.04)")
-                  : "transparent",
-                transition:"background 0.2s",
-                animation: `vault-row-in 0.3s cubic-bezier(0.22,1,0.36,1) ${i * 0.04}s both`,
-              }}>
-
-              {/* Custom checkbox */}
+            <div key={doc.key} onClick={() => toggle(doc.key)} style={{
+              display:"flex", alignItems:"flex-start", gap:12,
+              padding:"11px 16px",
+              borderBottom: i < visibleDocs.length - 1 ? `1px solid ${th.divider}` : "none",
+              cursor:"pointer",
+              background: isChecked ? (dark ? "rgba(19,136,8,0.08)" : "rgba(19,136,8,0.04)") : "transparent",
+              transition:"background 0.2s",
+            }}>
+              {/* Checkbox */}
               <div style={{
-                width:22, height:22,
-                borderRadius:7,
-                flexShrink:0,
-                marginTop:1,
+                width:22, height:22, borderRadius:7, flexShrink:0, marginTop:1,
                 border:`2px solid ${isChecked ? IND_GREEN : th.border3}`,
-                background: isChecked
-                  ? `linear-gradient(135deg,${IND_GREEN},#16a34a)`
-                  : th.optionBg,
+                background: isChecked ? `linear-gradient(135deg,${IND_GREEN},#16a34a)` : th.optionBg,
                 display:"flex", alignItems:"center", justifyContent:"center",
                 transition:"all 0.22s cubic-bezier(0.22,1,0.36,1)",
                 boxShadow: isChecked ? `0 2px 8px rgba(19,136,8,0.35)` : "none",
@@ -2554,28 +2565,34 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark }) {
               }}>
                 {isChecked && (
                   <svg width={12} height={12} viewBox="0 0 12 12" fill="none">
-                    <path d="M2 6.5L4.5 9L10 3" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-                      style={{ animation:"vault-check 0.25s ease" }}/>
+                    <path d="M2 6.5L4.5 9L10 3" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
               </div>
 
               {/* Doc info */}
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{
-                  fontSize:13, fontWeight:isChecked ? 600 : 700,
-                  color: isChecked ? th.textSub : th.text,
-                  fontFamily:bf,
-                  textDecoration: isChecked ? "line-through" : "none",
-                  textDecorationColor: th.textSub,
-                  transition:"all 0.2s",
-                  lineHeight:1.3,
-                }}>
-                  {docName}
+                <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:3 }}>
+                  <div style={{
+                    fontSize:13, fontWeight: isChecked ? 600 : 700,
+                    color: isChecked ? th.textSub : th.text, fontFamily:bf, lineHeight:1.3, flex:1, minWidth:0,
+                    textDecoration: isChecked ? "line-through" : "none",
+                    textDecorationColor: th.textSub, transition:"all 0.2s",
+                  }}>
+                    {docName}
+                  </div>
+                  {/* Impact badge: how many schemes need this doc */}
+                  <div style={{
+                    flexShrink:0, fontSize:9, fontWeight:700, borderRadius:10, padding:"2px 7px", whiteSpace:"nowrap",
+                    background: impact >= 5 ? `${IND_GREEN}18` : `${ASHOKA_BLUE}12`,
+                    color:       impact >= 5 ? IND_GREEN          : ASHOKA_BLUE,
+                  }}>
+                    {impact} {isHindi ? "योजना" : impact === 1 ? "scheme" : "schemes"}
+                  </div>
                 </div>
-                {/* Scheme pills */}
-                <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginTop:5 }}>
-                  {doc.schemes.slice(0, 3).map(s => (
+                {/* Top 2 scheme pills + overflow count */}
+                <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                  {doc.schemes.slice(0,2).map(s => (
                     <div key={s.id} style={{
                       display:"inline-flex", alignItems:"center", gap:3,
                       background: s.color + (dark ? "22" : "14"),
@@ -2584,13 +2601,13 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark }) {
                     }}>
                       <span style={{ fontSize:9 }}>{s.icon}</span>
                       <span style={{ fontSize:9.5, fontWeight:700, color:s.color, lineHeight:1, maxWidth:80, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                        {s.name.en.length > 18 ? s.name.en.slice(0, 16) + "…" : s.name.en}
+                        {s.name.en.length > 18 ? s.name.en.slice(0,16)+"…" : s.name.en}
                       </span>
                     </div>
                   ))}
-                  {doc.schemes.length > 3 && (
+                  {doc.schemes.length > 2 && (
                     <div style={{ display:"inline-flex", alignItems:"center", background:th.pillBg, borderRadius:20, padding:"2px 7px" }}>
-                      <span style={{ fontSize:9.5, fontWeight:700, color:th.textSub }}>+{doc.schemes.length - 3}</span>
+                      <span style={{ fontSize:9.5, fontWeight:700, color:th.textSub }}>+{doc.schemes.length - 2}</span>
                     </div>
                   )}
                 </div>
@@ -2601,36 +2618,29 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark }) {
       </div>
 
       {/* Show all / collapse */}
-      {sortedDocs.length > 5 && (
-        <div onClick={() => { haptic(); setShowAll(v => !v); }}
-          style={{
-            padding:"11px 16px",
-            borderTop:`1px solid ${th.border}`,
-            display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-            cursor:"pointer",
-            background: dark ? th.card2 : "#FAFAFA",
-          }}>
+      {sortedDocs.length > 6 && (
+        <div onClick={() => { haptic(); setShowAll(v => !v); }} style={{
+          padding:"11px 16px", borderTop:`1px solid ${th.border}`,
+          display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+          cursor:"pointer", background: dark ? th.card2 : "#FAFAFA",
+        }}>
           <span style={{ fontSize:12, fontWeight:700, color:ASHOKA_BLUE, fontFamily:bf }}>
             {showAll
               ? (isHindi ? "कम दिखाएं" : "Show less")
               : (isHindi ? `सभी ${sortedDocs.length} दस्तावेज़ देखें` : `See all ${sortedDocs.length} documents`)}
           </span>
-          <span style={{ color:ASHOKA_BLUE, fontSize:14, transition:"transform 0.25s", display:"inline-block", transform: showAll ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
+          <span style={{ color:ASHOKA_BLUE, fontSize:14, display:"inline-block", transform: showAll ? "rotate(180deg)" : "none", transition:"transform 0.25s" }}>▾</span>
         </div>
       )}
 
       {/* DigiLocker CTA */}
-      <div style={{
-        margin:"0 16px 14px",
-        marginTop: sortedDocs.length > 5 ? 10 : 10,
-      }}>
-        <div onClick={() => { haptic(); window.open("https://www.digilocker.gov.in", "_blank"); }}
+      <div style={{ margin:"10px 16px 14px" }}>
+        <div onClick={() => { haptic(); window.open("https://www.digilocker.gov.in","_blank"); }}
           style={{
-            background: "linear-gradient(135deg,#003580,#1a56db)",
+            background:"linear-gradient(135deg,#003580,#1a56db)",
             borderRadius:12, padding:"10px 14px",
             display:"flex", alignItems:"center", gap:10,
-            cursor:"pointer",
-            boxShadow:"0 4px 14px rgba(0,53,128,0.22)",
+            cursor:"pointer", boxShadow:"0 4px 14px rgba(0,53,128,0.22)",
           }}>
           <span style={{ fontSize:18 }}>🔒</span>
           <div style={{ flex:1 }}>
