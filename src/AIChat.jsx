@@ -88,6 +88,9 @@ function playChipSounds(count) {
   } catch (_) {}
 }
 
+// ─── CHAT HISTORY PERSISTENCE ────────────────────────────────────────────────
+const CHAT_STORAGE_KEY = "yojana_chat_history";
+
 const THEME = {
   light: {
     appBg:"#f5f5f0", card:"#fff",
@@ -1045,7 +1048,12 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
   const bf      = fontFamily(lang);
   const isHindi = lang === "hi";
 
-  const [messages,     setMessages]     = useState([]);
+  const [messages,     setMessages]     = useState(() => {
+    try {
+      const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [input,        setInput]        = useState("");
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState("");
@@ -1072,6 +1080,14 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
   // FIX Bug 3: store the justUnlocked setTimeout handle so it can be cleared on
   // unmount, preventing "setState on unmounted component" errors.
   const justUnlockedTimerRef = useRef(null);
+
+  // ── Persist chat history to localStorage ────────────────────────────────────
+  // Capped at 100 messages to avoid bloating storage. Restored on next load.
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages.slice(-100)));
+    } catch {}
+  }, [messages]);
 
   // ── Scroll to bottom ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1251,6 +1267,7 @@ export default function AIChat({ lang="en", dark=false, profile=null }) {
                 setUsedChips(new Set()); setSecondsLeft(0);
                 clearInterval(cooldownRef.current);
                 clearTimeout(justUnlockedTimerRef.current); // FIX Bug 3
+                try { localStorage.removeItem(CHAT_STORAGE_KEY); } catch {}
               }}
               style={{
                 background:"rgba(255,255,255,0.18)", border:"1px solid rgba(255,255,255,0.3)",
