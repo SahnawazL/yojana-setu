@@ -7,7 +7,7 @@ import {
 } from "./schemesData.js";
 import { auth, db } from "./firebase.js";
 import { RecaptchaVerifier, signInWithPhoneNumber, signOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
-import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import AIChat from "./AIChat.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
 
@@ -1760,6 +1760,9 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   };
 
   const handleSignOut=async()=>{
+    // Clear this user's doc vault from localStorage before signing out
+    const uid=auth.currentUser?.uid;
+    if(uid){ try{ localStorage.removeItem(`yojana_doc_vault_${uid}`); }catch{} }
     await signOut(auth);
     setProfile(null);
     setPhone("");setOtp(["","","","","",""]);
@@ -1778,20 +1781,25 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       const provider=new GoogleAuthProvider();
       const result=await signInWithPopup(auth,provider);
       const user=result.user;
-      // Store email so profile knows this is a Google login
       setGoogleEmail(user.email||"");
-      // Save Google profile photo for avatar display
       setGooglePhoto(user.photoURL||"");
-      // Pre-fill name from Google account
+      // ── Returning user: load existing Firestore profile ──
+      try{
+        const snap=await getDoc(doc(db,"users",user.uid));
+        if(snap.exists()){
+          setProfile(snap.data());
+          setStage("dashboard");
+          return;
+        }
+      }catch{}
+      // New user: pre-fill from Google + eligibility answers, go to setup
       if(user.displayName) setSetupName(user.displayName);
-      // Pre-fill state/category from any saved eligibility answers
       if(savedAnswers){
         if(savedAnswers.state){setSetupState(savedAnswers.state);setStateSearch(savedAnswers.state);}
         if(savedAnswers.who) setSetupCat(savedAnswers.who);
       }
       setStage("setup1");
     }catch(err){
-      // Don't show error if user just closed the popup
       if(err.code!=="auth/popup-closed-by-user"){
         setAuthError(err.message||"Google sign-in failed. Please try again.");
       }
@@ -1817,9 +1825,20 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setEmailLoading(true);setAuthError("");
     try{
       await signInWithEmailAndPassword(auth,emailInput.trim(),passwordInput);
+      // ── Returning user: load existing Firestore profile ──
+      const uid=auth.currentUser?.uid;
+      if(uid){
+        try{
+          const snap=await getDoc(doc(db,"users",uid));
+          if(snap.exists()){
+            setProfile(snap.data());
+            setStage("dashboard");
+            return;
+          }
+        }catch{}
+      }
       afterEmailAuth(emailInput.trim());
     }catch(err){
-      // Map Firebase codes to friendly messages
       const code=err.code||"";
       if(code==="auth/user-not-found"||code==="auth/wrong-password"||code==="auth/invalid-credential"){
         setAuthError(isHindi?"गलत ईमेल या पासवर्ड। फिर से जाँचें।":"Wrong email or password. Please check and try again.");
@@ -2918,12 +2937,14 @@ function canonicalDocKey(rawEn) {
   return s.replace(/\s+/g,"_").slice(0,40);
 }
 
-function DocumentVaultCard({ allMatchedSchemes, lang, dark }) {
+function DocumentVaultCard({ allMatchedSchemes, lang, dark, uid }) {
   const th = THEME[dark ? "dark" : "light"];
   const isHindi = lang === "hi";
   const bf = fontFamily(lang);
   const [showAll, setShowAll] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
+  // ── UID-namespaced key so each account has its own checklist ──
+  const vaultKey = uid ? `yojana_doc_vault_${uid}` : "yojana_doc_vault_guest";
 
   // Smart de-duped doc map: canonical key → { en, hi, schemes[] }
   // Groups all Aadhaar variants → one entry, all Bank variants → one entry, etc.
@@ -2952,18 +2973,21 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark }) {
     return Object.values(map).sort((a,b) => b.schemes.length - a.schemes.length);
   }, [allMatchedSchemes]);
 
-  const [checked, setChecked] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(DOC_VAULT_KEY) || "{}"); } catch { return {}; }
-  });
+  // Load checked state whenever the vault key changes (i.e. different user logs in)
+  const [checked, setChecked] = useState({});
+  useEffect(() => {
+    try { setChecked(JSON.parse(localStorage.getItem(vaultKey) || "{}")); }
+    catch { setChecked({}); }
+  }, [vaultKey]);
 
   const toggle = useCallback((key) => {
     haptic();
     setChecked(prev => {
       const next = { ...prev, [key]: !prev[key] };
-      try { localStorage.setItem(DOC_VAULT_KEY, JSON.stringify(next)); } catch {}
+      try { localStorage.setItem(vaultKey, JSON.stringify(next)); } catch {}
       return next;
     });
-  }, []);
+  }, [vaultKey]);
 
   const checkedCount = docMap.filter(d => checked[d.key]).length;
   const total        = docMap.length;
@@ -3221,12 +3245,16 @@ export default function YojanaSetu(){
     else localStorage.removeItem("yojana_profile");
   },[profile]);
 
-  // If Firebase session expires or user signs out from another tab → clear profile
-  // Also silently updates lastSeen each time the app is opened
+  // On every auth state change: clear on sign-out; restore Firestore profile on session restore
   useEffect(()=>{
     const unsub=onAuthStateChanged(auth,async(user)=>{
       if(!user){ setProfile(null); return; }
-      // Update lastSeen — silent fail, don't block
+      // Restore profile from Firestore (handles page refresh & tab restore)
+      try{
+        const snap=await getDoc(doc(db,"users",user.uid));
+        if(snap.exists()) setProfile(snap.data());
+      }catch{}
+      // Update lastSeen silently
       try{ await updateDoc(doc(db,"users",user.uid),{lastSeen:serverTimestamp()}); }catch{}
     });
     return()=>unsub();
@@ -3391,7 +3419,7 @@ export default function YojanaSetu(){
 
             {/* Document Vault — auto-generated checklist from matched schemes */}
             {profile&&allMatchedSchemes.length>0&&(
-              <DocumentVaultCard allMatchedSchemes={allMatchedSchemes} lang={lang} dark={dark}/>
+              <DocumentVaultCard allMatchedSchemes={allMatchedSchemes} lang={lang} dark={dark} uid={auth.currentUser?.uid||null}/>
             )}
 
             {/* Categories — now CLICKABLE, opens CategorySheet */}
