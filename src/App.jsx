@@ -247,7 +247,7 @@ const PT = {
     step1Title:"Your Name & Gender",
     step2Title:"State & Category",
     step1of3:"STEP 1 OF 3",step2of3:"STEP 2 OF 3",step3of3:"STEP 3 OF 3",
-    step3Title:"Welfare Details",
+    step3Title:"Income, Area & Welfare",
     fillOnce:"Fill once · Used everywhere",
     prefilled:"Pre-filled from your eligibility check ✓",
     rationLabel:"Ration Card Type",
@@ -356,7 +356,7 @@ const PT = {
     step1Title:"आपका नाम और लिंग",
     step2Title:"राज्य और श्रेणी",
     step1of3:"चरण 1 / 3",step2of3:"चरण 2 / 3",step3of3:"चरण 3 / 3",
-    step3Title:"कल्याण विवरण",
+    step3Title:"आय, क्षेत्र और कल्याण",
     fillOnce:"एक बार भरें · हर जगह काम आएगा",
     prefilled:"पात्रता जांच से पहले से भरा गया ✓",
     rationLabel:"राशन कार्ड प्रकार",
@@ -479,13 +479,13 @@ function SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
   const handleCopy=(e)=>{
     e.stopPropagation();
     haptic(30);
-    navigator.clipboard?.writeText(scheme.name.en).then(()=>{
+    navigator.clipboard?.writeText(scheme.name[lang]).then(()=>{
       setCopied(true);
       setTimeout(()=>setCopied(false),2000);
     }).catch(()=>{
       // fallback for older browsers
       const el=document.createElement("textarea");
-      el.value=scheme.name.en;
+      el.value=scheme.name[lang];
       document.body.appendChild(el);
       el.select();
       document.execCommand("copy");
@@ -1599,6 +1599,12 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   const [setupState,setSetupState]=useState(profile?.state||"");
   const [stateSearch,setStateSearch]=useState(profile?.state||"");
   const [setupCat,setSetupCat]=useState(profile?.occupation||"");
+  // Bug 4+5 fix: these 4 fields were never collected in setup — add state vars
+  // initialized from existing profile so handleEdit() can restore them correctly
+  const [setupIncome,    setSetupIncome]    =useState(profile?.income ||"");
+  const [setupAge,       setSetupAge]       =useState(profile?.age    ||"");
+  const [setupArea,      setSetupArea]      =useState(profile?.area   ||"");
+  const [setupHouse,     setSetupHouse]     =useState(profile?.house  ||"");
   const [setupRation,    setSetupRation]    =useState(profile?.ration    ||"");
   const [setupDisability,setSetupDisability]=useState(profile?.disability||"none");
   const [setupMarital,   setSetupMarital]   =useState(profile?.marital   ||"");
@@ -1632,7 +1638,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   useEffect(()=>{
     if(profile) setStage("dashboard");
     else if(stage==="dashboard") setStage("phone");
-  },[profile]);
+  },[profile,stage]);
 
   // OTP countdown timer
   useEffect(()=>{
@@ -1684,7 +1690,11 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       await confirmationRef.current.confirm(otp.join(""));
       if(savedAnswers){
         if(savedAnswers.state){setSetupState(savedAnswers.state);setStateSearch(savedAnswers.state);}
-        if(savedAnswers.who) setSetupCat(savedAnswers.who);
+        if(savedAnswers.who)    setSetupCat(savedAnswers.who);
+        if(savedAnswers.income) setSetupIncome(savedAnswers.income);
+        if(savedAnswers.age)    setSetupAge(savedAnswers.age);
+        if(savedAnswers.area)   setSetupArea(savedAnswers.area);
+        if(savedAnswers.house)  setSetupHouse(savedAnswers.house);
       }
       setStage("setup1");
     }catch(err){
@@ -1714,10 +1724,10 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     const profileData={
       name:setupName.trim(),phone,gender:setupGender,
       state:setupState,occupation:setupCat,
-      income:savedAnswers?.income||"1to3",
-      house:savedAnswers?.house||"no",
-      age:savedAnswers?.age||"18to35",
-      area:savedAnswers?.area||"rural",
+      income:setupIncome||"1to3",
+      house:setupHouse||"no",
+      age:setupAge||"18to35",
+      area:setupArea||"rural",
       ration:setupRation,
       disability:setupDisability,
       marital:setupMarital,
@@ -1747,6 +1757,10 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setSetupName(profile?.name||"");setSetupGender(profile?.gender||"");
     setSetupState(profile?.state||"");setStateSearch(profile?.state||"");
     setSetupCat(profile?.occupation||"");
+    setSetupIncome(profile?.income||"");  // Bug 5 fix: was never restored
+    setSetupAge(profile?.age||"");
+    setSetupArea(profile?.area||"");
+    setSetupHouse(profile?.house||"");
     setSetupRation(profile?.ration||"");
     setSetupDisability(profile?.disability||"none");
     setSetupMarital(profile?.marital||"");
@@ -1763,10 +1777,13 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     // Clear this user's doc vault from localStorage before signing out
     const uid=auth.currentUser?.uid;
     if(uid){ try{ localStorage.removeItem(`yojana_doc_vault_${uid}`); }catch{} }
+    try{ localStorage.removeItem(STORAGE_KEY); }catch{}       // Bug 2 fix: eligibility answers bleed to next user
+    try{ localStorage.removeItem(RECENT_STATE_KEY); }catch{}  // Bug 6 fix: last-picked state leaks across accounts
     await signOut(auth);
     setProfile(null);
     setPhone("");setOtp(["","","","","",""]);
     setSetupName("");setSetupGender("");setSetupState("");setStateSearch("");setSetupCat("");
+    setSetupIncome("");setSetupAge("");setSetupArea("");setSetupHouse("");
     setSetupRation("");setSetupDisability("none");setSetupMarital("");
     setSetupLandHolding("");setSetupKisanCard("");
     setSetupEducationLevel("");setSetupInstitutionType("");
@@ -1796,7 +1813,11 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       if(user.displayName) setSetupName(user.displayName);
       if(savedAnswers){
         if(savedAnswers.state){setSetupState(savedAnswers.state);setStateSearch(savedAnswers.state);}
-        if(savedAnswers.who) setSetupCat(savedAnswers.who);
+        if(savedAnswers.who)    setSetupCat(savedAnswers.who);
+        if(savedAnswers.income) setSetupIncome(savedAnswers.income);
+        if(savedAnswers.age)    setSetupAge(savedAnswers.age);
+        if(savedAnswers.area)   setSetupArea(savedAnswers.area);
+        if(savedAnswers.house)  setSetupHouse(savedAnswers.house);
       }
       setStage("setup1");
     }catch(err){
@@ -1814,7 +1835,11 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setGoogleEmail(email);
     if(savedAnswers){
       if(savedAnswers.state){setSetupState(savedAnswers.state);setStateSearch(savedAnswers.state);}
-      if(savedAnswers.who) setSetupCat(savedAnswers.who);
+      if(savedAnswers.who)    setSetupCat(savedAnswers.who);
+      if(savedAnswers.income) setSetupIncome(savedAnswers.income);
+      if(savedAnswers.age)    setSetupAge(savedAnswers.age);
+      if(savedAnswers.area)   setSetupArea(savedAnswers.area);
+      if(savedAnswers.house)  setSetupHouse(savedAnswers.house);
     }
     setStage("setup1");
   };
@@ -2269,7 +2294,8 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   // ── STAGE: SETUP 3 — Ration Card + Disability + Marital Status ──────────────
   if(stage==="setup3"){
     const hasDisability=setupDisability!=="none"&&setupDisability!=="";
-    const canSave=!!setupRation&&!!setupDisability&&!!setupMarital;
+    const fields=T[lang].fields; // reuse existing T translations for income/age/area/house labels
+    const canSave=!!setupIncome&&!!setupAge&&!!setupArea&&!!setupHouse&&!!setupRation&&!!setupDisability&&!!setupMarital;
     return(
       <div style={{flex:1,display:"flex",flexDirection:"column",background:th.appBg,overflowY:"auto"}}>
         <TriHeader bg="linear-gradient(135deg,#138808 0%,#16a34a 60%,#003580 100%)">
@@ -2288,6 +2314,70 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
         </TriHeader>
 
         <Card dark={dark}>
+
+          {/* ── Annual Income (Bug 4 fix: collected here, not assumed from eligibility checker) ── */}
+          <div style={{marginBottom:20}}>
+            <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:8,fontFamily:bf,letterSpacing:0.3}}>💰 {fields.income}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              {fields.incomes.map(o=>{
+                const a=setupIncome===o.v;
+                return(
+                  <div key={o.v} onClick={()=>{haptic();setSetupIncome(o.v);}}
+                    style={{padding:"11px 8px",borderRadius:13,cursor:"pointer",border:`2px solid ${a?"#FF9933":th.border3}`,background:a?th.optionActive:th.optionBg,fontSize:11.5,fontWeight:a?700:400,color:a?"#CC6600":th.textMid,textAlign:"center",fontFamily:bf,transition:"all 0.18s",boxShadow:a?"0 4px 12px rgba(255,153,51,0.22)":"none",lineHeight:1.35}}>
+                    {o.l}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── Age Group ── */}
+          <div style={{marginBottom:20}}>
+            <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:8,fontFamily:bf,letterSpacing:0.3}}>🎂 {fields.age}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              {fields.ages.map(o=>{
+                const a=setupAge===o.v;
+                return(
+                  <div key={o.v} onClick={()=>{haptic();setSetupAge(o.v);}}
+                    style={{padding:"11px 8px",borderRadius:13,cursor:"pointer",border:`2px solid ${a?"#003580":th.border3}`,background:a?(dark?"rgba(0,53,128,0.22)":"rgba(0,53,128,0.1)"):th.optionBg,fontSize:11.5,fontWeight:a?700:400,color:a?(dark?"#7ba7f0":"#003580"):th.textMid,textAlign:"center",fontFamily:bf,transition:"all 0.18s",boxShadow:a?"0 4px 12px rgba(0,53,128,0.22)":"none",lineHeight:1.35}}>
+                    {o.l}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── Area Type ── */}
+          <div style={{marginBottom:20}}>
+            <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:8,fontFamily:bf,letterSpacing:0.3}}>📍 {fields.area}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+              {fields.areas.map(o=>{
+                const a=setupArea===o.v;
+                return(
+                  <div key={o.v} onClick={()=>{haptic();setSetupArea(o.v);}}
+                    style={{padding:"11px 6px",borderRadius:13,cursor:"pointer",border:`2px solid ${a?"#138808":th.border3}`,background:a?(dark?"rgba(19,136,8,0.22)":"rgba(19,136,8,0.1)"):th.optionBg,fontSize:11,fontWeight:a?700:400,color:a?(dark?"#4ade80":"#138808"):th.textMid,textAlign:"center",fontFamily:bf,transition:"all 0.18s",boxShadow:a?"0 4px 12px rgba(19,136,8,0.22)":"none",lineHeight:1.45}}>
+                    {o.l}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── Pucca House ── */}
+          <div style={{marginBottom:22}}>
+            <div style={{fontSize:12,fontWeight:700,color:th.textMid,marginBottom:8,fontFamily:bf,letterSpacing:0.3}}>🏠 {fields.house}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+              {fields.houses.map(o=>{
+                const a=setupHouse===o.v;
+                return(
+                  <div key={o.v} onClick={()=>{haptic();setSetupHouse(o.v);}}
+                    style={{padding:"11px 6px",borderRadius:13,cursor:"pointer",border:`2px solid ${a?"#FF9933":th.border3}`,background:a?th.optionActive:th.optionBg,fontSize:11,fontWeight:a?700:400,color:a?"#CC6600":th.textMid,textAlign:"center",fontFamily:bf,transition:"all 0.18s",boxShadow:a?"0 4px 12px rgba(255,153,51,0.22)":"none",lineHeight:1.45}}>
+                    {o.l}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
           {/* ── Ration Card ── */}
           <div style={{marginBottom:22}}>
