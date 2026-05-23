@@ -810,30 +810,20 @@ function ChatBubble({ msg, lang, dark, isNew }) {
   //   • inset top highlight (light source from top-left)
   //   • inset left highlight (same light source)
   //   • inset bottom-dark edge (shadow side)
+  // ── User bubble: chip-style glass + same saffron→indigo→navy gradient border ─
+  // Blue-tinted glass (vs chip's neutral white/dark glass) so the bubble reads
+  // as a "sent" message while sharing the same border language as chips and the
+  // AI bubble. Inset highlight keeps a subtle 3D lift.
+  const userGlass = dark ? "rgba(30,58,138,0.65)" : "rgba(219,234,254,0.82)";
   const userBubbleStyle = isUser ? {
-    // Professional blue-indigo gradient — same navy family as the AI palette
-    // but without the loud saffron. Gradient border: soft white highlight at
-    // top-left (light source) fading to near-invisible at bottom-right.
     border: "1.5px solid transparent",
-    background: dark
-      ? `linear-gradient(148deg, #3b82f6 0%, #4a5ec8 42%, #2d4ea8 72%, #1a3a8a 100%) padding-box,
-         linear-gradient(148deg, rgba(255,255,255,0.32) 0%, rgba(200,218,255,0.18) 50%, rgba(100,130,220,0.08) 100%) border-box`
-      : `linear-gradient(148deg, #2563eb 0%, #3b4fb5 42%, #1e3a8a 72%, #003580 100%) padding-box,
-         linear-gradient(148deg, rgba(255,255,255,0.55) 0%, rgba(200,218,255,0.28) 50%, rgba(100,130,220,0.08) 100%) border-box`,
+    background: `linear-gradient(${userGlass}, ${userGlass}) padding-box,
+                 linear-gradient(135deg,#FF9933 0%,#6366f1 50%,#003580 100%) border-box`,
+    backdropFilter: "blur(16px)",
+    WebkitBackdropFilter: "blur(16px)",
     boxShadow: dark
-      ? [
-          "0 6px 20px rgba(37,99,235,0.38)",
-          "0 3px 10px rgba(0,0,0,0.4)",
-          "inset 0 1px 0 rgba(255,255,255,0.22)",
-          "inset 0 -1px 0 rgba(0,0,0,0.28)",
-        ].join(", ")
-      : [
-          "0 6px 18px rgba(37,99,235,0.3)",
-          "0 3px 8px rgba(0,53,128,0.22)",
-          "inset 0 1px 0 rgba(255,255,255,0.32)",
-          "inset 0 -1px 0 rgba(0,30,100,0.18)",
-        ].join(", "),
-    textShadow: "0 1px 2px rgba(0,0,0,0.22)",
+      ? "0 4px 20px rgba(255,153,51,0.18), 0 2px 8px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.1)"
+      : "0 4px 16px rgba(255,153,51,0.15), 0 2px 6px rgba(0,53,128,0.13), inset 0 1px 0 rgba(255,255,255,0.65)",
   } : {};
 
   return (
@@ -849,7 +839,7 @@ function ChatBubble({ msg, lang, dark, isNew }) {
       <div style={{
         maxWidth:"88%",
         background: isUser ? undefined : th.card,
-        color: isUser ? "#fff" : th.text,
+        color: isUser ? (dark ? "#dde8ff" : "#1e3a8a") : th.text,
         borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
         padding:"11px 15px", fontSize:13.5, lineHeight:1.65, fontFamily:bf,
         whiteSpace:"pre-wrap", wordBreak:"break-word",
