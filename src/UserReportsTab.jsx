@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 import { db, auth } from "./firebase.js";
 import {
   collection, query, where, orderBy, getDocs,
+  doc, updateDoc, arrayUnion, serverTimestamp,
 } from "firebase/firestore";
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
@@ -583,7 +584,7 @@ function ConversationThread({ report, dark, lang }) {
 }
 
 // ─── REPORT CARD ──────────────────────────────────────────────────────────────
-function ReportCard({ report, dark, lang, isExpanded, onToggle }) {
+function ReportCard({ report, dark, lang, isExpanded, onToggle, onReopen }) {
   const th       = THEME[dark ? "dark" : "light"];
   const s        = STRINGS[lang] || STRINGS.en;
   const typeMeta = TYPE_META[report.type]   || { icon:"📝", color:NAVY };
@@ -592,6 +593,52 @@ function ReportCard({ report, dark, lang, isExpanded, onToggle }) {
   const stLabel  = s.statusLabel[report.status] || report.status;
   const hasReply = !!(report.adminReply || (report.replyHistory?.length > 0));
   const replyCount = report.replyHistory?.length || (report.adminReply ? 1 : 0);
+  const isReopened = report.replyHistory?.some(r => r.isReopen);
+
+  // ── Reopen state ──
+  const [showReopen,  setShowReopen]  = useState(false);
+  const [reopenMsg,   setReopenMsg]   = useState("");
+  const [reopening,   setReopening]   = useState(false);
+  const [reopenDone,  setReopenDone]  = useState(false);
+  const [reopenError, setReopenError] = useState("");
+  const MIN_CHARS = 20;
+
+  async function handleReopen() {
+    if (reopenMsg.trim().length < MIN_CHARS) {
+      setReopenError(lang === "hi"
+        ? `कम से कम ${MIN_CHARS} अक्षर लिखें।`
+        : `Please write at least ${MIN_CHARS} characters.`);
+      return;
+    }
+    setReopenError("");
+    setReopening(true);
+    try {
+      await updateDoc(doc(db, "reports", report.id), {
+        status:     "open",
+        reopenedAt: serverTimestamp(),
+        replyHistory: arrayUnion({
+          who:      "user",
+          text:     reopenMsg.trim(),
+          sentAt:   new Date().toISOString(),
+          isReopen: true,
+        }),
+      });
+      setReopenDone(true);
+      setTimeout(() => {
+        setShowReopen(false);
+        setReopenDone(false);
+        setReopenMsg("");
+        onReopen?.();
+      }, 1800);
+    } catch (err) {
+      console.error("Reopen failed:", err);
+      setReopenError(lang === "hi"
+        ? "कुछ गलत हुआ। दोबारा कोशिश करें।"
+        : "Something went wrong. Please try again.");
+    } finally {
+      setReopening(false);
+    }
+  }
 
   return (
     <div style={{
@@ -649,6 +696,16 @@ function ReportCard({ report, dark, lang, isExpanded, onToggle }) {
                 💬 {replyCount} {lang === "hi" ? "जवाब" : replyCount === 1 ? "reply" : "replies"}
               </span>
             )}
+            {isReopened && (
+              <span style={{
+                fontSize:9, fontWeight:700, color:"#D97706",
+                background: dark ? "rgba(217,119,6,0.18)" : "#FFFBEB",
+                border:"1px solid rgba(217,119,6,0.35)",
+                borderRadius:6, padding:"2px 7px",
+              }}>
+                🔄 {lang === "hi" ? "पुनः खोला" : "Reopened"}
+              </span>
+            )}
           </div>
 
           {/* Subject / preview */}
@@ -684,6 +741,232 @@ function ReportCard({ report, dark, lang, isExpanded, onToggle }) {
 
           {/* Status progress bar */}
           <StatusProgress status={report.status} dark={dark} lang={lang} />
+
+          {/* ── REOPEN SECTION (resolved only) ── */}
+          {report.status === "resolved" && (
+            <div>
+              {isReopened ? (
+                /* ── Already reopened once — permanently locked ── */
+                <div style={{
+                  display:"flex", alignItems:"center", gap:12,
+                  padding:"13px 16px", borderRadius:14,
+                  background: dark ? "rgba(255,255,255,0.04)" : "#f8f9fa",
+                  border:`1.5px solid ${dark ? "rgba(255,255,255,0.08)" : "#e5e7eb"}`,
+                }}>
+                  <div style={{
+                    width:36, height:36, borderRadius:10, flexShrink:0,
+                    background: dark ? "rgba(255,255,255,0.06)" : "#f0f0f0",
+                    border:`1.5px solid ${dark ? "rgba(255,255,255,0.1)" : "#e0e0e0"}`,
+                    display:"flex", alignItems:"center", justifyContent:"center", fontSize:17,
+                  }}>🔒</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:12, fontWeight:800, color: dark ? "rgba(255,255,255,0.45)" : "#888" }}>
+                      {lang === "hi" ? "पुनः खोलना उपलब्ध नहीं" : "Reopen Not Available"}
+                    </div>
+                    <div style={{ fontSize:11, color: dark ? "rgba(255,255,255,0.3)" : "#aaa", marginTop:3, lineHeight:1.5 }}>
+                      {lang === "hi"
+                        ? "यह रिपोर्ट पहले ही एक बार पुनः खोली जा चुकी है। नई समस्या के लिए नई रिपोर्ट दर्ज करें।"
+                        : "This report has already been reopened once. For a new or related issue, please submit a new report."}
+                    </div>
+                  </div>
+                </div>
+              ) : !showReopen ? (
+                /* Reopen trigger button */
+                <div
+                  onClick={() => { setShowReopen(true); setReopenMsg(""); setReopenError(""); }}
+                  style={{
+                    display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                    padding:"11px 16px", borderRadius:14, cursor:"pointer",
+                    border:"1.5px dashed rgba(217,119,6,0.5)",
+                    background: dark ? "rgba(217,119,6,0.08)" : "rgba(217,119,6,0.05)",
+                    transition:"all 0.18s",
+                  }}
+                >
+                  <span style={{ fontSize:16 }}>🔄</span>
+                  <span style={{ fontSize:12, fontWeight:700, color:"#D97706" }}>
+                    {lang === "hi" ? "इस रिपोर्ट को पुनः खोलें" : "Reopen this Report"}
+                  </span>
+                </div>
+              ) : reopenDone ? (
+                /* Success state */
+                <div style={{
+                  display:"flex", alignItems:"center", gap:10,
+                  padding:"14px 16px", borderRadius:14,
+                  background: dark ? "rgba(5,150,105,0.15)" : "#f0fdf4",
+                  border:"1.5px solid rgba(5,150,105,0.3)",
+                }}>
+                  <span style={{ fontSize:22 }}>✅</span>
+                  <div>
+                    <div style={{ fontSize:13, fontWeight:800, color:"#059669" }}>
+                      {lang === "hi" ? "रिपोर्ट पुनः खोली गई!" : "Report Reopened!"}
+                    </div>
+                    <div style={{ fontSize:11, color: dark ? "rgba(255,255,255,0.5)" : "#555", marginTop:2 }}>
+                      {lang === "hi" ? "हमारी टीम जल्द ही जवाब देगी।" : "Our team will respond shortly."}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Reopen form */
+                <div style={{
+                  borderRadius:16,
+                  border:"1.5px solid rgba(217,119,6,0.4)",
+                  background: dark
+                    ? "linear-gradient(145deg,rgba(217,119,6,0.10),rgba(217,119,6,0.04))"
+                    : "linear-gradient(145deg,rgba(255,251,235,1),rgba(255,247,220,1))",
+                  overflow:"hidden",
+                  boxShadow:"0 4px 20px rgba(217,119,6,0.12)",
+                }}>
+                  {/* Form header */}
+                  <div style={{
+                    padding:"13px 16px 10px",
+                    borderBottom:`1px solid rgba(217,119,6,0.18)`,
+                    display:"flex", alignItems:"center", justifyContent:"space-between",
+                  }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                      <div style={{
+                        width:30, height:30, borderRadius:9,
+                        background:"linear-gradient(135deg,#D97706,#FBBF24)",
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        fontSize:15, boxShadow:"0 3px 10px rgba(217,119,6,0.35)",
+                      }}>🔄</div>
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:800, color: dark ? "#FBBF24" : "#92400E" }}>
+                          {lang === "hi" ? "रिपोर्ट पुनः खोलें" : "Reopen Report"}
+                        </div>
+                        <div style={{ fontSize:10, color: dark ? "rgba(255,255,255,0.45)" : "#78350F", marginTop:1 }}>
+                          {lang === "hi"
+                            ? `कम से कम ${MIN_CHARS} अक्षर अनिवार्य`
+                            : `Minimum ${MIN_CHARS} characters required`}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Close */}
+                    <div
+                      onClick={() => { setShowReopen(false); setReopenError(""); }}
+                      style={{
+                        width:28, height:28, borderRadius:8, cursor:"pointer",
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        fontSize:14, color: dark ? "rgba(255,255,255,0.4)" : "#78350F",
+                        background: dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
+                      }}
+                    >✕</div>
+                  </div>
+
+                  {/* Textarea */}
+                  <div style={{ padding:"14px 16px", display:"flex", flexDirection:"column", gap:10 }}>
+                    <div style={{ position:"relative" }}>
+                      <textarea
+                        value={reopenMsg}
+                        onChange={e => { setReopenMsg(e.target.value); setReopenError(""); }}
+                        placeholder={lang === "hi"
+                          ? "बताएं कि आप इस रिपोर्ट को क्यों पुनः खोलना चाहते हैं… (अनिवार्य)"
+                          : "Explain why you want to reopen this report… (required)"}
+                        rows={4}
+                        maxLength={500}
+                        style={{
+                          width:"100%", boxSizing:"border-box",
+                          padding:"12px 14px",
+                          borderRadius:12,
+                          border:`1.5px solid ${reopenError
+                            ? "#DC2626"
+                            : reopenMsg.length >= MIN_CHARS
+                              ? "rgba(5,150,105,0.5)"
+                              : "rgba(217,119,6,0.3)"}`,
+                          background: dark ? "rgba(255,255,255,0.05)" : "#fff",
+                          color: dark ? "#f0f0f0" : "#1a1a1a",
+                          fontSize:13, lineHeight:1.65, resize:"none",
+                          outline:"none",
+                          transition:"border-color 0.18s",
+                          fontFamily:"inherit",
+                        }}
+                      />
+                      {/* Char counter */}
+                      <div style={{
+                        position:"absolute", bottom:10, right:12,
+                        fontSize:10, fontWeight:600,
+                        color: reopenMsg.length < MIN_CHARS
+                          ? "#D97706"
+                          : reopenMsg.length > 450
+                            ? "#DC2626"
+                            : "#059669",
+                      }}>
+                        {reopenMsg.length}/500
+                      </div>
+                    </div>
+
+                    {/* Progress bar showing min char progress */}
+                    <div style={{ height:3, borderRadius:99, background: dark ? "rgba(255,255,255,0.08)" : "#e5e7eb", overflow:"hidden" }}>
+                      <div style={{
+                        height:"100%", borderRadius:99,
+                        width:`${Math.min((reopenMsg.trim().length / MIN_CHARS) * 100, 100)}%`,
+                        background: reopenMsg.trim().length >= MIN_CHARS
+                          ? "linear-gradient(90deg,#059669,#34d399)"
+                          : "linear-gradient(90deg,#D97706,#FBBF24)",
+                        transition:"width 0.2s, background 0.3s",
+                      }} />
+                    </div>
+
+                    {/* Error */}
+                    {reopenError && (
+                      <div style={{
+                        fontSize:11, color:"#DC2626", fontWeight:600,
+                        display:"flex", alignItems:"center", gap:5,
+                      }}>
+                        ⚠️ {reopenError}
+                      </div>
+                    )}
+
+                    {/* Buttons */}
+                    <div style={{ display:"flex", gap:10 }}>
+                      <div
+                        onClick={() => { setShowReopen(false); setReopenError(""); setReopenMsg(""); }}
+                        style={{
+                          flex:1, padding:"11px", borderRadius:12, textAlign:"center",
+                          fontSize:12, fontWeight:700, cursor:"pointer",
+                          border:`1.5px solid rgba(217,119,6,0.3)`,
+                          color:"#D97706",
+                          background: dark ? "rgba(217,119,6,0.08)" : "rgba(217,119,6,0.06)",
+                        }}
+                      >
+                        {lang === "hi" ? "रद्द करें" : "Cancel"}
+                      </div>
+                      <div
+                        onClick={!reopening ? handleReopen : undefined}
+                        style={{
+                          flex:2, padding:"11px", borderRadius:12, textAlign:"center",
+                          fontSize:12, fontWeight:800, cursor: reopening ? "not-allowed" : "pointer",
+                          background: reopenMsg.trim().length >= MIN_CHARS && !reopening
+                            ? "linear-gradient(135deg,#D97706,#FBBF24)"
+                            : dark ? "rgba(255,255,255,0.08)" : "#e5e7eb",
+                          color: reopenMsg.trim().length >= MIN_CHARS && !reopening
+                            ? "#fff"
+                            : dark ? "rgba(255,255,255,0.3)" : "#aaa",
+                          boxShadow: reopenMsg.trim().length >= MIN_CHARS && !reopening
+                            ? "0 4px 14px rgba(217,119,6,0.4)" : "none",
+                          transition:"all 0.2s",
+                          display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+                        }}
+                      >
+                        {reopening ? (
+                          <>
+                            <div style={{
+                              width:12, height:12, borderRadius:"50%",
+                              border:"2px solid rgba(255,255,255,0.4)",
+                              borderTopColor:"#fff",
+                              animation:"sp-spin 0.8s linear infinite",
+                            }} />
+                            {lang === "hi" ? "भेजा जा रहा है…" : "Submitting…"}
+                          </>
+                        ) : (
+                          `🔄 ${lang === "hi" ? "पुनः खोलें" : "Reopen Report"}`
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Full conversation thread */}
           <ConversationThread report={report} dark={dark} lang={lang} />
@@ -975,6 +1258,7 @@ export default function UserReportsTab({
             lang={lang}
             isExpanded={expanded === report.id}
             onToggle={() => setExpanded(expanded === report.id ? null : report.id)}
+            onReopen={() => fetchReports(true)}
           />
         ))}
 

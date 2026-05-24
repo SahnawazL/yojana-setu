@@ -879,16 +879,17 @@ function ConversationThread({ report, dark }) {
   const history = Array.isArray(report.replyHistory) ? report.replyHistory : [];
   history.forEach((r, i) => {
     thread.push({
-      key:    `reply-${i}`,
-      who:    "admin",
-      icon:   "🛡️",
-      label:  "Admin",
-      text:   r.text || "—",
-      time:   r.sentAt
-                ? new Date(r.sentAt).toLocaleString("en-IN",
-                    { day:"numeric", month:"short", year:"2-digit", hour:"2-digit", minute:"2-digit" })
-                : "—",
-      status: r.status || null,
+      key:      `reply-${i}`,
+      who:      r.who === "user" ? "user" : "admin",
+      icon:     r.who === "user" ? "👤" : "🛡️",
+      label:    r.who === "user" ? (report.userName || "User") : "Admin",
+      text:     r.text || "—",
+      time:     r.sentAt
+                  ? new Date(r.sentAt).toLocaleString("en-IN",
+                      { day:"numeric", month:"short", year:"2-digit", hour:"2-digit", minute:"2-digit" })
+                  : "—",
+      status:   r.status || null,
+      isReopen: r.isReopen || false,
     });
   });
 
@@ -926,31 +927,49 @@ function ConversationThread({ report, dark }) {
             {/* Avatar bubble */}
             <div style={{
               width:30, height:30, borderRadius:"50%", flexShrink:0, zIndex:1,
-              background: isAdmin
-                ? `linear-gradient(135deg,${NAVY},#1a56db)`
-                : `linear-gradient(135deg,${SAFFRON},#f97316)`,
+              background: msg.isReopen
+                ? "linear-gradient(135deg,#D97706,#FBBF24)"
+                : msg.who === "admin"
+                  ? `linear-gradient(135deg,${NAVY},#1a56db)`
+                  : `linear-gradient(135deg,${SAFFRON},#f97316)`,
               display:"flex", alignItems:"center", justifyContent:"center",
               fontSize:13, boxShadow:"0 2px 6px rgba(0,0,0,0.15)",
             }}>
-              {msg.icon}
+              {msg.isReopen ? "🔄" : msg.icon}
             </div>
 
             {/* Bubble content */}
             <div style={{
               flex:1, minWidth:0,
-              background: isAdmin
-                ? (dark ? "rgba(0,53,128,0.2)" : "#EFF6FF")
-                : (dark ? "rgba(255,255,255,0.06)" : "#fff"),
-              border:`1px solid ${isAdmin ? NAVY+"33" : th.border}`,
-              borderRadius: isAdmin ? "4px 14px 14px 14px" : "14px 14px 14px 4px",
+              background: msg.isReopen
+                ? (dark ? "rgba(217,119,6,0.15)" : "#FFFBEB")
+                : msg.who === "admin"
+                  ? (dark ? "rgba(0,53,128,0.2)" : "#EFF6FF")
+                  : (dark ? "rgba(255,255,255,0.06)" : "#fff"),
+              border:`1.5px solid ${msg.isReopen ? "rgba(217,119,6,0.4)" : msg.who === "admin" ? NAVY+"33" : th.border}`,
+              borderRadius: msg.who === "admin" ? "4px 14px 14px 14px" : "14px 14px 14px 4px",
               padding:"9px 12px",
               marginBottom: isLast ? 0 : 12,
             }}>
               <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4, flexWrap:"wrap" }}>
-                <span style={{ fontSize:11, fontWeight:800, color: isAdmin ? NAVY : SAFFRON }}>
+                <span style={{
+                  fontSize:11, fontWeight:800,
+                  color: msg.isReopen ? "#D97706" : msg.who === "admin" ? NAVY : SAFFRON,
+                }}>
                   {msg.label}
                 </span>
-                {smeta && (
+                {msg.isReopen && (
+                  <span style={{
+                    fontSize:9, fontWeight:800, color:"#92400E",
+                    background:"rgba(217,119,6,0.18)",
+                    border:"1px solid rgba(217,119,6,0.35)",
+                    borderRadius:5, padding:"1px 7px",
+                    letterSpacing:0.3,
+                  }}>
+                    🔄 REOPENED BY USER
+                  </span>
+                )}
+                {smeta && !msg.isReopen && (
                   <span style={{
                     fontSize:9, fontWeight:700, color:smeta.color,
                     background: dark ? `${smeta.color}22` : smeta.bg,
@@ -962,6 +981,14 @@ function ConversationThread({ report, dark }) {
                 )}
                 <span style={{ fontSize:9, color:th.textSub, marginLeft:"auto" }}>{msg.time}</span>
               </div>
+              {msg.isReopen && (
+                <div style={{
+                  fontSize:10, fontWeight:700, color:"#92400E",
+                  marginBottom:5, letterSpacing:0.2,
+                }}>
+                  Reason for reopening:
+                </div>
+              )}
               <div style={{ fontSize:12, color:th.text, lineHeight:1.65, whiteSpace:"pre-wrap" }}>
                 {msg.text}
               </div>
@@ -1261,6 +1288,7 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
         const typeMeta   = TYPE_META[report.type]   || { icon:"📝", label:report.type, color:NAVY };
         const statusMeta = STATUS_META[report.status] || STATUS_META.open;
         const isExpanded = expanded === report.id;
+        const isReopened = report.replyHistory?.some(r => r.isReopen);
 
         return (
           <div key={report.id} style={{
@@ -1305,6 +1333,16 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
                   }}>
                     {statusMeta.label}
                   </span>
+                  {isReopened && (
+                    <span style={{
+                      fontSize:10, fontWeight:700, color:"#D97706",
+                      background: dark ? "rgba(217,119,6,0.18)" : "#FFFBEB",
+                      border:"1px solid rgba(217,119,6,0.4)",
+                      borderRadius:6, padding:"2px 7px",
+                    }}>
+                      🔄 Reopened
+                    </span>
+                  )}
                 </div>
 
                 {/* Subject or message preview */}
