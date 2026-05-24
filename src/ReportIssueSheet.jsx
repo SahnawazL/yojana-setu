@@ -82,10 +82,7 @@ const STRINGS = {
 };
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
-// displayName — optional override; if passed it replaces the profile name
-//               everywhere (preview card + Firestore write). Used so the admin
-//               can submit reports under an alias (e.g. "SHZ HyperZenith").
-export default function ReportIssueSheet({ lang = "en", dark = false, onClose, userProfile, displayName }) {
+export default function ReportIssueSheet({ lang = "en", dark = false, onClose, userProfile }) {
   const th = S[dark ? "dark" : "light"];
   const s  = STRINGS[lang] || STRINGS.en;
   const types = REPORT_TYPES[lang] || REPORT_TYPES.en;
@@ -100,7 +97,7 @@ export default function ReportIssueSheet({ lang = "en", dark = false, onClose, u
   const user        = auth.currentUser;
   const charLen     = message.length;
   // Resolved name: explicit override → profile name → Google display name → fallback
-  const resolvedName = displayName || userProfile?.name || user?.displayName || "Anonymous";
+  const resolvedName = userProfile?.name || user?.displayName || "Anonymous";
 
   async function handleSubmit() {
     if (!message.trim()) { setError(s.messageReq); return; }
