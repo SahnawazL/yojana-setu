@@ -926,23 +926,32 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
   // ── Send Admin Reply ───────────────────────────────────────────────────────
   async function handleSendReply(report) {
     if (!replyText.trim()) { setReplyError("Please write a reply first."); return; }
-    if (!report.userEmail)  { setReplyError("No email on file for this user — reply saved to Firestore only."); }
     setReplySending(true);
     setReplyError("");
+    let firestoreOk = false;
     try {
-      // 1. Save to Firestore
+      // ── Step 1: Save to Firestore ────────────────────────────────────────
       await updateDoc(doc(db, "reports", report.id), {
-        adminReply:  replyText.trim(),
-        repliedAt:   serverTimestamp(),
-        status:      "resolved",
+        adminReply:   replyText.trim(),
+        repliedAt:    serverTimestamp(),
+        status:       "resolved",
         replyHistory: arrayUnion({
           text:   replyText.trim(),
           sentAt: new Date().toISOString(),
         }),
       });
+      firestoreOk = true;
+      onStatusChange(report.id, "resolved");
+    } catch (err) {
+      console.error("❌ Firestore write failed:", err);
+      setReplyError(`Firestore error: ${err.message}`);
+      setReplySending(false);
+      return;
+    }
 
-      // 2. Email the user (only if they have an email)
-      if (report.userEmail) {
+    // ── Step 2: Send email (only if user has email) ──────────────────────
+    if (firestoreOk && report.userEmail) {
+      try {
         await emailjs.send(
           EJS_SERVICE_ID,
           EJS_REPLY_TID,
@@ -954,18 +963,21 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
           },
           EJS_PUBLIC_KEY
         );
+      } catch (err) {
+        console.error("❌ EmailJS send failed:", err);
+        // Firestore already saved — show partial success
+        setReplyError(`Reply saved ✓ but email failed: ${err?.text || err?.message || "EmailJS error"}`);
+        setReplySending(false);
+        setReplyDone(true); // still show success since Firestore worked
+        setReplyText("");
+        return;
       }
-
-      // 3. Update local state: status → resolved
-      onStatusChange(report.id, "resolved");
-      setReplyDone(true);
-      setReplyText("");
-    } catch (err) {
-      console.error("Send reply failed:", err);
-      setReplyError("Failed to send reply. Check console.");
-    } finally {
-      setReplySending(false);
     }
+
+    // ── Both succeeded ────────────────────────────────────────────────────
+    setReplyDone(true);
+    setReplyText("");
+    setReplySending(false);
   }
 
   const filtered = useMemo(() => {
