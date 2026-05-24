@@ -2,7 +2,7 @@
 // Enhanced with: Analytics tab, donut charts, user detail drawer,
 // sorting, pagination, filtered CSV export, refresh, more metrics
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { collection, getDocs, updateDoc, doc, serverTimestamp, arrayUnion } from "firebase/firestore";
 import { db } from "./firebase.js";
 import { SCHEME_DB, INDIA_STATES } from "./schemesData.js";
@@ -1175,11 +1175,21 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
   }
 
   const filtered = useMemo(() => {
-    return reports.filter(r => {
+    const list = reports.filter(r => {
       const matchStatus = filter === "all" || r.status === filter;
       const matchType   = typeFilter === "all" || r.type === typeFilter;
       return matchStatus && matchType;
     });
+
+    // Sort: Open (fresh) → In Progress → Reopened → Resolved
+    const getPriority = (r) => {
+      if (r.status === "resolved")    return 3;
+      if (r.status === "in_progress") return 1;
+      if (r.replyHistory?.some(h => h.isReopen)) return 2; // reopened
+      return 0; // open, never reopened
+    };
+    list.sort((a, b) => getPriority(a) - getPriority(b));
+    return list;
   }, [reports, filter, typeFilter]);
 
   const openCount     = reports.filter(r => r.status === "open").length;
@@ -1287,21 +1297,93 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
         </div>
       )}
 
-      {/* Report cards */}
-      {filtered.map(report => {
+      {/* Report cards — grouped by status */}
+      {filtered.map((report, idx) => {
         const typeMeta   = TYPE_META[report.type]   || { icon:"📝", label:report.type, color:NAVY };
         const statusMeta = STATUS_META[report.status] || STATUS_META.open;
         const isExpanded = expanded === report.id;
         const isReopened = report.replyHistory?.some(r => r.isReopen);
 
+        // Determine this card's status group
+        const group = report.status === "resolved"    ? "resolved"
+                    : report.status === "in_progress" ? "in_progress"
+                    : isReopened                       ? "reopened"
+                    : "open";
+
+        const GROUP_META = {
+          open:        { label:"🔴 Open",         color:"#DC2626", bg:"rgba(220,38,38,0.08)"  },
+          in_progress: { label:"🟡 In Progress",  color:"#D97706", bg:"rgba(245,158,11,0.08)" },
+          reopened:    { label:"🔁 Reopened",      color:"#A855F7", bg:"rgba(168,85,247,0.08)" },
+          resolved:    { label:"✅ Resolved",      color:IND_GREEN, bg:"rgba(19,136,8,0.06)"   },
+        };
+        const gMeta = GROUP_META[group];
+
+        // Show a section divider when group changes
+        const prevReport   = filtered[idx - 1];
+        const prevReopened = prevReport?.replyHistory?.some(r => r.isReopen);
+        const prevGroup    = !prevReport ? null
+                           : prevReport.status === "resolved"    ? "resolved"
+                           : prevReport.status === "in_progress" ? "in_progress"
+                           : prevReopened                         ? "reopened"
+                           : "open";
+        const showGroupHeader = group !== prevGroup;
+
+        // Count reports in this group (for header badge)
+        const groupCount = filtered.filter(r => {
+          const rReopened = r.replyHistory?.some(h => h.isReopen);
+          const rGroup = r.status === "resolved"    ? "resolved"
+                       : r.status === "in_progress" ? "in_progress"
+                       : rReopened                   ? "reopened"
+                       : "open";
+          return rGroup === group;
+        }).length;
+
+        // Status color for left border (reopened overrides open color)
+        const statusColor = group === "reopened" ? "#A855F7" : statusMeta.color;
+
         return (
-          <div key={report.id} style={{
-            background:th.card,
-            border:`1.5px solid ${isExpanded ? typeMeta.color : th.border}`,
-            borderRadius:16, overflow:"hidden",
-            transition:"border-color 0.2s",
-            boxShadow: isExpanded ? `0 4px 20px ${typeMeta.color}22` : "none",
-          }}>
+          <React.Fragment key={report.id}>
+
+            {/* ── Group section header ── */}
+            {showGroupHeader && (
+              <div style={{
+                display:"flex", alignItems:"center", gap:8,
+                marginTop: idx > 0 ? 6 : 0,
+              }}>
+                <div style={{ height:1.5, flex:1, background: gMeta.color + "33", borderRadius:1 }} />
+                <div style={{
+                  display:"flex", alignItems:"center", gap:5,
+                  background: gMeta.bg,
+                  border:`1.5px solid ${gMeta.color}44`,
+                  borderRadius:20, padding:"3px 10px",
+                }}>
+                  <span style={{ fontSize:10, fontWeight:800, color: gMeta.color }}>
+                    {gMeta.label}
+                  </span>
+                  <span style={{
+                    fontSize:9, fontWeight:800, color:"#fff",
+                    background: gMeta.color,
+                    borderRadius:8, padding:"1px 6px",
+                    minWidth:14, textAlign:"center",
+                  }}>
+                    {groupCount}
+                  </span>
+                </div>
+                <div style={{ height:1.5, flex:1, background: gMeta.color + "33", borderRadius:1 }} />
+              </div>
+            )}
+
+            {/* ── Report card ── */}
+            <div style={{
+              background: th.card,
+              borderTop:    `1.5px solid ${isExpanded ? typeMeta.color : th.border}`,
+              borderRight:  `1.5px solid ${isExpanded ? typeMeta.color : th.border}`,
+              borderBottom: `1.5px solid ${isExpanded ? typeMeta.color : th.border}`,
+              borderLeft:   `4px solid ${statusColor}`,
+              borderRadius:16, overflow:"hidden",
+              transition:"all 0.2s",
+              boxShadow: isExpanded ? `0 4px 20px ${typeMeta.color}22` : `inset 3px 0 0 ${statusColor}22`,
+            }}>
             {/* Card header — always visible */}
             <div
               onClick={() => setExpanded(isExpanded ? null : report.id)}
@@ -1670,6 +1752,7 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
               </div>
             )}
           </div>
+          </React.Fragment>
         );
       })}
 
