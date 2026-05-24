@@ -135,7 +135,7 @@ export default function ReportIssueSheet({ lang = "en", dark = false, onClose, u
             subject:     subject.trim() || "(no subject)",
             message:     message.trim(),
           },
-          EJS_PUBLIC_KEY
+          { publicKey: EJS_PUBLIC_KEY }
         ).catch(e => console.warn("Confirmation email failed:", e));
       }
     } catch (err) {

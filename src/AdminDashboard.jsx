@@ -961,7 +961,7 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
             admin_reply:      replyText.trim(),
             original_message: report.message   || "",
           },
-          EJS_PUBLIC_KEY
+          { publicKey: EJS_PUBLIC_KEY }
         );
       } catch (err) {
         console.error("❌ EmailJS send failed:", err);
