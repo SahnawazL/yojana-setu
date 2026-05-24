@@ -177,28 +177,49 @@ function buildCountGuidance(lang, context = "total") {
 //   • 2–4 matched               → medium (benefit + link per scheme)
 //   • 5+ matched / list query   → names only, capped at 6
 //   • Nothing matched           → top 5 national, compact
-function buildSmartContext(query, lang = "en") {
+//
+// FIX Bug 2: accepts `profile` so implicit attributes (gender, occupation, state)
+// boost keyword scoring even when the query itself omits those words.
+function buildSmartContext(query, lang = "en", profile = null) {
   const q = query.toLowerCase();
+
+  // ── Build a profile-augmented query string for keyword scoring ───────────────
+  // Example: female farmer in Assam asking "what schemes can I get?" now also
+  // scores against "farmer kisan women mahila assam" even though none appear in q.
+  const profileTokens = [];
+  if (profile) {
+    if (profile.occupation) {
+      const occMap = { farmer:"farmer kisan kheti", student:"student scholarship padhai", women:"homemaker mahila", senior:"senior elderly pension", business:"business loan udyog", general:"" };
+      profileTokens.push(occMap[profile.occupation] ?? profile.occupation);
+    }
+    if (profile.gender === "female") profileTokens.push("women mahila female girl beti nari");
+    if (profile.state)     profileTokens.push(profile.state.toLowerCase());
+    if (profile.ration === "bpl" || profile.ration === "aay") profileTokens.push("bpl poverty ration food");
+    if (profile.disability && profile.disability !== "none")  profileTokens.push("disability divyang");
+    if (profile.income === "below1") profileTokens.push("below poverty poor");
+    if (profile.area === "rural")    profileTokens.push("rural gramin village");
+  }
+  // Merge: original query gets full weight; profile tokens augment it
+  const augQ = (q + " " + profileTokens.join(" ")).trim();
   const l = lang === "hi" ? "hi" : "en";
 
   // ── Detect state & detail-level signals from query ──────────────────────────
-  const mentionedState = ALL_STATES.find(s => q.includes(s)) ?? null;
+  // Use augQ (profile-aware) for state detection so profile.state boosts state schemes
+  const mentionedState = ALL_STATES.find(s => augQ.includes(s)) ?? null;
   const wantsCount  = /how many|kitni|kitne|total|count/.test(q);
   const wantsList   = /list|all scheme|sabhi|show all|sab yojna|sab yojana/.test(q);
   const wantsDetail = /document|kagaz|apply|avedan|eligib|yogyta|how to|kaise|kya chahiye|detail|full info|link|website|portal/.test(q);
 
   // ── Detect "total/overall count" queries (no specific topic) ─────────────────
-  // e.g. "how many total schemes", "how many schemes do you have", "total record"
-  // These should return exact counts + breakdown -- NOT a list of all schemes.
-  // wantsTotalCount: fires on count OR list queries with no specific topic
-  const NO_TOPIC = !mentionedState &&
+  // Use q (raw query) so profile tokens don't accidentally suppress total-count detection
+  const NO_TOPIC = !ALL_STATES.find(s => q.includes(s)) &&
     !/farmer|kisan|health|student|women|mahila|housing|awas|business|pension|senior|insurance|ration|water|jal|skill/.test(q);
   const wantsTotalCount = (wantsCount || wantsList) && NO_TOPIC;
 
   // ── Detect per-state breakdown request ───────────────────────────────────────
   const wantsStateBreakdown = /each state|state.?wise|har state|per state|state mein kitni|state ke liye|every state/.test(q) && (wantsCount || wantsList);
 
-  // ── Score each scheme against the query ─────────────────────────────────────
+  // ── Score each scheme against the profile-augmented query ───────────────────
   const scored = SCHEME_DB.map(s => {
     const searchText = [
       s.name.en, s.name.hi,
@@ -211,26 +232,26 @@ function buildSmartContext(query, lang = "en") {
 
     let score = 0;
 
-    // Exact scheme name / id mention → very high boost
+    // Exact scheme name / id mention → very high boost (query only, not profile)
     if (q.includes(s.id.replace(/_/g, " "))) score += 20;
     if (q.includes(s.name.en.toLowerCase()))  score += 15;
     if (q.includes(s.name.hi.toLowerCase()))  score += 15;
 
-    // State match
+    // State match — uses augQ so profile.state boosts correct state schemes
     if (mentionedState) {
       if (s.scope === "state" && s.state?.toLowerCase().includes(mentionedState)) score += 8;
       else if (s.scope === "national") score += 2; // national schemes always somewhat relevant
     }
 
-    // Keyword category matches
+    // Keyword category matches — uses augQ so profile occupation/gender fire keywords
     for (const [, kws] of Object.entries(KEYWORD_MAP)) {
       for (const kw of kws) {
-        if (q.includes(kw) && searchText.includes(kw)) score += 3;
+        if (augQ.includes(kw) && searchText.includes(kw)) score += 3;
       }
     }
 
-    // Query words found in scheme text — skip stop words to avoid false matches
-    const words = q.split(/\s+/).filter(w => w.length > 3 && !STOP_WORDS.has(w));
+    // Words found in scheme text — augQ includes profile tokens, skip stop words
+    const words = augQ.split(/\s+/).filter(w => w.length > 3 && !STOP_WORDS.has(w));
     for (const w of words) {
       if (searchText.includes(w)) score += 1;
     }
@@ -378,7 +399,7 @@ function buildSmartContext(query, lang = "en") {
 //   • Identity (who you are, who built you, what app you live in)
 //   • Scheme counts + full index (Tier 1) — AI knows everything
 //   • Relevant scheme details (Tier 2) — injected at the end
-function buildSystemPrompt(query, lang) {
+function buildSystemPrompt(query, lang, profile = null) {
   const isHindi  = lang === "hi";
   const national = SCHEME_DB.filter(s => s.scope === "national").length;
   const state    = SCHEME_DB.filter(s => s.scope === "state").length;
@@ -399,7 +420,7 @@ CHIPS:["question 1","question 2","question 3"]
 - Keep each chip 4–7 words, specific and actionable`;
 
   // ── Context: only smart-scored relevant schemes for this query ───────────────
-  const smartContext = buildSmartContext(query, lang);
+  const smartContext = buildSmartContext(query, lang, profile);
 
   return `You are YojanaSetu AI — the official AI assistant of the YojanaSetu app.
 
@@ -424,6 +445,10 @@ CHIPS:["question 1","question 2","question 3"]
 
 ══ RULES ══
 ${langRule}
+- PROFILE CONTEXT: When the conversation history contains a "[Profile context for personalization …]" message, use EVERY field — Gender, Occupation, State, Income, Ration card, Disability, Marital status, Children — to personalize ALL recommendations. Never ignore the profile.
+- GENDER AWARENESS: If profile Gender is Female, proactively include women-specific schemes (Mahila, Beti, Maternity, SHG, Widow, Nari schemes) alongside other relevant ones — even if the user's query does not mention "women". If Gender is Male, skip women-only schemes unless the user explicitly asks.
+- GREETINGS: When the user's message is ONLY a greeting (hi / hello / hey / namaste / हेलो / नमस्ते / हाय / good morning / good evening) — respond warmly using the respectful address, ask how you can help, and briefly mention what you can assist with. Never dump scheme data as a reply to a pure greeting.
+- SMART NAME USE: Use the respectful address (Mr./Mrs./Ms. + first name in English; [Name] जी in Hindi) at greetings, when giving personalized advice, and at the start of key recommendations. Do NOT repeat the name in every sentence — once per response is enough.
 - Use simple words — many users are rural citizens
 
 FORMATTING (follow strictly):
@@ -463,7 +488,9 @@ function parseResponse(raw) {
 
 // ─── MAIN EXPORT ─────────────────────────────────────────────────────────────
 // Returns { reply: string, followUps: string[] }
-export async function sendMessage(conversationHistory, userQuery, lang = "en") {
+// FIX Bug 2: accepts profile so buildSmartContext can score schemes against
+// the user's implicit attributes (occupation, gender, state) not just the query.
+export async function sendMessage(conversationHistory, userQuery, lang = "en", profile = null) {
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -471,10 +498,21 @@ export async function sendMessage(conversationHistory, userQuery, lang = "en") {
       model:       MODEL,
       max_tokens:  lang === "hi" ? 1200 : 800, // Hindi responses are longer — extra headroom to avoid mid-sentence cutoff
       temperature: 0.5,        // More factual accuracy for scheme data
-      messages: [
-        { role: "system", content: buildSystemPrompt(userQuery, lang) },
-        ...conversationHistory.slice(-8), // 70b + 128K context handles 8 turns (4 exchanges) well
-      ],
+      messages: (() => {
+        // FIX Bug 1: Profile context (positions 0 & 1) must ALWAYS be included.
+        // Detect profile prefix by the sentinel text injected in AIChat.jsx.
+        // Slice only the actual conversation messages (everything after the 2 profile rows).
+        const hasProfile =
+          conversationHistory.length >= 2 &&
+          conversationHistory[0]?.content?.includes("[Profile context for personalization");
+        const profilePart = hasProfile ? conversationHistory.slice(0, 2) : [];
+        const chatPart    = (hasProfile ? conversationHistory.slice(2) : conversationHistory).slice(-6);
+        return [
+          { role: "system", content: buildSystemPrompt(userQuery, lang, profile) },
+          ...profilePart,   // always present — never sliced away
+          ...chatPart,      // last 6 chat turns (3 exchanges) — fits 70b context easily
+        ];
+      })(),
     }),
   });
 

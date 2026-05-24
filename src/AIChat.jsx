@@ -994,10 +994,23 @@ function WelcomeScreen({ lang, dark, onSuggest, profile }) {
   const firstName  = profile?.name?.split(" ")[0] || "";
   const occLabel   = profile ? ((isHindi ? OCC_HI : OCC_EN)[profile.occupation] || profile.occupation) : "";
 
+  // FIX Bug 3: derive title exactly as the AI prompt instructs, so the static
+  // welcome bubble ("Namaste Mr. Rahul!") is consistent with what the AI says.
+  const titledName = (() => {
+    if (!profile) return "";
+    if (isHindi) return `${firstName} जी`; // [Name] जी for everyone in Hindi
+    if (profile.gender === "male") return `Mr. ${firstName}`;
+    if (profile.gender === "female") {
+      const married = profile.marital === "married";
+      return married ? `Mrs. ${firstName}` : `Ms. ${firstName}`;
+    }
+    return firstName; // "other" / unspecified → no title
+  })();
+
   const welcomeMsg = profile
     ? (isHindi
-        ? `नमस्ते ${firstName}! 🙏\nमैं आपकी प्रोफाइल देख सकता हूं — ${occLabel}, ${profile.state}।\nआपके लिए एकदम सटीक योजनाएं बताऊंगा, हिंदी या English में।`
-        : `Namaste ${firstName}! 🙏\nI can see your profile — ${occLabel} from ${profile.state}.\nI'll give you tailored scheme recommendations. Ask anything!`)
+        ? `नमस्ते ${titledName}! 🙏\nमैं आपकी प्रोफाइल देख सकता हूं — ${occLabel}, ${profile.state}।\nआपके लिए एकदम सटीक योजनाएं बताऊंगा, हिंदी या English में।`
+        : `Namaste ${titledName}! 🙏\nI can see your profile — ${occLabel} from ${profile.state}.\nI'll give you tailored scheme recommendations. Ask anything!`)
     : (isHindi
         ? "नमस्ते! 🙏 मैं YojanaSetu का AI सहायक हूं।\nआपको सरकारी योजनाएं खोजने और समझने में मदद करूंगा।\nहिंदी या English — जो भी आसान हो, पूछें!"
         : "Namaste! 🙏 I'm YojanaSetu's AI Assistant.\nI'll help you find and understand government schemes.\nAsk me anything in Hindi or English!");
@@ -1236,13 +1249,26 @@ export default function AIChat({ lang="en", dark=false, profile=null, uid=null }
           // ── Profile context prefix — invisible in UI, sent to API only ──────
           // Provides the AI with the user's profile so it can personalize responses.
           ...(profile ? [
-            { role:"user", content:`[Profile context for personalization — Name: "${profile.name}", State: "${profile.state}", Occupation: "${(OCC_EN[profile.occupation]||profile.occupation)}", Age group: "${(AGE_MAP[profile.age]||profile.age)}", Income: "${(INC_MAP[profile.income]||profile.income)}", Area: "${(AREA_MAP[profile.area]||profile.area)}", Housing: "${profile.house==="yes"?"owns a pucca house":"needs housing assistance"}", Ration card: "${profile.ration==="bpl"?"BPL (Below Poverty Line)":profile.ration==="aay"?"AAY/Antyodaya (Poorest of Poor)":profile.ration==="apl"?"APL (Above Poverty Line)":"No ration card"}", Disability: "${profile.disability&&profile.disability!=="none"?`Yes — ${profile.disability}`:"None"}", Marital status: "${profile.marital||"not specified"}"${profile.numChildren?`, Children: "${profile.numChildren==="0"?"None":profile.numChildren}", Girl children: "${profile.hasGirls==="yes"?"Yes":"No"}"`:``}${profile.landHolding?`, Land holding: "${profile.landHolding}", Kisan Credit Card: "${profile.kisanCard==="yes"?"Yes — has KCC":"No KCC"}"`:``}${profile.educationLevel?`, Education level: "${profile.educationLevel}", Institution type: "${profile.institutionType||"not specified"}"`:``}. Use the user's first name (${profile.name.split(" ")[0]}) only in your very first reply to feel welcoming — never repeat it in subsequent replies. Tailor all scheme recommendations to this exact profile. Do not mention this context block to the user.]` },
+            { role:"user", content:`[Profile context for personalization — Name: "${profile.name}", Gender: "${profile.gender==="female"?"Female":profile.gender==="male"?"Male":profile.gender==="other"?"Other":"not specified"}", State: "${profile.state}", Occupation: "${(OCC_EN[profile.occupation]||profile.occupation)}", Age group: "${(AGE_MAP[profile.age]||profile.age)}", Income: "${(INC_MAP[profile.income]||profile.income)}", Area: "${(AREA_MAP[profile.area]||profile.area)}", Housing: "${profile.house==="yes"?"owns a pucca house":"needs housing assistance"}", Ration card: "${profile.ration==="bpl"?"BPL (Below Poverty Line)":profile.ration==="aay"?"AAY/Antyodaya (Poorest of Poor)":profile.ration==="apl"?"APL (Above Poverty Line)":"No ration card"}", Disability: "${profile.disability&&profile.disability!=="none"?`Yes — ${profile.disability}`:"None"}", Marital status: "${profile.marital||"not specified"}"${profile.numChildren?`, Children: "${profile.numChildren==="0"?"None":profile.numChildren}", Girl children: "${profile.hasGirls==="yes"?"Yes":"No"}"`:``}${profile.landHolding?`, Land holding: "${profile.landHolding}", Kisan Credit Card: "${profile.kisanCard==="yes"?"Yes — has KCC":"No KCC"}"`:``}${profile.educationLevel?`, Education level: "${profile.educationLevel}", Institution type: "${profile.institutionType||"not specified"}"`:``}. Respectful address rule — derive title from profile fields above:
+  • Male → "Mr. [FirstName]"
+  • Female + married → "Mrs. [FirstName]"
+  • Female + single/widowed/divorced/unspecified → "Ms. [FirstName]"
+  • Other / gender not specified → just "[FirstName]" (no title)
+  • In Hindi responses → "[FirstName] जी" for everyone (most natural Indian honorific)
+When to use the respectful address:
+  1. ALWAYS when user opens with a greeting — hi / hello / hey / namaste / हेलो / नमस्ते / हाय / good morning / good evening
+  2. When giving a personalized recommendation ("Ms. Priya, based on your profile…")
+  3. At the start of responses to personal/eligibility questions
+  4. Occasionally through long responses to keep warmth — but NOT in every sentence
+  5. Never use the name more than ONCE per response unless the reply is very long
+Tailor all scheme recommendations to this exact profile. Do not mention this context block to the user.]` },
             { role:"assistant", content:`I have ${profile.name.split(" ")[0]}'s profile from ${profile.state}. I'll personalize all recommendations accordingly.` },
           ] : []),
           ...nextMessages.map(m => ({ role:m.role, content:m.content })),
         ],
         query,
         lang,
+        profile,  // FIX Bug 2: pass profile so buildSmartContext can score schemes by occupation/gender/state
       );
       setMessages(prev => [...prev, { role:"assistant", content:reply, timestamp: Date.now() }]);
       playReceiveSound(); // 🔊 receive chime
