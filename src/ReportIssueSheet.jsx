@@ -30,7 +30,7 @@ const NAVY      = "#003580";
 const IND_GREEN = "#138808";
 
 // ─── EMAILJS CONFIG ──────────────────────────────────────────────────────────
-const EJS_SERVICE_ID  = "service_31t3h2j";
+const EJS_SERVICE_ID  = "service_j0cvqgf";
 const EJS_CONFIRM_TID = "template_gju4z27";   // User confirmation email
 const EJS_PUBLIC_KEY  = "aV7SknFp6qPFayUkX";
 

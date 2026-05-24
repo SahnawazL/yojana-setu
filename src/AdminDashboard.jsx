@@ -32,7 +32,7 @@ const PINK      = "#EC4899";
 const GOOGLE_B  = "#4285F4";
 
 // ─── EMAILJS + AI CONFIG ──────────────────────────────────────────────────────
-const EJS_SERVICE_ID  = "service_31t3h2j";
+const EJS_SERVICE_ID  = "service_j0cvqgf";
 const EJS_REPLY_TID   = "template_xvl9ir3";   // Admin → User reply template
 const EJS_PUBLIC_KEY  = "aV7SknFp6qPFayUkX";
 // Groq calls go through the Vercel serverless route /api/chat (same as groqClient.js)
