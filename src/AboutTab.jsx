@@ -1260,7 +1260,7 @@ export default function AboutTab({ lang = "en", dark = false }) {
                   navigator.share({
                     title: "YojanaSetu — Official Scheme Finder",
                     text: "Find government schemes you qualify for. Free, bilingual, and made in India 🇮🇳",
-                    url: "https://sahnawaz-portfolio.vercel.app",
+                    url: "https://yojana-setu-bice.vercel.app",
                   }).catch(() => {/* user cancelled or not supported — silent fail */});
                 }
               }}
@@ -1278,6 +1278,68 @@ export default function AboutTab({ lang = "en", dark = false }) {
               }}>
               {s.shareBtn}
             </div>
+
+            {/* ── App Store & Play Store — Coming Soon ── */}
+            <div style={{
+              marginTop: 20,
+              display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap",
+            }}>
+              {/* Apple App Store pill */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                background: "rgba(255,255,255,0.07)",
+                border: "1px solid rgba(255,255,255,0.14)",
+                borderRadius: 10, padding: "7px 13px",
+                backdropFilter: "blur(8px)",
+              }}>
+                <svg width="13" height="16" viewBox="0 0 814 1000" fill="rgba(255,255,255,0.75)">
+                  <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.4 269-317.4 70.1 0 128.4 46.4 172.5 46.4 42.8 0 109.8-49.1 190.5-49.1zm-3.2-161.7c32.4-38.4 56.3-91.4 56.3-144.4 0-7.4-.6-14.9-1.9-21.7-53.5 2-117.4 35.5-155.5 79.9-31.1 35.5-59.9 88.5-59.9 142.1 0 8.3 1.3 16.6 1.9 19.2 3.2.6 8.4 1.3 13.6 1.3 48.4 0 109.1-32.4 145.5-76.4z"/>
+                </svg>
+                <div>
+                  <div style={{
+                    fontSize: 7.5, fontWeight: 600, color: "rgba(255,255,255,0.42)",
+                    letterSpacing: 1, textTransform: "uppercase", fontFamily: bf,
+                  }}>
+                    Coming Soon
+                  </div>
+                  <div style={{
+                    fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.80)",
+                    fontFamily: bf, lineHeight: 1.2,
+                  }}>
+                    App Store
+                  </div>
+                </div>
+              </div>
+
+              {/* Google Play pill */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                background: "rgba(255,255,255,0.07)",
+                border: "1px solid rgba(255,255,255,0.14)",
+                borderRadius: 10, padding: "7px 13px",
+                backdropFilter: "blur(8px)",
+              }}>
+                <svg width="13" height="14" viewBox="0 0 512 512" fill="rgba(255,255,255,0.75)">
+                  <path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l232.6-232.6L47 0zm442.1 221.9l-60.7-35.1-67.8 67.8 67.8 67.8 61.4-35.4c17.4-10 17.4-35.1-.7-45.1zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/>
+                </svg>
+                <div>
+                  <div style={{
+                    fontSize: 7.5, fontWeight: 600, color: "rgba(255,255,255,0.42)",
+                    letterSpacing: 1, textTransform: "uppercase", fontFamily: bf,
+                  }}>
+                    Coming Soon
+                  </div>
+                  <div style={{
+                    fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.80)",
+                    fontFamily: bf, lineHeight: 1.2,
+                  }}>
+                    Google Play
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* ─────────────────────────────────────────────────────────── */}
+
           </div>
         </div>
 
