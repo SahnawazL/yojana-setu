@@ -39,6 +39,18 @@ function useCountUp(targets, trigger, duration=1400){
 // Patterns: "light"=30ms, default=50ms, "medium"=80ms, "double"=[50,60,50]
 const haptic = (pattern = 50) => { try { navigator.vibrate?.(pattern); } catch {} };
 
+// ─── URL HELPERS ───────────────────────────────────────────────────────────────
+// Prevents double https:// if the stored URL already includes a protocol
+const safeApplyUrl = (url) => {
+  if (!url) return null;
+  if (/^https?:\/\//i.test(url)) return url;
+  return `https://${url}`;
+};
+// Opens a Google search for the scheme so offline/CSC schemes are still actionable
+const googleSearchScheme = (name) => {
+  window.open(`https://www.google.com/search?q=${encodeURIComponent(name+" scheme apply")}`, "_blank");
+};
+
 // ─── STAT TARGETS (stable reference — prevents useCountUp from re-animating) ──
 const STAT_TARGETS = [3000, 28, 50];
 const STORAGE_KEY = "yojana_eligibility_answers";
@@ -480,25 +492,35 @@ function SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
   const t=T[lang];
   const bf=fontFamily(lang);
   const isNational=scheme.scope==="national";
+  const isOnline=scheme.applyType==="online";
+  const applyUrl=isOnline?safeApplyUrl(scheme.apply.en):null;
+
   const [copied,setCopied]=useState(false);
+  const [showGSearch,setShowGSearch]=useState(false);
+
   const handleCopy=(e)=>{
     e.stopPropagation();
     haptic(30);
-    navigator.clipboard?.writeText(scheme.name[lang]).then(()=>{
+    const schemeName=scheme.name[lang];
+    navigator.clipboard?.writeText(schemeName).then(()=>{
       setCopied(true);
+      setShowGSearch(true);
       setTimeout(()=>setCopied(false),2000);
+      setTimeout(()=>setShowGSearch(false),4000);
     }).catch(()=>{
-      // fallback for older browsers
       const el=document.createElement("textarea");
-      el.value=scheme.name[lang];
+      el.value=schemeName;
       document.body.appendChild(el);
       el.select();
       document.execCommand("copy");
       document.body.removeChild(el);
       setCopied(true);
+      setShowGSearch(true);
       setTimeout(()=>setCopied(false),2000);
+      setTimeout(()=>setShowGSearch(false),4000);
     });
   };
+
   return(
     <div style={{
       background:th.card,borderRadius:18,marginBottom:10,overflow:"hidden",
@@ -533,11 +555,20 @@ function SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
             <span style={{fontSize:9,fontWeight:700,background:scheme.color+"18",color:scheme.color,borderRadius:6,padding:"2px 7px"}}>
               {scheme.tag[lang]}
             </span>
+            {/* Online/Offline badge */}
+            <span style={{fontSize:9,fontWeight:700,
+              background:isOnline?"#f0fdf4":"#f5f5f5",
+              color:isOnline?"#15803d":"#777",
+              borderRadius:6,padding:"2px 7px",
+              border:`1px solid ${isOnline?"#bbf7d0":"#e0e0e0"}`}}>
+              {isOnline?"🌐 Online":"🏢 Offline"}
+            </span>
           </div>
           <div style={{display:"flex",alignItems:"flex-start",gap:7,marginBottom:4}}>
             <div style={{fontSize:13,fontWeight:700,color:th.text,lineHeight:1.35,fontFamily:bf,flex:1}}>
               {scheme.name[lang]}
             </div>
+            {/* Copy button */}
             <div onClick={handleCopy}
               style={{flexShrink:0,display:"flex",alignItems:"center",gap:3,
                 background:copied?(dark?"#14532d":"#f0fdf4"):(dark?"rgba(255,255,255,0.07)":scheme.color+"12"),
@@ -556,6 +587,23 @@ function SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
           </div>
           <div style={{fontSize:12,color:scheme.color,fontWeight:600}}>{scheme.benefit[lang]}</div>
           <div style={{fontSize:10,color:th.textLight,marginTop:3,fontFamily:bf}}>{scheme.ministry[lang]}</div>
+
+          {/* Google search quick-action — appears 1s after copy */}
+          {showGSearch&&(
+            <div
+              onClick={e=>{e.stopPropagation();haptic(30);googleSearchScheme(scheme.name.en);}}
+              style={{
+                marginTop:7,display:"inline-flex",alignItems:"center",gap:5,
+                background:"#EFF6FF",border:"1px solid #93C5FD",
+                borderRadius:8,padding:"4px 9px",cursor:"pointer",
+                animation:"fadeIn 0.2s ease",
+              }}>
+              <span style={{fontSize:11}}>🔎</span>
+              <span style={{fontSize:10,fontWeight:700,color:"#1D4ED8"}}>
+                Search on Google →
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Animated chevron */}
@@ -577,7 +625,6 @@ function SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
         transition:"grid-template-rows 0.38s cubic-bezier(0.4,0,0.2,1)",
       }}>
         <div style={{overflow:"hidden"}}>
-          {/* Inner fades + slides up slightly after height opens */}
           <div style={{
             borderTop:`1px solid ${scheme.color}22`,
             background:scheme.color+"07",
@@ -612,20 +659,27 @@ function SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
             </div>
 
             {/* Apply CTA */}
-            <div style={{padding:"0 16px 16px"}}>
+            <div style={{padding:"0 16px 16px",display:"flex",flexDirection:"column",gap:8}}>
+              {/* Primary action */}
               <div
-                onClick={()=>{haptic();scheme.applyType==="online"&&window.open(`https://${scheme.apply.en}`,"_blank");}}
+                onClick={()=>{
+                  haptic();
+                  if(applyUrl) window.open(applyUrl,"_blank");
+                  else googleSearchScheme(scheme.name.en);
+                }}
                 style={{
-                  background:`linear-gradient(135deg,${scheme.color},${scheme.color}cc)`,
+                  background:applyUrl
+                    ?`linear-gradient(135deg,${scheme.color},${scheme.color}cc)`
+                    :`linear-gradient(135deg,#1D4ED8,#2563eb)`,
                   borderRadius:14,padding:"13px 16px",
                   display:"flex",alignItems:"center",justifyContent:"space-between",
-                  cursor:scheme.applyType==="online"?"pointer":"default",
-                  boxShadow:`0 4px 16px ${scheme.color}40`,
+                  cursor:"pointer",
+                  boxShadow:applyUrl?`0 4px 16px ${scheme.color}40`:"0 4px 16px rgba(37,99,235,0.35)",
                 }}>
                 <div>
                   <div style={{fontSize:12,fontWeight:800,color:"#fff",fontFamily:bf}}>{t.applyLabel}</div>
                   <div style={{fontSize:11,color:"rgba(255,255,255,0.85)",marginTop:3}}>
-                    {scheme.applyType==="online"?"🌐 ":"🏢 "}{scheme.apply[lang]}
+                    {applyUrl?"🌐 "+scheme.apply[lang]:"🔎 Find on Google"}
                   </div>
                 </div>
                 <div style={{
@@ -634,9 +688,23 @@ function SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
                   display:"flex",alignItems:"center",justifyContent:"center",
                   border:"1.5px solid rgba(255,255,255,0.3)",
                 }}>
-                  {scheme.applyType==="online"?"↗":"🏢"}
+                  {applyUrl?"↗":"🔍"}
                 </div>
               </div>
+
+              {/* Offline helper row */}
+              {!applyUrl&&(
+                <div style={{
+                  display:"flex",alignItems:"center",gap:8,
+                  background:dark?"rgba(255,255,255,0.04)":"#f8f9fa",
+                  border:`1px solid ${th.border}`,borderRadius:11,padding:"9px 12px",
+                }}>
+                  <span style={{fontSize:14,flexShrink:0}}>🏢</span>
+                  <span style={{fontSize:11,color:th.textMid,fontFamily:bf,lineHeight:1.45}}>
+                    {scheme.apply[lang]} — {lang==="hi"?"नजदीकी केंद्र में जाएं या ऑनलाइन खोजें।":"Visit nearest centre or search online for exact process."}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -745,7 +813,8 @@ function SchemeDetailSheet({schemeId,lang,onClose,dark=false}){
   const bf=fontFamily(lang);
   const [visible,setVisible]=useState(false);
   useEffect(()=>{const id=setTimeout(()=>setVisible(true),30);return()=>clearTimeout(id);},[]);
-  const applyUrl=useMemo(()=>scheme?.applyType==="online"?`https://${scheme.apply.en}`:null,[scheme]);
+  const isOnline=scheme?.applyType==="online";
+  const applyUrl=useMemo(()=>isOnline?safeApplyUrl(scheme.apply.en):null,[scheme]);
   if(!scheme)return null;
   return(
     <div onClick={e=>{if(e.target===e.currentTarget)onClose();}}
@@ -782,16 +851,24 @@ function SchemeDetailSheet({schemeId,lang,onClose,dark=false}){
               </div>
             ))}
           </div>
-          <div onClick={()=>{haptic();applyUrl&&window.open(applyUrl,"_blank");}}
-            style={{background:applyUrl?`linear-gradient(135deg,${scheme.color},${scheme.color}cc)`:"#888",borderRadius:16,padding:18,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:applyUrl?"pointer":"default",boxShadow:applyUrl?`0 6px 20px ${scheme.color}40`:"none"}}>
+          <div onClick={()=>{haptic();if(applyUrl)window.open(applyUrl,"_blank");else googleSearchScheme(scheme.name.en);}}
+            style={{background:applyUrl?`linear-gradient(135deg,${scheme.color},${scheme.color}cc)`:"linear-gradient(135deg,#1D4ED8,#2563eb)",borderRadius:16,padding:18,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",boxShadow:applyUrl?`0 6px 20px ${scheme.color}40`:"0 6px 20px rgba(37,99,235,0.35)"}}>
             <div>
               <div style={{fontSize:14,fontWeight:800,color:"#fff",fontFamily:bf}}>{t.applyLabel}</div>
-              <div style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginTop:3}}>{scheme.applyType==="online"?"🌐 ":"🏢 "}{scheme.apply[lang]}</div>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginTop:3}}>{applyUrl?"🌐 "+scheme.apply[lang]:"🔎 Find on Google"}</div>
             </div>
             <div style={{width:40,height:40,background:"rgba(255,255,255,0.2)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,border:"1.5px solid rgba(255,255,255,0.3)"}}>
-              {scheme.applyType==="online"?"↗":"🏢"}
+              {applyUrl?"↗":"🔍"}
             </div>
           </div>
+          {!applyUrl&&(
+            <div style={{marginTop:10,display:"flex",alignItems:"center",gap:8,background:"#f8f9fa",border:"1px solid #e8e8e8",borderRadius:12,padding:"10px 14px"}}>
+              <span style={{fontSize:15,flexShrink:0}}>🏢</span>
+              <span style={{fontSize:12,color:"#555",fontFamily:bf,lineHeight:1.5}}>
+                {scheme.apply[lang]} — Visit nearest centre or search online for exact process.
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -807,36 +884,85 @@ function SearchTab({lang,initialQuery="",dark=false}){
   const bf=fontFamily(lang);
   const [query,setQuery]=useState(initialQuery);
   const [expandedId,setExpandedId]=useState(null);
+  const [ready,setReady]=useState(!!initialQuery); // skip delay if arriving with a query
+  const [focused,setFocused]=useState(false);
+  const inputRef=useRef(null);
 
-  const results=useMemo(()=>query.trim().length>0
-    ? SCHEME_DB.filter(s=>{
-        const q=query.toLowerCase();
-        return(
-          s.name.en.toLowerCase().includes(q)||
-          s.name.hi.toLowerCase().includes(q)||
-          s.tag.en.toLowerCase().includes(q)||
-          s.tag.hi.toLowerCase().includes(q)||
-          s.ministry.en.toLowerCase().includes(q)||
-          (s.state&&s.state.toLowerCase().includes(q))
-        );
-      })
-    : SCHEME_DB,[query]); // show all when empty
+  // Let the tab slide in first, THEN render the list — kills the lag
+  // (only runs when there's no initialQuery; otherwise we're already ready)
+  useEffect(()=>{
+    if(ready) return;
+    const id=setTimeout(()=>setReady(true),120);
+    return()=>clearTimeout(id);
+  },[]);
+
+  const deferredQuery=useDeferredValue(query);
+
+  const results=useMemo(()=>{
+    if(!ready) return [];
+    if(deferredQuery.trim().length>0){
+      const q=deferredQuery.toLowerCase();
+      return SCHEME_DB.filter(s=>(
+        s.name.en.toLowerCase().includes(q)||
+        s.name.hi.toLowerCase().includes(q)||
+        s.tag.en.toLowerCase().includes(q)||
+        s.tag.hi.toLowerCase().includes(q)||
+        s.ministry.en.toLowerCase().includes(q)||
+        (s.state&&s.state.toLowerCase().includes(q))
+      ));
+    }
+    return SCHEME_DB;
+  },[deferredQuery,ready]);
 
   const national=useMemo(()=>results.filter(s=>s.scope==="national"),[results]);
   const state=useMemo(()=>results.filter(s=>s.scope==="state"),[results]);
+
+  const hintText=isHindi
+    ?"यहाँ टाइप करें — योजना का नाम, मंत्रालय या राज्य"
+    :"Tap to search — scheme name, ministry or state";
 
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",overflowY:"auto",background:th.appBg}}>
       {/* Search bar */}
       <div style={{background:th.card,padding:"16px 16px 12px",borderBottom:`1px solid ${th.border}`,position:"sticky",top:0,zIndex:10}}>
-        <div style={{background:th.searchBg,borderRadius:14,display:"flex",alignItems:"center",gap:10,padding:"12px 16px",border:"2px solid #FF993340"}}>
+        <div
+          onClick={()=>inputRef.current?.focus()}
+          style={{
+            background:th.searchBg,borderRadius:14,
+            display:"flex",alignItems:"center",gap:10,padding:"12px 16px",
+            border:`2px solid ${focused?"#FF9933":"#FF993340"}`,
+            transition:"border-color 0.2s",cursor:"text",
+          }}>
           <span style={{fontSize:18}}>🔍</span>
-          <input value={query} onChange={e=>setQuery(e.target.value)} placeholder={t.searchPlaceholder} autoFocus
-            style={{border:"none",outline:"none",fontSize:14,flex:1,background:"transparent",color:th.text,fontFamily:bf}}/>
-          {query&&<span onClick={()=>{haptic();setQuery("");}} style={{cursor:"pointer",color:"#aaa",fontSize:18}}>✕</span>}
+          <div style={{flex:1,position:"relative",minWidth:0}}>
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={e=>setQuery(e.target.value)}
+              onFocus={()=>setFocused(true)}
+              onBlur={()=>setFocused(false)}
+              /* NO autoFocus — user taps deliberately */
+              style={{border:"none",outline:"none",fontSize:14,width:"100%",background:"transparent",color:th.text,fontFamily:bf}}
+            />
+            {/* Floating hint — only when empty and not focused */}
+            {!query&&!focused&&(
+              <div style={{
+                position:"absolute",top:"50%",left:0,transform:"translateY(-50%)",
+                fontSize:13,color:th.textSub,pointerEvents:"none",
+                whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
+                width:"100%",fontFamily:bf,
+              }}>
+                {hintText}
+              </div>
+            )}
+          </div>
+          {query&&<span onClick={e=>{e.stopPropagation();haptic();setQuery("");}} style={{cursor:"pointer",color:"#aaa",fontSize:18,flexShrink:0}}>✕</span>}
         </div>
         <div style={{fontSize:12,color:th.textSub,marginTop:8,paddingLeft:2}}>
-          {results.length} {isHindi?"योजनाएं":"schemes"} · {national.length} {isHindi?"केंद्रीय":"Central"} · {state.length} {isHindi?"राज्य":"State"}
+          {ready
+            ? `${results.length} ${isHindi?"योजनाएं":"schemes"} · ${national.length} ${isHindi?"केंद्रीय":"Central"} · ${state.length} ${isHindi?"राज्य":"State"}`
+            : (isHindi?"लोड हो रहा है…":"Loading schemes…")
+          }
         </div>
       </div>
 
