@@ -956,7 +956,7 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
           EJS_SERVICE_ID,
           EJS_REPLY_TID,
           {
-            to_email:         report.userEmail,
+            email:            report.userEmail,
             user_name:        report.userName  || "User",
             admin_reply:      replyText.trim(),
             original_message: report.message   || "",

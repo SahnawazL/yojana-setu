@@ -129,11 +129,11 @@ export default function ReportIssueSheet({ lang = "en", dark = false, onClose, u
           EJS_SERVICE_ID,
           EJS_CONFIRM_TID,
           {
-            to_email:    toEmail,
-            user_name:   resolvedName,
-            report_type: typeLabel,
-            subject:     subject.trim() || "(no subject)",
-            message:     message.trim(),
+            email:        toEmail,
+            user_name:    resolvedName,
+            report_type:  typeLabel,
+            subject:      subject.trim() || "(no subject)",
+            user_message: message.trim(),
           },
           { publicKey: EJS_PUBLIC_KEY }
         ).catch(e => console.warn("Confirmation email failed:", e));
