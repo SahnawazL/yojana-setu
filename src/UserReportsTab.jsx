@@ -133,141 +133,286 @@ function timeAgo(ts) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-// ─── STATUS PROGRESS BAR ──────────────────────────────────────────────────────
-// Premium 3-step stepper: Submitted → In Review → Resolved
-// Each step takes 33.33% of the row; the track runs between circle centers.
-// Circle center for step i = (i * 33.33 + 16.67)% of the row.
-//   Step 0 center: ~16.67%   Step 1 center: ~50%   Step 2 center: ~83.33%
-// Track: left=16.67%, right=16.67% → track spans the middle 66.66%.
-// Fill widths (relative to container, starting at 16.67%):
-//   open        → 0%
-//   in_progress → 33.33%  (half of 66.66% track)
-//   resolved    → 66.66%  (full track, ends exactly at right circle center)
+// ─── STATUS PROGRESS — PREMIUM ANIMATED ──────────────────────────────────────
 function StatusProgress({ status, dark, lang }) {
   const th = THEME[dark ? "dark" : "light"];
 
-  const STATUS_CONFIG = {
-    open:        { color:"#DC2626", gradFrom:"#DC2626", gradTo:"#f87171", glow:"rgba(220,38,38,0.25)" },
-    in_progress: { color:"#D97706", gradFrom:"#D97706", gradTo:"#fbbf24", glow:"rgba(217,119,6,0.25)"  },
-    resolved:    { color:IND_GREEN, gradFrom:IND_GREEN, gradTo:"#4ade80", glow:"rgba(19,136,8,0.22)"   },
+  // Per-status color palette
+  const CFG = {
+    open:        { c1:"#DC2626", c2:"#ff6b6b", glow:"220,38,38",   label:lang==="hi"?"खुली":"Open"        },
+    in_progress: { c1:"#D97706", c2:"#FBBF24", glow:"217,119,6",   label:lang==="hi"?"प्रगति में":"In Progress" },
+    resolved:    { c1:"#059669", c2:"#34d399", glow:"5,150,105",    label:lang==="hi"?"हल हुई":"Resolved"  },
   };
-  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.open;
+  const cfg = CFG[status] || CFG.open;
+  const activeIdx = status==="resolved" ? 2 : status==="in_progress" ? 1 : 0;
 
   const steps = [
-    {
-      key:"submitted",
-      labelEn:"Submitted", labelHi:"भेजी गई",
-      doneIcon:"📬", pendingDot:true,
-    },
-    {
-      key:"review",
-      labelEn:"In Review", labelHi:"समीक्षा में",
-      doneIcon:"🔍", pendingDot:true,
-    },
-    {
-      key:"resolved",
-      labelEn:"Resolved", labelHi:"हल हुई",
-      doneIcon:"✅", pendingDot:true,
-    },
+    { key:"submitted",   iconDone:"✓",  iconPend:"📬", labelEn:"Submitted",  labelHi:"भेजी गई"     },
+    { key:"in_progress", iconDone:"✓",  iconPend:"🔍", labelEn:"In Review",  labelHi:"समीक्षा में"  },
+    { key:"resolved",    iconDone:"✓",  iconPend:"🏁", labelEn:"Resolved",   labelHi:"हल हुई"      },
   ];
 
-  const activeIdx = status === "resolved" ? 2 : status === "in_progress" ? 1 : 0;
+  // Track fill: each step center at 16.67%, 50%, 83.33%.
+  // Track runs left=16.67% → right=16.67% (width=66.66%).
+  // Fill covers 0, 1, or 2 of those 33.33%-wide segments.
+  const fillPct = ["0%","33.33%","66.66%"][activeIdx];
 
-  // Fill width: track is 66.66% wide starting at 16.67%.
-  // Each segment = 33.33% of container.
-  const fillWidth = activeIdx === 0 ? "0%" : activeIdx === 1 ? "33.33%" : "66.66%";
+  const css = `
+    @keyframes sp-pulse {
+      0%,100% { box-shadow: 0 0 0 0px rgba(${cfg.glow},0.55), 0 0 0 6px rgba(${cfg.glow},0.18); }
+      50%      { box-shadow: 0 0 0 5px rgba(${cfg.glow},0.22), 0 0 0 11px rgba(${cfg.glow},0.07); }
+    }
+    @keyframes sp-shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    @keyframes sp-pop {
+      0%   { transform: scale(0.55); opacity:0; }
+      60%  { transform: scale(1.18); }
+      80%  { transform: scale(0.94); }
+      100% { transform: scale(1);    opacity:1; }
+    }
+    @keyframes sp-fadein {
+      from { opacity:0; transform:translateY(4px); }
+      to   { opacity:1; transform:translateY(0);   }
+    }
+    @keyframes sp-spin {
+      from { transform: rotate(0deg);   }
+      to   { transform: rotate(360deg); }
+    }
+    .sp-active-ring {
+      animation: sp-pulse 2.2s ease-in-out infinite;
+    }
+    .sp-icon-pop {
+      animation: sp-pop 0.45s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .sp-label-in {
+      animation: sp-fadein 0.4s ease both;
+    }
+  `;
 
   return (
-    <div style={{ padding:"10px 0 6px", position:"relative", userSelect:"none" }}>
+    <>
+      <style>{css}</style>
 
-      {/* ── Track (grey) — sits between circle centers ── */}
+      {/* ── Outer card ── */}
       <div style={{
-        position:"absolute",
-        top: 17,                      // center of 36px circle
-        left:"16.67%", right:"16.67%",
-        height: 4,
-        background: dark ? "rgba(255,255,255,0.08)" : "#e5e7eb",
-        borderRadius: 99,
-        zIndex: 0,
-      }} />
+        borderRadius: 18,
+        padding: "18px 16px 16px",
+        background: dark
+          ? `linear-gradient(145deg,rgba(${cfg.glow},0.10),rgba(${cfg.glow},0.04))`
+          : `linear-gradient(145deg,rgba(${cfg.glow},0.06),rgba(${cfg.glow},0.01))`,
+        border: `1.5px solid rgba(${cfg.glow},0.22)`,
+        boxShadow: `0 4px 24px rgba(${cfg.glow},0.10)`,
+        position: "relative",
+        overflow: "hidden",
+        userSelect: "none",
+      }}>
 
-      {/* ── Filled track ── */}
-      <div style={{
-        position:"absolute",
-        top: 17,
-        left:"16.67%",
-        width: fillWidth,
-        height: 4,
-        borderRadius: 99,
-        background:`linear-gradient(90deg,${cfg.gradFrom},${cfg.gradTo})`,
-        boxShadow:`0 0 8px ${cfg.glow}`,
-        zIndex: 1,
-        transition:"width 0.65s cubic-bezier(0.22,1,0.36,1)",
-      }} />
+        {/* Subtle top shimmer line */}
+        <div style={{
+          position:"absolute", top:0, left:0, right:0, height:2, borderRadius:"18px 18px 0 0",
+          background:`linear-gradient(90deg,transparent,${cfg.c1},${cfg.c2},transparent)`,
+          opacity: 0.7,
+        }} />
 
-      {/* ── Steps ── */}
-      <div style={{ display:"flex", position:"relative", zIndex:2 }}>
-        {steps.map((step, i) => {
-          const done    = i <= activeIdx;
-          const current = i === activeIdx;
-          const future  = i > activeIdx;
-
-          return (
-            <div key={step.key} style={{
-              flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:6,
+        {/* Header row: icon + label + badge */}
+        <div style={{
+          display:"flex", alignItems:"center", justifyContent:"space-between",
+          marginBottom: 20,
+        }}>
+          <div style={{ display:"flex", alignItems:"center", gap:7 }}>
+            <div style={{
+              width:28, height:28, borderRadius:8,
+              background:`linear-gradient(135deg,${cfg.c1},${cfg.c2})`,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:13, boxShadow:`0 3px 10px rgba(${cfg.glow},0.4)`,
             }}>
-              {/* Circle */}
-              <div style={{
-                width: 36, height: 36, borderRadius:"50%",
-                display:"flex", alignItems:"center", justifyContent:"center",
-                fontSize: current ? 16 : 14,
-                flexShrink: 0,
-                background: future
-                  ? (dark ? "rgba(255,255,255,0.06)" : "#f3f4f6")
-                  : current
-                    ? `linear-gradient(135deg,${cfg.gradFrom},${cfg.gradTo})`
-                    : `linear-gradient(135deg,${cfg.gradFrom}cc,${cfg.gradTo}99)`,
-                border: future
-                  ? `2px solid ${dark ? "rgba(255,255,255,0.1)" : "#e5e7eb"}`
-                  : `2px solid ${cfg.gradTo}`,
-                boxShadow: current
-                  ? `0 0 0 5px ${cfg.glow}, 0 4px 14px ${cfg.glow}`
-                  : done && !current
-                    ? `0 2px 8px ${cfg.glow}`
-                    : "none",
-                transition:"all 0.4s cubic-bezier(0.22,1,0.36,1)",
-              }}>
-                {future ? (
-                  <div style={{
-                    width:8, height:8, borderRadius:"50%",
-                    background: dark ? "rgba(255,255,255,0.2)" : "#d1d5db",
-                  }} />
-                ) : (
-                  <span style={{ lineHeight:1 }}>{step.doneIcon}</span>
-                )}
-              </div>
-
-              {/* Label */}
-              <div style={{
-                fontSize: 10,
-                fontWeight: current ? 800 : done ? 600 : 500,
-                color: future
-                  ? th.textSub
-                  : current
-                    ? cfg.color
-                    : th.textMid,
-                textAlign:"center",
-                lineHeight: 1.3,
-                letterSpacing: current ? 0.1 : 0,
-                transition:"color 0.3s",
-              }}>
-                {lang === "hi" ? step.labelHi : step.labelEn}
-              </div>
+              {status==="resolved" ? "✅" : status==="in_progress" ? "⏳" : "📬"}
             </div>
-          );
-        })}
+            <span style={{
+              fontSize:11, fontWeight:800, color:th.text,
+              letterSpacing:0.5, textTransform:"uppercase",
+            }}>
+              {lang==="hi" ? "स्थिति" : "Status"}
+            </span>
+          </div>
+
+          {/* Live badge */}
+          <div style={{
+            display:"flex", alignItems:"center", gap:5,
+            padding:"4px 10px", borderRadius:20,
+            background:`linear-gradient(135deg,${cfg.c1},${cfg.c2})`,
+            boxShadow:`0 3px 12px rgba(${cfg.glow},0.35)`,
+          }}>
+            {status==="in_progress" && (
+              <div style={{
+                width:6, height:6, borderRadius:"50%", background:"#fff",
+                animation:"sp-spin 1s linear infinite",
+                flexShrink:0,
+              }} />
+            )}
+            <span style={{ fontSize:10, fontWeight:800, color:"#fff", letterSpacing:0.3 }}>
+              {cfg.label}
+            </span>
+          </div>
+        </div>
+
+        {/* ── Stepper row ── */}
+        <div style={{ position:"relative" }}>
+
+          {/* Grey track */}
+          <div style={{
+            position:"absolute", top:20, left:"16.67%", right:"16.67%",
+            height:5, borderRadius:99,
+            background: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+          }} />
+
+          {/* Filled track with shimmer */}
+          <div style={{
+            position:"absolute", top:20, left:"16.67%",
+            width: fillPct,
+            height:5, borderRadius:99,
+            background:`linear-gradient(90deg,${cfg.c1} 0%,${cfg.c2} 50%,${cfg.c1} 100%)`,
+            backgroundSize:"200% 100%",
+            animation: activeIdx > 0 ? "sp-shimmer 2.5s linear infinite" : "none",
+            boxShadow:`0 0 10px rgba(${cfg.glow},0.5), 0 0 3px rgba(${cfg.glow},0.8)`,
+            transition:"width 0.9s cubic-bezier(0.22,1,0.36,1)",
+          }} />
+
+          {/* Step nodes */}
+          <div style={{ display:"flex", position:"relative", zIndex:2 }}>
+            {steps.map((step, i) => {
+              const done    = i <= activeIdx;
+              const current = i === activeIdx;
+              const future  = i > activeIdx;
+              const label   = lang==="hi" ? step.labelHi : step.labelEn;
+
+              return (
+                <div key={step.key} style={{
+                  flex:1, display:"flex", flexDirection:"column",
+                  alignItems:"center", gap:8,
+                }}>
+                  {/* Node circle */}
+                  <div
+                    className={current ? "sp-active-ring" : ""}
+                    style={{
+                      width:40, height:40, borderRadius:"50%",
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      flexShrink:0,
+                      background: future
+                        ? (dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)")
+                        : `linear-gradient(135deg,${cfg.c1},${cfg.c2})`,
+                      border: future
+                        ? `2px dashed ${dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)"}`
+                        : `2px solid rgba(255,255,255,0.3)`,
+                      boxShadow: done && !current
+                        ? `0 3px 12px rgba(${cfg.glow},0.35)`
+                        : "none",
+                      transition:"all 0.5s cubic-bezier(0.22,1,0.36,1)",
+                      position:"relative",
+                    }}
+                  >
+                    {/* Inner content */}
+                    {future ? (
+                      /* Hollow ring */
+                      <div style={{
+                        width:10, height:10, borderRadius:"50%",
+                        border:`2px solid ${dark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)"}`,
+                      }} />
+                    ) : current && status==="in_progress" ? (
+                      /* Spinning ring for active in-progress */
+                      <div style={{
+                        width:18, height:18, borderRadius:"50%",
+                        border:`3px solid rgba(255,255,255,0.3)`,
+                        borderTopColor:"#fff",
+                        animation:"sp-spin 0.9s linear infinite",
+                      }} />
+                    ) : (
+                      /* Check mark */
+                      <span className="sp-icon-pop" style={{
+                        fontSize: 18, color:"#fff", fontWeight:900, lineHeight:1,
+                      }}>
+                        {current && status==="open" ? "●" : "✓"}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Label */}
+                  <div className="sp-label-in" style={{
+                    fontSize:10,
+                    fontWeight: current ? 800 : done ? 600 : 400,
+                    color: future
+                      ? (dark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.25)")
+                      : current
+                        ? cfg.c1
+                        : (dark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.55)"),
+                    textAlign:"center",
+                    lineHeight:1.3,
+                    letterSpacing: current ? 0.2 : 0,
+                  }}>
+                    {label}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Congrats message for resolved ── */}
+        {status === "resolved" && (
+          <div className="sp-icon-pop" style={{
+            marginTop:16,
+            padding:"10px 14px",
+            borderRadius:12,
+            background: dark ? "rgba(5,150,105,0.15)" : "rgba(5,150,105,0.08)",
+            border:`1px solid rgba(${cfg.glow},0.25)`,
+            display:"flex", alignItems:"center", gap:8,
+          }}>
+            <span style={{ fontSize:18 }}>🎉</span>
+            <span style={{ fontSize:11, fontWeight:700, color:cfg.c1, lineHeight:1.4 }}>
+              {lang==="hi"
+                ? "आपकी रिपोर्ट सफलतापूर्वक हल हो गई है!"
+                : "Your report has been successfully resolved!"}
+            </span>
+          </div>
+        )}
+
+        {/* ── In Progress live message ── */}
+        {status === "in_progress" && (
+          <div style={{
+            marginTop:16, padding:"10px 14px", borderRadius:12,
+            background: dark ? "rgba(217,119,6,0.12)" : "rgba(217,119,6,0.07)",
+            border:`1px solid rgba(${cfg.glow},0.22)`,
+            display:"flex", alignItems:"center", gap:8,
+          }}>
+            <span style={{ fontSize:16, animation:"sp-spin 2s linear infinite", display:"inline-block" }}>⚙️</span>
+            <span style={{ fontSize:11, fontWeight:700, color:cfg.c1, lineHeight:1.4 }}>
+              {lang==="hi"
+                ? "हमारी टीम इस पर सक्रिय रूप से काम कर रही है।"
+                : "Our team is actively working on this."}
+            </span>
+          </div>
+        )}
+
+        {/* ── Open awaiting message ── */}
+        {status === "open" && (
+          <div style={{
+            marginTop:16, padding:"10px 14px", borderRadius:12,
+            background: dark ? "rgba(220,38,38,0.10)" : "rgba(220,38,38,0.05)",
+            border:`1px solid rgba(${cfg.glow},0.20)`,
+            display:"flex", alignItems:"center", gap:8,
+          }}>
+            <span style={{ fontSize:16 }}>📩</span>
+            <span style={{ fontSize:11, fontWeight:700, color:cfg.c1, lineHeight:1.4 }}>
+              {lang==="hi"
+                ? "टीम का जवाब मिलने पर आपको ईमेल से सूचित किया जाएगा।"
+                : "You'll be notified by email once our team responds."}
+            </span>
+          </div>
+        )}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -538,33 +683,7 @@ function ReportCard({ report, dark, lang, isExpanded, onToggle }) {
         }}>
 
           {/* Status progress bar */}
-          <div style={{
-            background: dark ? "rgba(255,255,255,0.03)" : th.card2,
-            border:`1px solid ${th.border}`,
-            borderRadius:12, padding:"12px 14px",
-          }}>
-            <div style={{ fontSize:10, fontWeight:800, color:th.textSub, letterSpacing:0.4, marginBottom:4 }}>
-              📊 {lang === "hi" ? "स्थिति" : "STATUS"}
-            </div>
-            <StatusProgress status={report.status} dark={dark} lang={lang} />
-
-            {/* Status tip */}
-            <div style={{
-              marginTop:10,
-              background: dark ? stMeta.darkBg : stMeta.bg,
-              border:`1px solid ${stMeta.color}44`,
-              borderRadius:8, padding:"7px 10px",
-              fontSize:11, color:stMeta.color, fontWeight:600,
-              display:"flex", gap:6, alignItems:"flex-start",
-            }}>
-              <span>{stMeta.emoji}</span>
-              <span>
-                {report.status === "resolved"    && (STRINGS[lang] || STRINGS.en).resolvedTip}
-                {report.status === "in_progress" && (STRINGS[lang] || STRINGS.en).inProgTip}
-                {report.status === "open"        && (STRINGS[lang] || STRINGS.en).awaitingTip}
-              </span>
-            </div>
-          </div>
+          <StatusProgress status={report.status} dark={dark} lang={lang} />
 
           {/* Full conversation thread */}
           <ConversationThread report={report} dark={dark} lang={lang} />
