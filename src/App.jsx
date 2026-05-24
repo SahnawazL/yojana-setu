@@ -12,6 +12,7 @@ import AIChat from "./AIChat.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
 import ReportIssueSheet from "./ReportIssueSheet.jsx";
 import UserReportsTab from "./UserReportsTab.jsx";
+import AboutTab from "./AboutTab.jsx";
 
 // ─── ADMIN UID ─────────────────────────────────────────────────────────────────
 // Replace with your Firebase UID. Find it: Firebase Console → Auth → Users → copy UID
@@ -1930,6 +1931,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   const [emailLoading,setEmailLoading]=useState(false);
   const [showReport,setShowReport]=useState(false);
   const [reportTab,setReportTab]=useState("my"); // "my" | "new"
+  const [showAbout,setShowAbout]=useState(false);
   const otpRefs=useRef([]);
   const verifierRef=useRef(null);
   const confirmationRef=useRef(null);
@@ -3206,6 +3208,26 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
             </div>
           )}
 
+          {/* About YojanaSetu — visible to all */}
+          <div onClick={()=>{haptic();setShowAbout(true);}}
+            style={{padding:"13px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:36,height:36,borderRadius:10,
+                background:"linear-gradient(135deg,rgba(0,53,128,0.12),rgba(255,153,51,0.10))",
+                border:"1.5px solid rgba(0,53,128,0.18)",
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>ℹ️</div>
+              <div>
+                <div style={{fontSize:14,fontWeight:600,color:th.text,fontFamily:bf}}>
+                  {isHindi?"ऐप के बारे में":"About YojanaSetu"}
+                </div>
+                <div style={{fontSize:11,color:th.textSub,marginTop:1}}>
+                  {isHindi?"मिशन, AI, टीम और अधिक":"Mission, AI, team & more"}
+                </div>
+              </div>
+            </div>
+            <div style={{color:th.textSub,fontSize:18}}>›</div>
+          </div>
+
           {/* Sign Out */}
           <div onClick={()=>{haptic([50,60,50]);handleSignOut();}}
             style={{padding:"13px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
@@ -3217,6 +3239,42 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           </div>
         </div>
       </div>
+
+      {/* ── About Screen Overlay ── */}
+      {showAbout&&(
+        <div style={{
+          position:"fixed",inset:0,zIndex:900,
+          background:THEME[dark?"dark":"light"].appBg,
+          display:"flex",flexDirection:"column",
+          fontFamily:lang==="hi"?"'Noto Sans Devanagari',sans-serif":"'Noto Sans',sans-serif",
+        }}>
+          {/* Sticky back header */}
+          <div style={{
+            position:"sticky",top:0,zIndex:10,flexShrink:0,
+            background:THEME[dark?"dark":"light"].card,
+            borderBottom:`1px solid ${THEME[dark?"dark":"light"].border}`,
+            padding:"12px 16px",
+            display:"flex",alignItems:"center",gap:10,
+            boxShadow:"0 2px 12px rgba(0,0,0,0.06)",
+          }}>
+            <div onClick={()=>setShowAbout(false)} style={{
+              width:34,height:34,borderRadius:10,
+              background:THEME[dark?"dark":"light"].card2,
+              border:`1.5px solid ${THEME[dark?"dark":"light"].border}`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:16,cursor:"pointer",flexShrink:0,
+              color:THEME[dark?"dark":"light"].text,
+            }}>←</div>
+            <div style={{fontSize:16,fontWeight:800,color:THEME[dark?"dark":"light"].text}}>
+              {lang==="hi"?"ℹ️ ऐप के बारे में":"ℹ️ About"}
+            </div>
+          </div>
+          {/* Scrollable content */}
+          <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+            <AboutTab lang={lang} dark={dark}/>
+          </div>
+        </div>
+      )}
 
       {/* ── Report / Query Screen — two-tab: My Reports + New Report ── */}
       {showReport&&(
