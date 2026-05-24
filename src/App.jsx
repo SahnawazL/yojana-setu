@@ -11,6 +11,7 @@ import { doc, setDoc, getDoc, updateDoc, serverTimestamp, collection, addDoc } f
 import AIChat from "./AIChat.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
 import ReportIssueSheet from "./ReportIssueSheet.jsx";
+import UserReportsTab from "./UserReportsTab.jsx";
 
 // ─── ADMIN UID ─────────────────────────────────────────────────────────────────
 // Replace with your Firebase UID. Find it: Firebase Console → Auth → Users → copy UID
@@ -1928,6 +1929,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   const [emailTab,setEmailTab]=useState("signin"); // "signin" | "signup"
   const [emailLoading,setEmailLoading]=useState(false);
   const [showReport,setShowReport]=useState(false);
+  const [reportTab,setReportTab]=useState("my"); // "my" | "new"
   const otpRefs=useRef([]);
   const verifierRef=useRef(null);
   const confirmationRef=useRef(null);
@@ -3170,7 +3172,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
 
           {/* Report / Query — visible to all logged-in users */}
           {auth.currentUser&&(
-            <div onClick={()=>{haptic();setShowReport(true);}}
+            <div onClick={()=>{haptic();setReportTab("my");setShowReport(true);}}
               style={{padding:"13px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
                 <div style={{width:36,height:36,borderRadius:10,
@@ -3216,15 +3218,79 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
         </div>
       </div>
 
-      {/* Report / Query Sheet */}
+      {/* ── Report / Query Screen — two-tab: My Reports + New Report ── */}
       {showReport&&(
-        <ReportIssueSheet
-          lang={lang}
-          dark={dark}
-          userProfile={profile}
-          displayName="SHZ HyperZenith"
-          onClose={()=>setShowReport(false)}
-        />
+        <div style={{
+          position:"fixed",inset:0,zIndex:900,
+          background:THEME[dark?"dark":"light"].appBg,
+          display:"flex",flexDirection:"column",
+          fontFamily:lang==="hi"?"'Noto Sans Devanagari',sans-serif":"'Noto Sans',sans-serif",
+        }}>
+          {/* Header */}
+          <div style={{
+            background:THEME[dark?"dark":"light"].card,
+            borderBottom:`1px solid ${THEME[dark?"dark":"light"].border}`,
+            padding:"14px 16px 0",
+            flexShrink:0,
+          }}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+              <div onClick={()=>setShowReport(false)} style={{
+                width:34,height:34,borderRadius:10,
+                background:THEME[dark?"dark":"light"].card2,
+                border:`1.5px solid ${THEME[dark?"dark":"light"].border}`,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                fontSize:16,cursor:"pointer",flexShrink:0,
+              }}>←</div>
+              <div style={{fontSize:16,fontWeight:800,color:THEME[dark?"dark":"light"].text}}>
+                📬 {lang==="hi"?"रिपोर्ट / सवाल":"Report / Query"}
+              </div>
+            </div>
+
+            {/* Tab bar */}
+            <div style={{display:"flex",gap:0}}>
+              {[
+                {key:"my",  labelEn:"My Reports",  labelHi:"मेरी रिपोर्ट"},
+                {key:"new", labelEn:"+ New Report", labelHi:"+ नई रिपोर्ट"},
+              ].map(tab=>(
+                <div key={tab.key} onClick={()=>setReportTab(tab.key)} style={{
+                  flex:1,textAlign:"center",
+                  padding:"9px 0 10px",
+                  fontSize:13,fontWeight:reportTab===tab.key?800:600,
+                  color:reportTab===tab.key?"#FF9933":THEME[dark?"dark":"light"].textSub,
+                  borderBottom:`2.5px solid ${reportTab===tab.key?"#FF9933":"transparent"}`,
+                  cursor:"pointer",
+                  transition:"all 0.18s",
+                }}>
+                  {lang==="hi"?tab.labelHi:tab.labelEn}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tab body */}
+          <div style={{flex:1,overflowY:"auto"}}>
+            {reportTab==="my"?(
+              <UserReportsTab
+                lang={lang}
+                dark={dark}
+                userProfile={profile}
+                onNewReport={()=>setReportTab("new")}
+              />
+            ):(
+              <ReportIssueSheet
+                lang={lang}
+                dark={dark}
+                userProfile={profile}
+                displayName="SHZ HyperZenith"
+                onClose={()=>{
+                  // After submitting, go back to My Reports to see it
+                  setReportTab("my");
+                }}
+                embeddedMode={true}
+              />
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
