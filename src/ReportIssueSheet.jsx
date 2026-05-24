@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { db, auth } from "./firebase.js";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import emailjs from "@emailjs/browser";
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const THEME = {
@@ -27,6 +28,11 @@ const THEME = {
 const SAFFRON   = "#FF9933";
 const NAVY      = "#003580";
 const IND_GREEN = "#138808";
+
+// ─── EMAILJS CONFIG ──────────────────────────────────────────────────────────
+const EJS_SERVICE_ID  = "service_31t3h2j";
+const EJS_CONFIRM_TID = "template_gju4z27";   // User confirmation email
+const EJS_PUBLIC_KEY  = "aV7SknFp6qPFayUkX";
 
 // ─── REPORT TYPES ────────────────────────────────────────────────────────────
 const REPORT_TYPES = {
@@ -114,6 +120,24 @@ export default function ReportIssueSheet({ lang = "en", dark = false, onClose, u
         createdAt: serverTimestamp(),
       });
       setSubmitted(true);
+
+      // ── Send confirmation email (non-blocking) ────────────────────────────
+      const toEmail = userProfile?.email || user?.email;
+      if (toEmail) {
+        const typeLabel = (REPORT_TYPES.en.find(t => t.v === selectedType)?.label) || selectedType;
+        emailjs.send(
+          EJS_SERVICE_ID,
+          EJS_CONFIRM_TID,
+          {
+            to_email:    toEmail,
+            user_name:   resolvedName,
+            report_type: typeLabel,
+            subject:     subject.trim() || "(no subject)",
+            message:     message.trim(),
+          },
+          EJS_PUBLIC_KEY
+        ).catch(e => console.warn("Confirmation email failed:", e));
+      }
     } catch (err) {
       console.error("Report submit error:", err);
       setError("Failed to submit. Please try again.");

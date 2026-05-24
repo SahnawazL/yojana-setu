@@ -3,9 +3,10 @@
 // sorting, pagination, filtered CSV export, refresh, more metrics
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { collection, getDocs, updateDoc, doc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, serverTimestamp, arrayUnion } from "firebase/firestore";
 import { db } from "./firebase.js";
 import { SCHEME_DB, INDIA_STATES } from "./schemesData.js";
+import emailjs from "@emailjs/browser";
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const THEME = {
@@ -29,6 +30,14 @@ const IND_GREEN = "#138808";
 const VIOLET    = "#8B5CF6";
 const PINK      = "#EC4899";
 const GOOGLE_B  = "#4285F4";
+
+// ─── EMAILJS + AI CONFIG ──────────────────────────────────────────────────────
+const EJS_SERVICE_ID  = "service_31t3h2j";
+const EJS_REPLY_TID   = "template_xvl9ir3";   // Admin → User reply template
+const EJS_PUBLIC_KEY  = "aV7SknFp6qPFayUkX";
+// Groq calls go through the Vercel serverless route /api/chat (same as groqClient.js)
+// — API keys live in Vercel env vars, never in frontend code.
+const GROQ_MODEL = "llama-3.3-70b-versatile";
 
 const OCC_LABELS = {
   farmer:"Farmer", student:"Student", women:"Homemaker",
@@ -853,6 +862,112 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
   const [typeFilter, setTypeFilter] = useState("all");
   const [expanded, setExpanded] = useState(null);   // expanded report id
 
+  // ── Reply state ────────────────────────────────────────────────────────────
+  const [replyText,   setReplyText]   = useState("");
+  const [replySending,setReplySending]= useState(false);
+  const [aiLoading,   setAiLoading]   = useState(false);
+  const [replyDone,   setReplyDone]   = useState(false);  // sent success flash
+  const [replyError,  setReplyError]  = useState("");
+
+  // Reset reply state whenever a different card is expanded
+  useEffect(() => {
+    setReplyText("");
+    setReplySending(false);
+    setAiLoading(false);
+    setReplyDone(false);
+    setReplyError("");
+  }, [expanded]);
+
+  // ── AI Suggest ────────────────────────────────────────────────────────────
+  async function handleAiSuggest(report) {
+    setAiLoading(true);
+    setReplyError("");
+    try {
+      const typeLabel = TYPE_META[report.type]?.label || report.type;
+      const systemPrompt =
+        `You are a helpful, warm support agent for YojanaSetu — a government scheme discovery app for Indian citizens.\n` +
+        `Reply in plain text only. No markdown, no bullet points, no headers.`;
+      const userPrompt =
+        `A user named "${report.userName || "a user"}" submitted a ${typeLabel}.\n` +
+        `Subject: ${report.subject || "(none)"}\n` +
+        `Message: ${report.message}\n\n` +
+        `Write a warm, concise admin reply in 2–4 sentences. Address their concern directly. ` +
+        `End with a polite closing from the YojanaSetu Team.`;
+
+      // Call /api/chat — same pattern as groqClient.js sendMessage()
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model:       GROQ_MODEL,
+          max_tokens:  300,
+          temperature: 0.65,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user",   content: userPrompt   },
+          ],
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `API error (${res.status})`);
+      }
+      const data = await res.json();
+      const suggestion = data.choices?.[0]?.message?.content?.trim() || "";
+      if (suggestion) setReplyText(suggestion);
+    } catch (err) {
+      console.error("AI suggest failed:", err);
+      setReplyError("AI suggest failed. Write your reply manually.");
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  // ── Send Admin Reply ───────────────────────────────────────────────────────
+  async function handleSendReply(report) {
+    if (!replyText.trim()) { setReplyError("Please write a reply first."); return; }
+    if (!report.userEmail)  { setReplyError("No email on file for this user — reply saved to Firestore only."); }
+    setReplySending(true);
+    setReplyError("");
+    try {
+      // 1. Save to Firestore
+      await updateDoc(doc(db, "reports", report.id), {
+        adminReply:  replyText.trim(),
+        repliedAt:   serverTimestamp(),
+        status:      "resolved",
+        replyHistory: arrayUnion({
+          text:   replyText.trim(),
+          sentAt: new Date().toISOString(),
+        }),
+      });
+
+      // 2. Email the user (only if they have an email)
+      if (report.userEmail) {
+        await emailjs.send(
+          EJS_SERVICE_ID,
+          EJS_REPLY_TID,
+          {
+            to_email:         report.userEmail,
+            user_name:        report.userName  || "User",
+            admin_reply:      replyText.trim(),
+            original_message: report.message   || "",
+          },
+          EJS_PUBLIC_KEY
+        );
+      }
+
+      // 3. Update local state: status → resolved
+      onStatusChange(report.id, "resolved");
+      setReplyDone(true);
+      setReplyText("");
+    } catch (err) {
+      console.error("Send reply failed:", err);
+      setReplyError("Failed to send reply. Check console.");
+    } finally {
+      setReplySending(false);
+    }
+  }
+
   const filtered = useMemo(() => {
     return reports.filter(r => {
       const matchStatus = filter === "all" || r.status === filter;
@@ -1108,6 +1223,138 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
                       </div>
                     ))}
                   </div>
+                </div>
+
+                {/* ── ADMIN REPLY SECTION ── */}
+                <div style={{
+                  background: dark ? "rgba(0,53,128,0.12)" : "#EFF6FF",
+                  border: `1.5px solid ${NAVY}33`,
+                  borderRadius:14, padding:"14px 14px",
+                  display:"flex", flexDirection:"column", gap:10,
+                }}>
+                  <div style={{ fontSize:10, fontWeight:800, color:NAVY, letterSpacing:0.5 }}>
+                    ✉️ REPLY TO USER
+                  </div>
+
+                  {/* Prior reply badge */}
+                  {report.adminReply && !replyDone && (
+                    <div style={{
+                      background: dark ? "rgba(19,136,8,0.15)" : "#F0FDF4",
+                      border:`1px solid ${IND_GREEN}44`,
+                      borderRadius:10, padding:"9px 12px",
+                    }}>
+                      <div style={{ fontSize:9, fontWeight:700, color:IND_GREEN, marginBottom:4, letterSpacing:0.4 }}>
+                        LAST REPLY SENT
+                      </div>
+                      <div style={{ fontSize:12, color:th.text, lineHeight:1.6, whiteSpace:"pre-wrap" }}>
+                        {report.adminReply}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Success flash */}
+                  {replyDone && (
+                    <div style={{
+                      background: dark ? "rgba(19,136,8,0.2)" : "#F0FDF4",
+                      border:`1.5px solid ${IND_GREEN}`,
+                      borderRadius:10, padding:"10px 12px",
+                      fontSize:13, fontWeight:700, color:IND_GREEN,
+                      textAlign:"center",
+                    }}>
+                      ✅ Reply sent & status set to Resolved!
+                    </div>
+                  )}
+
+                  {/* Reply textarea */}
+                  {!replyDone && (
+                    <>
+                      <div style={{ position:"relative" }}>
+                        <textarea
+                          value={replyText}
+                          onChange={e => { setReplyText(e.target.value.slice(0, 800)); setReplyError(""); }}
+                          placeholder="Write your reply here… or use ✨ AI Suggest below"
+                          rows={4}
+                          style={{
+                            width:"100%", boxSizing:"border-box",
+                            padding:"11px 12px", borderRadius:10,
+                            border:`1.5px solid ${replyError ? "#DC2626" : th.border}`,
+                            background:th.inputBg, color:th.text,
+                            fontSize:13, outline:"none", resize:"none",
+                            lineHeight:1.6, fontFamily:"inherit",
+                            transition:"border-color 0.18s",
+                          }}
+                          onFocus={e => (e.target.style.borderColor = NAVY)}
+                          onBlur={e  => (e.target.style.borderColor = replyError ? "#DC2626" : th.border)}
+                        />
+                        <div style={{
+                          position:"absolute", bottom:8, right:10,
+                          fontSize:9, color:replyText.length >= 700 ? "#DC2626" : th.textSub,
+                          fontWeight:600, pointerEvents:"none",
+                        }}>
+                          {replyText.length} / 800
+                        </div>
+                      </div>
+
+                      {/* Error */}
+                      {replyError && (
+                        <div style={{ fontSize:11, color:"#DC2626", fontWeight:600 }}>
+                          ⚠️ {replyError}
+                        </div>
+                      )}
+
+                      {/* Buttons row */}
+                      <div style={{ display:"flex", gap:8 }}>
+                        {/* AI Suggest */}
+                        <div
+                          onClick={() => !aiLoading && handleAiSuggest(report)}
+                          style={{
+                            flex:1, padding:"10px 8px",
+                            borderRadius:10, textAlign:"center",
+                            fontSize:11, fontWeight:700, cursor: aiLoading ? "default" : "pointer",
+                            background: dark ? "rgba(139,92,246,0.15)" : "#F5F3FF",
+                            border:`1.5px solid ${VIOLET}55`,
+                            color: aiLoading ? th.textSub : VIOLET,
+                            transition:"all 0.18s",
+                            opacity: aiLoading ? 0.7 : 1,
+                          }}
+                        >
+                          {aiLoading ? "⏳ Thinking…" : "✨ AI Suggest"}
+                        </div>
+
+                        {/* Send Reply */}
+                        <div
+                          onClick={() => !replySending && handleSendReply(report)}
+                          style={{
+                            flex:2, padding:"10px 8px",
+                            borderRadius:10, textAlign:"center",
+                            fontSize:12, fontWeight:800,
+                            cursor: replySending ? "default" : "pointer",
+                            background: replySending
+                              ? th.border
+                              : `linear-gradient(135deg,${NAVY},rgba(0,53,128,0.85))`,
+                            color: replySending ? th.textSub : "#fff",
+                            boxShadow: replySending ? "none" : `0 4px 16px ${NAVY}44`,
+                            transition:"all 0.2s",
+                            opacity: replySending ? 0.7 : 1,
+                          }}
+                        >
+                          {replySending ? "Sending…" : report.userEmail ? "📨 Send Reply" : "💾 Save Reply"}
+                        </div>
+                      </div>
+
+                      {/* No email warning */}
+                      {!report.userEmail && (
+                        <div style={{
+                          fontSize:10, color:SAFFRON, fontWeight:600,
+                          background: dark ? "rgba(255,153,51,0.1)" : "#FFFBEB",
+                          border:`1px solid ${SAFFRON}55`,
+                          borderRadius:8, padding:"6px 10px",
+                        }}>
+                          ⚠️ No email on file — reply will be saved to Firestore but not emailed.
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             )}
