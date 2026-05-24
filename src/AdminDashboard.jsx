@@ -1128,7 +1128,11 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
         }),
       });
       firestoreOk = true;
-      onStatusChange(report.id, statusToSave);
+      onStatusChange(report.id, statusToSave, {
+        text:   replyText.trim(),
+        sentAt: new Date().toISOString(),
+        status: statusToSave,
+      });
     } catch (err) {
       console.error("❌ Firestore write failed:", err);
       setReplyError(`Firestore error: ${err.message}`);
@@ -2464,17 +2468,31 @@ export default function AdminDashboard({ onClose, dark = false }) {
           loading={reportsLoading}
           dark={dark}
           onRefresh={fetchReports}
-          onStatusChange={async (reportId, newStatus) => {
-            try {
-              await updateDoc(doc(db, "reports", reportId), {
-                status: newStatus,
-                updatedAt: serverTimestamp(),
-              });
+          onStatusChange={async (reportId, newStatus, replyData) => {
+            if (replyData) {
+              // Called after reply already saved to Firestore — just sync local state
               setReports(prev =>
-                prev.map(r => r.id === reportId ? { ...r, status: newStatus } : r)
+                prev.map(r => r.id === reportId ? {
+                  ...r,
+                  status:       newStatus,
+                  adminReply:   replyData.text,
+                  repliedAt:    replyData.sentAt,
+                  replyHistory: [...(r.replyHistory || []), replyData],
+                } : r)
               );
-            } catch (err) {
-              console.error("Status update failed:", err);
+            } else {
+              // Status-button-only change — write to Firestore + sync local state
+              try {
+                await updateDoc(doc(db, "reports", reportId), {
+                  status: newStatus,
+                  updatedAt: serverTimestamp(),
+                });
+                setReports(prev =>
+                  prev.map(r => r.id === reportId ? { ...r, status: newStatus } : r)
+                );
+              } catch (err) {
+                console.error("Status update failed:", err);
+              }
             }
           }}
         />
