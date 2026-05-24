@@ -1376,6 +1376,48 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
                   ))}
                 </div>
 
+                {/* ── REPORT DETAILS ── */}
+                <div style={{
+                  background: dark ? "rgba(255,153,51,0.07)" : "#FFFBEB",
+                  border:`1px solid ${SAFFRON}44`, borderRadius:12,
+                  padding:"12px 14px", display:"flex", flexDirection:"column", gap:7,
+                }}>
+                  <div style={{ fontSize:10, fontWeight:700, color:SAFFRON, marginBottom:2, letterSpacing:0.4 }}>
+                    📋 REPORT DETAILS
+                  </div>
+                  {[
+                    { icon:"🪪", label:"Report ID", value:report.id, mono:true },
+                    { icon:"📅", label:"Submitted",  value: report.createdAt?.seconds
+                        ? new Date(report.createdAt.seconds * 1000).toLocaleString("en-IN", {
+                            day:"numeric", month:"short", year:"numeric",
+                            hour:"2-digit", minute:"2-digit",
+                          })
+                        : "—"
+                    },
+                    { icon:"💬", label:"Last Reply", value: report.repliedAt?.seconds
+                        ? new Date(report.repliedAt.seconds * 1000).toLocaleString("en-IN", {
+                            day:"numeric", month:"short", year:"numeric",
+                            hour:"2-digit", minute:"2-digit",
+                          })
+                        : "No reply yet"
+                    },
+                    { icon:"🌐", label:"Language",   value: report.lang === "hi" ? "Hindi" : "English" },
+                  ].map(({ icon, label, value, mono }) => (
+                    <div key={label} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+                      <span style={{ fontSize:11, color:th.textSub, display:"flex", alignItems:"center", gap:5, flexShrink:0 }}>
+                        <span>{icon}</span> {label}
+                      </span>
+                      <span style={{
+                        fontSize:11, fontWeight:700, color:th.text,
+                        fontFamily: mono ? "monospace" : "inherit",
+                        textAlign:"right", wordBreak:"break-all",
+                      }}>
+                        {value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
                 {/* ── STATUS CHANGER — also sets AI intent ── */}
                 <div>
                   <div style={{ fontSize:10, fontWeight:700, color:th.textSub, marginBottom:8, letterSpacing:0.4 }}>

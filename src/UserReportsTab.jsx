@@ -134,60 +134,132 @@ function timeAgo(ts) {
 }
 
 // ─── STATUS PROGRESS BAR ──────────────────────────────────────────────────────
-// Shows a 3-step visual: Submitted → In Review → Resolved
+// Premium 3-step stepper: Submitted → In Review → Resolved
+// Each step takes 33.33% of the row; the track runs between circle centers.
+// Circle center for step i = (i * 33.33 + 16.67)% of the row.
+//   Step 0 center: ~16.67%   Step 1 center: ~50%   Step 2 center: ~83.33%
+// Track: left=16.67%, right=16.67% → track spans the middle 66.66%.
+// Fill widths (relative to container, starting at 16.67%):
+//   open        → 0%
+//   in_progress → 33.33%  (half of 66.66% track)
+//   resolved    → 66.66%  (full track, ends exactly at right circle center)
 function StatusProgress({ status, dark, lang }) {
   const th = THEME[dark ? "dark" : "light"];
+
+  const STATUS_CONFIG = {
+    open:        { color:"#DC2626", gradFrom:"#DC2626", gradTo:"#f87171", glow:"rgba(220,38,38,0.25)" },
+    in_progress: { color:"#D97706", gradFrom:"#D97706", gradTo:"#fbbf24", glow:"rgba(217,119,6,0.25)"  },
+    resolved:    { color:IND_GREEN, gradFrom:IND_GREEN, gradTo:"#4ade80", glow:"rgba(19,136,8,0.22)"   },
+  };
+  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.open;
+
   const steps = [
-    { key:"submitted", labelEn:"Submitted",  labelHi:"भेजी गई",   icon:"📬" },
-    { key:"review",    labelEn:"In Review",   labelHi:"समीक्षा में", icon:"🔍" },
-    { key:"resolved",  labelEn:"Resolved",    labelHi:"हल हुई",     icon:"✅" },
+    {
+      key:"submitted",
+      labelEn:"Submitted", labelHi:"भेजी गई",
+      doneIcon:"📬", pendingDot:true,
+    },
+    {
+      key:"review",
+      labelEn:"In Review", labelHi:"समीक्षा में",
+      doneIcon:"🔍", pendingDot:true,
+    },
+    {
+      key:"resolved",
+      labelEn:"Resolved", labelHi:"हल हुई",
+      doneIcon:"✅", pendingDot:true,
+    },
   ];
-  // Map report status → which step is "active"
+
   const activeIdx = status === "resolved" ? 2 : status === "in_progress" ? 1 : 0;
 
+  // Fill width: track is 66.66% wide starting at 16.67%.
+  // Each segment = 33.33% of container.
+  const fillWidth = activeIdx === 0 ? "0%" : activeIdx === 1 ? "33.33%" : "66.66%";
+
   return (
-    <div style={{ padding:"12px 0 4px", position:"relative" }}>
-      {/* Connecting track */}
+    <div style={{ padding:"10px 0 6px", position:"relative", userSelect:"none" }}>
+
+      {/* ── Track (grey) — sits between circle centers ── */}
       <div style={{
-        position:"absolute", top:22, left:"16.5%", right:"16.5%",
-        height:3, background:th.border, borderRadius:2, zIndex:0,
-      }} />
-      {/* Filled portion */}
-      <div style={{
-        position:"absolute", top:22, left:"16.5%",
-        width: activeIdx === 0 ? "0%" : activeIdx === 1 ? "50%" : "100%",
-        height:3, borderRadius:2, zIndex:1,
-        background:`linear-gradient(90deg,${IND_GREEN},${IND_GREEN}aa)`,
-        transition:"width 0.6s cubic-bezier(0.22,1,0.36,1)",
+        position:"absolute",
+        top: 17,                      // center of 36px circle
+        left:"16.67%", right:"16.67%",
+        height: 4,
+        background: dark ? "rgba(255,255,255,0.08)" : "#e5e7eb",
+        borderRadius: 99,
+        zIndex: 0,
       }} />
 
-      {/* Steps */}
-      <div style={{ display:"flex", justifyContent:"space-between", position:"relative", zIndex:2 }}>
+      {/* ── Filled track ── */}
+      <div style={{
+        position:"absolute",
+        top: 17,
+        left:"16.67%",
+        width: fillWidth,
+        height: 4,
+        borderRadius: 99,
+        background:`linear-gradient(90deg,${cfg.gradFrom},${cfg.gradTo})`,
+        boxShadow:`0 0 8px ${cfg.glow}`,
+        zIndex: 1,
+        transition:"width 0.65s cubic-bezier(0.22,1,0.36,1)",
+      }} />
+
+      {/* ── Steps ── */}
+      <div style={{ display:"flex", position:"relative", zIndex:2 }}>
         {steps.map((step, i) => {
           const done    = i <= activeIdx;
           const current = i === activeIdx;
+          const future  = i > activeIdx;
+
           return (
-            <div key={step.key} style={{ display:"flex", flexDirection:"column", alignItems:"center", width:"33%" }}>
+            <div key={step.key} style={{
+              flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:6,
+            }}>
               {/* Circle */}
               <div style={{
-                width:30, height:30, borderRadius:"50%",
+                width: 36, height: 36, borderRadius:"50%",
                 display:"flex", alignItems:"center", justifyContent:"center",
-                fontSize:14,
-                background: done
-                  ? (current ? `linear-gradient(135deg,${IND_GREEN},#16a34a)` : IND_GREEN)
-                  : th.border,
-                boxShadow: current ? `0 0 0 4px ${IND_GREEN}30` : "none",
-                transition:"all 0.4s",
+                fontSize: current ? 16 : 14,
+                flexShrink: 0,
+                background: future
+                  ? (dark ? "rgba(255,255,255,0.06)" : "#f3f4f6")
+                  : current
+                    ? `linear-gradient(135deg,${cfg.gradFrom},${cfg.gradTo})`
+                    : `linear-gradient(135deg,${cfg.gradFrom}cc,${cfg.gradTo}99)`,
+                border: future
+                  ? `2px solid ${dark ? "rgba(255,255,255,0.1)" : "#e5e7eb"}`
+                  : `2px solid ${cfg.gradTo}`,
+                boxShadow: current
+                  ? `0 0 0 5px ${cfg.glow}, 0 4px 14px ${cfg.glow}`
+                  : done && !current
+                    ? `0 2px 8px ${cfg.glow}`
+                    : "none",
+                transition:"all 0.4s cubic-bezier(0.22,1,0.36,1)",
               }}>
-                {done ? step.icon : (
-                  <div style={{ width:8, height:8, borderRadius:"50%", background:th.textSub }} />
+                {future ? (
+                  <div style={{
+                    width:8, height:8, borderRadius:"50%",
+                    background: dark ? "rgba(255,255,255,0.2)" : "#d1d5db",
+                  }} />
+                ) : (
+                  <span style={{ lineHeight:1 }}>{step.doneIcon}</span>
                 )}
               </div>
+
               {/* Label */}
               <div style={{
-                fontSize:9, fontWeight: current ? 800 : 500,
-                color: done ? (current ? IND_GREEN : th.textMid) : th.textSub,
-                marginTop:5, textAlign:"center", lineHeight:1.3,
+                fontSize: 10,
+                fontWeight: current ? 800 : done ? 600 : 500,
+                color: future
+                  ? th.textSub
+                  : current
+                    ? cfg.color
+                    : th.textMid,
+                textAlign:"center",
+                lineHeight: 1.3,
+                letterSpacing: current ? 0.1 : 0,
+                transition:"color 0.3s",
               }}>
                 {lang === "hi" ? step.labelHi : step.labelEn}
               </div>
