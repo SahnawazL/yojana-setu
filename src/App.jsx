@@ -3281,7 +3281,6 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                 lang={lang}
                 dark={dark}
                 userProfile={profile}
-                displayName="SHZ HyperZenith"
                 onClose={()=>{
                   // After submitting, go back to My Reports to see it
                   setReportTab("my");

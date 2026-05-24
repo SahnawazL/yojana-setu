@@ -1736,8 +1736,11 @@ export default function AdminDashboard({ onClose, dark = false }) {
     }
   }, []);
 
+  // Fetch reports eagerly on mount so the tab badge shows immediately
+  useEffect(() => { fetchReports(); }, []);
+
   useEffect(() => {
-    if (activeSection === "reports" && reports.length === 0) fetchReports();
+    if (activeSection === "reports") fetchReports();
   }, [activeSection]);
 
   // ── Computed stats ────────────────────────────────────────────────────────
@@ -2002,10 +2005,42 @@ export default function AdminDashboard({ onClose, dark = false }) {
         {/* Tabs */}
         <div style={{ display:"flex", gap:6, marginTop:14, overflowX:"auto", paddingBottom:1 }}>
           {TABS.map(([id, label]) => {
-            const openCount = id === "reports" ? reports.filter(r => r.status === "open").length : 0;
+            const STATUS_HINTS = id === "reports" ? [
+              {
+                key: "open",
+                // Open but NOT reopened (reopened gets its own pill below)
+                count: reports.filter(r =>
+                  r.status === "open" &&
+                  !r.replyHistory?.some(h => h.isReopen)
+                ).length,
+                color: "#DC2626",
+                bg: "rgba(220,38,38,0.18)",
+                dot: "🔴",
+              },
+              {
+                key: "in_progress",
+                count: reports.filter(r => r.status === "in_progress").length,
+                color: "#F59E0B",
+                bg: "rgba(245,158,11,0.18)",
+                dot: "🟡",
+              },
+              {
+                key: "reopened",
+                // Reopened = has isReopen entry in replyHistory AND not yet resolved
+                count: reports.filter(r =>
+                  r.replyHistory?.some(h => h.isReopen) &&
+                  r.status !== "resolved"
+                ).length,
+                color: "#A855F7",
+                bg: "rgba(168,85,247,0.18)",
+                dot: "🔁",
+              },
+            ].filter(s => s.count > 0) : [];
+
             return (
               <div key={id} onClick={() => setActiveSection(id)} style={{
-                padding:"7px 13px", borderRadius:"20px 20px 0 0",
+                padding: STATUS_HINTS.length > 0 ? "7px 13px 20px" : "7px 13px",
+                borderRadius:"20px 20px 0 0",
                 fontSize:11, fontWeight:700, cursor:"pointer", flexShrink:0,
                 background: activeSection === id
                   ? "rgba(255,255,255,0.22)"
@@ -2019,17 +2054,27 @@ export default function AdminDashboard({ onClose, dark = false }) {
                 position:"relative",
               }}>
                 {label}
-                {openCount > 0 && (
-                  <span style={{
-                    position:"absolute", top:2, right:2,
-                    minWidth:14, height:14,
-                    background:"#DC2626", color:"#fff",
-                    borderRadius:7, fontSize:8, fontWeight:800,
-                    display:"flex", alignItems:"center", justifyContent:"center",
-                    padding:"0 3px",
+                {STATUS_HINTS.length > 0 && (
+                  <div style={{
+                    position:"absolute", bottom:3, left:"50%",
+                    transform:"translateX(-50%)",
+                    display:"flex", gap:3, alignItems:"center",
                   }}>
-                    {openCount}
-                  </span>
+                    {STATUS_HINTS.map(s => (
+                      <div key={s.key} style={{
+                        display:"flex", alignItems:"center", gap:2,
+                        background: s.bg,
+                        border:`1px solid ${s.color}`,
+                        borderRadius:6,
+                        padding:"1px 4px",
+                      }}>
+                        <span style={{ fontSize:7 }}>{s.dot}</span>
+                        <span style={{ fontSize:8, fontWeight:800, color: s.color }}>
+                          {s.count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             );
