@@ -876,54 +876,84 @@ function SchemeDetailSheet({schemeId,lang,onClose,dark=false}){
 }
 
 // ─── SEARCH TAB ────────────────────────────────────────────────────────────────
-// Full search tab — searches across all schemes in SCHEME_DB
+// Paginated + skeleton + deferred query to match SchemesTab performance.
+// Root cause of old lag: dumped ALL SCHEME_DB cards to DOM at once (no pagination).
 function SearchTab({lang,initialQuery="",dark=false}){
   const th=THEME[dark?"dark":"light"];
   const t=T[lang];
   const isHindi=lang==="hi";
   const bf=fontFamily(lang);
+
+  // ── Input state — raw query updates instantly (responsive feel)
   const [query,setQuery]=useState(initialQuery);
   const [expandedId,setExpandedId]=useState(null);
-  const [ready,setReady]=useState(!!initialQuery); // skip delay if arriving with a query
+  const [visibleCount,setVisibleCount]=useState(PAGE_SIZE);
   const [focused,setFocused]=useState(false);
-  const inputRef=useRef(null);
+  const [isReady,setIsReady]=useState(false); // delays first paint so tab animation fires first
 
-  // Let the tab slide in first, THEN render the list — kills the lag
-  // (only runs when there's no initialQuery; otherwise we're already ready)
+  const inputRef=useRef(null);
+  const sentinelRef=useRef(null); // IntersectionObserver target at bottom of list
+
+  // Defer the heavy filter to a low-priority render — typing stays instant
+  const deferredQuery=useDeferredValue(query);
+  const isStale=query!==deferredQuery; // true while deferred hasn't caught up
+
+  // 1-frame delay so the tab slide-in animation completes before mounting cards
   useEffect(()=>{
-    if(ready) return;
-    const id=setTimeout(()=>setReady(true),120);
-    return()=>clearTimeout(id);
+    const id=requestAnimationFrame(()=>setIsReady(true));
+    return()=>cancelAnimationFrame(id);
   },[]);
 
-  const deferredQuery=useDeferredValue(query);
+  // Reset pagination whenever the actual search query changes
+  useEffect(()=>{
+    setVisibleCount(PAGE_SIZE);
+    setExpandedId(null);
+  },[deferredQuery]);
 
+  // Filtered results — runs only when deferred query settles (not on every keystroke)
   const results=useMemo(()=>{
-    if(!ready) return [];
-    if(deferredQuery.trim().length>0){
-      const q=deferredQuery.toLowerCase();
-      return SCHEME_DB.filter(s=>(
-        s.name.en.toLowerCase().includes(q)||
-        s.name.hi.toLowerCase().includes(q)||
-        s.tag.en.toLowerCase().includes(q)||
-        s.tag.hi.toLowerCase().includes(q)||
-        s.ministry.en.toLowerCase().includes(q)||
-        (s.state&&s.state.toLowerCase().includes(q))
-      ));
-    }
-    return SCHEME_DB;
-  },[deferredQuery,ready]);
+    if(!isReady) return [];
+    if(deferredQuery.trim().length===0) return SCHEME_DB;
+    const q=deferredQuery.toLowerCase();
+    return SCHEME_DB.filter(s=>(
+      s.name.en.toLowerCase().includes(q)||
+      s.name.hi.toLowerCase().includes(q)||
+      s.tag.en.toLowerCase().includes(q)||
+      s.tag.hi.toLowerCase().includes(q)||
+      s.ministry.en.toLowerCase().includes(q)||
+      (s.state&&s.state.toLowerCase().includes(q))
+    ));
+  },[deferredQuery,isReady]);
 
   const national=useMemo(()=>results.filter(s=>s.scope==="national"),[results]);
-  const state=useMemo(()=>results.filter(s=>s.scope==="state"),[results]);
+  const stateRes=useMemo(()=>results.filter(s=>s.scope==="state"),[results]);
 
+  // Paginated slices — same budget logic as SchemesTab
+  const visibleState=useMemo(()=>stateRes.slice(0,Math.min(visibleCount,stateRes.length)),[stateRes,visibleCount]);
+  const centralBudget=Math.max(0,visibleCount-stateRes.length);
+  const visibleNat=useMemo(()=>national.slice(0,centralBudget),[national,centralBudget]);
+  const totalVisible=visibleState.length+visibleNat.length;
+  const hasMore=totalVisible<results.length;
+
+  // Auto-load next page when sentinel scrolls into view
+  useEffect(()=>{
+    if(!hasMore||!sentinelRef.current) return;
+    const obs=new IntersectionObserver(([entry])=>{
+      if(entry.isIntersecting) setVisibleCount(c=>c+PAGE_SIZE);
+    },{threshold:0.1});
+    obs.observe(sentinelRef.current);
+    return()=>obs.disconnect();
+  },[hasMore,totalVisible]);
+
+  const skeletonCount=!isReady||isStale?6:0;
   const hintText=isHindi
     ?"यहाँ टाइप करें — योजना का नाम, मंत्रालय या राज्य"
     :"Tap to search — scheme name, ministry or state";
 
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",overflowY:"auto",background:th.appBg}}>
-      {/* Search bar */}
+
+      {/* ── Sticky search bar ── */}
       <div style={{background:th.card,padding:"16px 16px 12px",borderBottom:`1px solid ${th.border}`,position:"sticky",top:0,zIndex:10}}>
         <div
           onClick={()=>inputRef.current?.focus()}
@@ -941,10 +971,9 @@ function SearchTab({lang,initialQuery="",dark=false}){
               onChange={e=>setQuery(e.target.value)}
               onFocus={()=>setFocused(true)}
               onBlur={()=>setFocused(false)}
-              /* NO autoFocus — user taps deliberately */
               style={{border:"none",outline:"none",fontSize:14,width:"100%",background:"transparent",color:th.text,fontFamily:bf}}
             />
-            {/* Floating hint — only when empty and not focused */}
+            {/* Floating hint — visible until user taps or types */}
             {!query&&!focused&&(
               <div style={{
                 position:"absolute",top:"50%",left:0,transform:"translateY(-50%)",
@@ -956,68 +985,106 @@ function SearchTab({lang,initialQuery="",dark=false}){
               </div>
             )}
           </div>
-          {query&&<span onClick={e=>{e.stopPropagation();haptic();setQuery("");}} style={{cursor:"pointer",color:"#aaa",fontSize:18,flexShrink:0}}>✕</span>}
+          {/* Stale spinner while deferred query is catching up */}
+          {isStale&&(
+            <div style={{flexShrink:0}}>
+              <AshokaChakra size={15} color={SAFFRON} spinning={true}/>
+            </div>
+          )}
+          {query&&!isStale&&(
+            <span onClick={e=>{e.stopPropagation();haptic();setQuery("");}}
+              style={{cursor:"pointer",color:"#aaa",fontSize:18,flexShrink:0}}>✕</span>
+          )}
         </div>
+        {/* Result count */}
         <div style={{fontSize:12,color:th.textSub,marginTop:8,paddingLeft:2}}>
-          {ready
-            ? `${results.length} ${isHindi?"योजनाएं":"schemes"} · ${national.length} ${isHindi?"केंद्रीय":"Central"} · ${state.length} ${isHindi?"राज्य":"State"}`
-            : (isHindi?"लोड हो रहा है…":"Loading schemes…")
+          {isReady&&!isStale
+            ?`${results.length} ${isHindi?"योजनाएं":"schemes"} · ${national.length} ${isHindi?"केंद्रीय":"Central"} · ${stateRes.length} ${isHindi?"राज्य":"State"}`
+            :(isHindi?"खोज रहे हैं…":"Searching…")
           }
         </div>
       </div>
 
-      {/* Results */}
+      {/* ── Results ── */}
       <div style={{padding:"12px 16px 80px"}}>
 
-        {/* ── LINK HINT BANNER ── */}
+        {/* Link hint banner */}
         <div style={{display:"flex",alignItems:"flex-start",gap:8,background:dark?"#1c1300":"#FFFBEB",borderRadius:12,padding:"9px 12px",marginBottom:14,border:`1px solid ${dark?"#78350f40":"#FDE68A"}`}}>
           <span style={{fontSize:13,flexShrink:0,marginTop:1}}>💡</span>
           <span style={{fontSize:11,color:dark?"#fbbf24":"#92400e",lineHeight:1.5,fontFamily:bf}}>
             {isHindi
-              ? "कुछ योजना लिंक काम नहीं कर सकते। सटीक जानकारी के लिए योजना का नाम कॉपी करके Google पर खोजें।"
-              : "Some scheme links may not work. Copy the scheme name & search on Google for the correct & up-to-date info."}
+              ?"कुछ योजना लिंक काम नहीं कर सकते। सटीक जानकारी के लिए योजना का नाम कॉपी करके Google पर खोजें।"
+              :"Some scheme links may not work. Copy the scheme name & search on Google for the correct & up-to-date info."}
           </span>
         </div>
 
-        {national.length>0&&(
-          <>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-              <div style={{height:1,flex:1,background:th.border2}}/>
-              <span style={{fontSize:11,fontWeight:700,color:"#1D4ED8",background:"#EFF6FF",borderRadius:20,padding:"3px 10px",border:"1px solid #BFDBFE"}}>
-                🇮🇳 {t.centralSchemes} ({national.length})
+        {/* Skeleton shimmer while loading / searching */}
+        {skeletonCount>0&&Array.from({length:skeletonCount}).map((_,i)=>(
+          <SkeletonCard key={`srch-sk-${i}`} dark={dark}/>
+        ))}
+
+        {/* Real cards — fade in once ready and not stale */}
+        <div style={{
+          opacity:isReady&&!isStale?1:0,
+          transition:"opacity 0.18s ease",
+          pointerEvents:isStale?"none":"auto",
+        }}>
+
+          {/* Central schemes */}
+          {visibleNat.length>0&&(
+            <>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                <div style={{height:1,flex:1,background:th.border2}}/>
+                <span style={{fontSize:11,fontWeight:700,color:"#1D4ED8",background:"#EFF6FF",borderRadius:20,padding:"3px 10px",border:"1px solid #BFDBFE"}}>
+                  🇮🇳 {t.centralSchemes} ({national.length})
+                </span>
+                <div style={{height:1,flex:1,background:th.border2}}/>
+              </div>
+              {visibleNat.map(s=>(
+                <SchemeCard key={s.id} scheme={s} lang={lang} dark={dark}
+                  expanded={expandedId===s.id}
+                  onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>
+              ))}
+            </>
+          )}
+
+          {/* State schemes */}
+          {visibleState.length>0&&(
+            <>
+              <div style={{display:"flex",alignItems:"center",gap:8,margin:`${visibleNat.length>0?14:0}px 0 10px`}}>
+                <div style={{height:1,flex:1,background:th.border2}}/>
+                <span style={{fontSize:11,fontWeight:700,color:"#854D0E",background:"#FEF9C3",borderRadius:20,padding:"3px 10px",border:"1px solid #FEF08A"}}>
+                  📍 {t.stateSchemes} ({stateRes.length})
+                </span>
+                <div style={{height:1,flex:1,background:th.border2}}/>
+              </div>
+              {visibleState.map(s=>(
+                <SchemeCard key={s.id} scheme={s} lang={lang} dark={dark}
+                  expanded={expandedId===s.id}
+                  onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>
+              ))}
+            </>
+          )}
+
+          {/* Auto load-more sentinel */}
+          {hasMore&&(
+            <div ref={sentinelRef} style={{padding:"18px 0",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <AshokaChakra size={15} color={SAFFRON} spinning={true}/>
+              <span style={{fontSize:12,color:th.textSub,fontFamily:bf}}>
+                {isHindi?"और योजनाएं लोड हो रही हैं...":"Loading more schemes…"}
               </span>
-              <div style={{height:1,flex:1,background:th.border2}}/>
             </div>
-            {national.map(s=>(
-              <SchemeCard key={s.id} scheme={s} lang={lang} dark={dark}
-                expanded={expandedId===s.id}
-                onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>
-            ))}
-          </>
-        )}
-        {state.length>0&&(
-          <>
-            <div style={{display:"flex",alignItems:"center",gap:8,margin:"14px 0 10px"}}>
-              <div style={{height:1,flex:1,background:th.border2}}/>
-              <span style={{fontSize:11,fontWeight:700,color:"#854D0E",background:"#FEF9C3",borderRadius:20,padding:"3px 10px",border:"1px solid #FEF08A"}}>
-                📍 {t.stateSchemes} ({state.length})
-              </span>
-              <div style={{height:1,flex:1,background:th.border2}}/>
+          )}
+
+          {/* No results */}
+          {isReady&&!isStale&&results.length===0&&(
+            <div style={{textAlign:"center",padding:"50px 20px"}}>
+              <div style={{fontSize:44,marginBottom:12}}>🔍</div>
+              <div style={{fontSize:15,fontWeight:700,color:th.text,fontFamily:bf}}>{t.noMatchTitle}</div>
+              <div style={{fontSize:13,marginTop:6,color:th.textSub}}>{t.noMatchSub}</div>
             </div>
-            {state.map(s=>(
-              <SchemeCard key={s.id} scheme={s} lang={lang} dark={dark}
-                expanded={expandedId===s.id}
-                onToggle={()=>setExpandedId(expandedId===s.id?null:s.id)}/>
-            ))}
-          </>
-        )}
-        {results.length===0&&(
-          <div style={{textAlign:"center",padding:"50px 20px",color:"#aaa"}}>
-            <div style={{fontSize:44,marginBottom:12}}>🔍</div>
-            <div style={{fontSize:15,fontWeight:700,color:th.text,fontFamily:bf}}>{t.noMatchTitle}</div>
-            <div style={{fontSize:13,marginTop:6,color:th.textSub}}>{t.noMatchSub}</div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
