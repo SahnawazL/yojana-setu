@@ -418,10 +418,58 @@ function StatusProgress({ status, dark, lang }) {
 }
 
 // ─── SINGLE CONVERSATION BUBBLE ───────────────────────────────────────────────
-function ChatBubble({ who, text, time, statusTag, dark, lang }) {
+function ChatBubble({ who, text, time, statusTag, isReopen, dark, lang }) {
   const th    = THEME[dark ? "dark" : "light"];
   const isMe  = who === "user";
   const smeta = statusTag ? STATUS_META[statusTag] : null;
+
+  // Reopen messages get special amber styling
+  if (isReopen) {
+    return (
+      <div style={{ display:"flex", flexDirection:"row-reverse", gap:8, alignItems:"flex-end" }}>
+        {/* Amber avatar */}
+        <div style={{
+          width:28, height:28, borderRadius:"50%", flexShrink:0,
+          display:"flex", alignItems:"center", justifyContent:"center",
+          fontSize:13,
+          background:"linear-gradient(135deg,#D97706,#FBBF24)",
+          boxShadow:"0 2px 6px rgba(217,119,6,0.35)",
+        }}>🔄</div>
+
+        {/* Amber bubble */}
+        <div style={{
+          maxWidth:"78%",
+          background: dark ? "rgba(217,119,6,0.14)" : "#FFFBEB",
+          border:"1.5px dashed rgba(217,119,6,0.5)",
+          borderRadius:"16px 4px 16px 16px",
+          padding:"10px 13px",
+        }}>
+          <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:5, flexWrap:"wrap" }}>
+            <span style={{ fontSize:10, fontWeight:800, color:"#D97706" }}>
+              {lang === "hi" ? "आप" : "You"}
+            </span>
+            <span style={{
+              fontSize:9, fontWeight:700, color:"#D97706",
+              background: dark ? "rgba(217,119,6,0.2)" : "#FEF3C7",
+              border:"1px solid rgba(217,119,6,0.4)",
+              borderRadius:5, padding:"1px 6px",
+            }}>
+              🔄 {lang === "hi" ? "पुनः खोला" : "REOPENED BY YOU"}
+            </span>
+          </div>
+          <div style={{ fontSize:10, color: dark ? "rgba(255,255,255,0.45)" : "#78350F", marginBottom:4, fontWeight:600 }}>
+            {lang === "hi" ? "पुनः खोलने का कारण:" : "Reason for reopening:"}
+          </div>
+          <div style={{ fontSize:13, color:th.text, lineHeight:1.65, whiteSpace:"pre-wrap", wordBreak:"break-word" }}>
+            {text}
+          </div>
+          <div style={{ fontSize:9, color:th.textSub, marginTop:5, fontWeight:500, textAlign:"left" }}>
+            {time}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -513,17 +561,18 @@ function ConversationThread({ report, dark, lang }) {
     status: null,
   });
 
-  // All admin replies from replyHistory
+  // All replies from replyHistory (admin OR user reopen entries)
   const history = Array.isArray(report.replyHistory) ? report.replyHistory : [];
   history.forEach((r, i) => {
     thread.push({
-      key:    `reply-${i}`,
-      who:    "admin",
-      text:   r.text || "—",
-      time:   r.sentAt
-                ? formatDateTime({ seconds: new Date(r.sentAt).getTime() / 1000 }, lang)
-                : "—",
-      status: r.status || null,
+      key:      `reply-${i}`,
+      who:      r.who === "user" ? "user" : "admin",
+      text:     r.text || "—",
+      time:     r.sentAt
+                  ? formatDateTime({ seconds: new Date(r.sentAt).getTime() / 1000 }, lang)
+                  : "—",
+      status:   r.status || null,
+      isReopen: r.isReopen || false,
     });
   });
 
@@ -554,6 +603,7 @@ function ConversationThread({ report, dark, lang }) {
           text={msg.text}
           time={msg.time}
           statusTag={msg.status}
+          isReopen={msg.isReopen}
           dark={dark}
           lang={lang}
         />
