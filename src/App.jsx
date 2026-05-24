@@ -2415,6 +2415,19 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           <div id="recaptcha-container"/>
         </div>
       </div>
+
+      {/* About YojanaSetu — accessible without login */}
+      <div onClick={()=>{haptic();setShowAbout(true);}}
+        style={{
+          display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+          padding:"4px 20px 36px",cursor:"pointer",
+        }}>
+        <span style={{fontSize:15}}>ℹ️</span>
+        <span style={{fontSize:13,fontWeight:600,color:dark?"#555":"#bbb",fontFamily:bf}}>
+          {isHindi?"ऐप के बारे में जानें":"About YojanaSetu"}
+        </span>
+        <span style={{color:dark?"#444":"#ccc",fontSize:16}}>›</span>
+      </div>
     </div>
   );
 
