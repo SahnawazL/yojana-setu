@@ -2428,6 +2428,40 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
         </span>
         <span style={{color:dark?"#444":"#ccc",fontSize:16}}>›</span>
       </div>
+
+      {/* ── About Screen Overlay (phone/logged-out stage) ── */}
+      {showAbout&&(
+        <div style={{
+          position:"fixed",inset:0,zIndex:900,
+          background:THEME[dark?"dark":"light"].appBg,
+          display:"flex",flexDirection:"column",
+          fontFamily:lang==="hi"?"'Noto Sans Devanagari',sans-serif":"'Noto Sans',sans-serif",
+        }}>
+          <div style={{
+            position:"sticky",top:0,zIndex:10,flexShrink:0,
+            background:THEME[dark?"dark":"light"].card,
+            borderBottom:`1px solid ${THEME[dark?"dark":"light"].border}`,
+            padding:"12px 16px",
+            display:"flex",alignItems:"center",gap:10,
+            boxShadow:"0 2px 12px rgba(0,0,0,0.06)",
+          }}>
+            <div onClick={()=>setShowAbout(false)} style={{
+              width:34,height:34,borderRadius:10,
+              background:THEME[dark?"dark":"light"].card2,
+              border:`1.5px solid ${THEME[dark?"dark":"light"].border}`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:16,cursor:"pointer",flexShrink:0,
+              color:THEME[dark?"dark":"light"].text,
+            }}>←</div>
+            <div style={{fontSize:16,fontWeight:800,color:THEME[dark?"dark":"light"].text}}>
+              {lang==="hi"?"ℹ️ ऐप के बारे में":"ℹ️ About"}
+            </div>
+          </div>
+          <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+            <AboutTab lang={lang} dark={dark}/>
+          </div>
+        </div>
+      )}
     </div>
   );
 
