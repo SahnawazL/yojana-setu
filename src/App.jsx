@@ -486,6 +486,62 @@ function LangToggle({lang,onToggle,dark=false}){
   );
 }
 
+// ─── DARK MODE TOGGLE ──────────────────────────────────────────────────────────
+// Same pill DNA as LangToggle — identical dimensions, track, slider, color tokens.
+// Uses crisp inline SVG (no emoji) so it renders sharply on all screens.
+function DarkModeToggle({dark,onToggle}){
+  const SunIcon=()=>(
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="4.2"/>
+      <line x1="12" y1="2"    x2="12" y2="5.5"/>
+      <line x1="12" y1="18.5" x2="12" y2="22"/>
+      <line x1="4.22"  y1="4.22"  x2="6.52"  y2="6.52"/>
+      <line x1="17.48" y1="17.48" x2="19.78" y2="19.78"/>
+      <line x1="2"    y1="12" x2="5.5"  y2="12"/>
+      <line x1="18.5" y1="12" x2="22"   y2="12"/>
+      <line x1="4.22"  y1="19.78" x2="6.52"  y2="17.48"/>
+      <line x1="17.48" y1="6.52"  x2="19.78" y2="4.22"/>
+    </svg>
+  );
+  const MoonIcon=()=>(
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  );
+  return(
+    <button onClick={()=>{haptic();onToggle();}}
+      aria-label={dark?"Switch to light mode":"Switch to dark mode"}
+      style={{display:"flex",alignItems:"center",
+        background:"rgba(255,255,255,0.15)",
+        border:"1.5px solid rgba(255,255,255,0.35)",
+        borderRadius:22,padding:"3px 4px",cursor:"pointer",
+        height:34,width:72,position:"relative",overflow:"hidden",flexShrink:0}}>
+      {/* Sliding white pill — glides left↔right */}
+      <div style={{position:"absolute",top:3,
+        left:dark?"calc(50% - 2px)":3,
+        width:"calc(50% - 2px)",bottom:3,
+        background:"#fff",borderRadius:16,
+        transition:"left 0.28s cubic-bezier(0.22,1,0.36,1)",
+        boxShadow:"0 1px 6px rgba(0,0,0,0.2)",zIndex:0}}/>
+      {/* ☀ Sun — left side — lit when light mode active */}
+      <span style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",
+        position:"relative",zIndex:1,
+        color:!dark?"#FF8C00":"rgba(255,255,255,0.55)",
+        transition:"color 0.25s"}}>
+        <SunIcon/>
+      </span>
+      {/* ☽ Moon — right side — lit when dark mode active */}
+      <span style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",
+        position:"relative",zIndex:1,
+        color:dark?"#FF8C00":"rgba(255,255,255,0.55)",
+        transition:"color 0.25s"}}>
+        <MoonIcon/>
+      </span>
+    </button>
+  );
+}
+
 // ─── SCHEME CARD (used in eligibility results, schemes tab & category sheet) ─────
 // Smooth expand/collapse via CSS grid 0fr→1fr trick.
 // Content is ALWAYS mounted — animation works in both directions everywhere.
@@ -4010,7 +4066,11 @@ export default function YojanaSetu(){
                   <div style={{color:"rgba(255,255,255,0.75)",fontSize:10.5}}>🇮🇳 {t.appSub}</div>
                 </div>
               </div>
-              <LangToggle lang={lang} onToggle={toggleLang} dark={true}/>
+              {/* Theme + Language controls — always visible, even before login */}
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <DarkModeToggle dark={dark} onToggle={toggleDark}/>
+                <LangToggle lang={lang} onToggle={toggleLang} dark={true}/>
+              </div>
             </div>
             <div style={{padding:"0 20px 16px"}}>
               <div style={{color:"rgba(255,255,255,0.85)",fontSize:13,marginBottom:2}}>{t.greeting(profile?.name)}</div>

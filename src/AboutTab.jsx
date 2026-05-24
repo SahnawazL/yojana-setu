@@ -1,90 +1,111 @@
 // AboutTab.jsx — YojanaSetu
-// Official About Screen · Accessible to all users · Embedded in Profile Tab
+// Premium Official About Screen · v2.0
 // Drop-in component: <AboutTab lang={lang} dark={dark} />
 
-// ─── COLOR TOKENS (matches App.jsx exactly) ────────────────────────────────────
-const SAFFRON    = "#FF9933";
-const NAVY       = "#003580";
-const IND_GREEN  = "#138808";
-const ASHOKA_BLUE= "#06038D";
+// ─── SECURITY HELPER ──────────────────────────────────────────────────────────
+// Prevents reverse tabnapping: sets noopener+noreferrer and nullifies opener
+const safeOpen = (url) => {
+  const win = window.open(url, "_blank", "noopener,noreferrer");
+  if (win) win.opener = null;
+};
 
-// ─── THEME (mirrors App.jsx THEME) ────────────────────────────────────────────
+// ─── BRAND COLORS ─────────────────────────────────────────────────────────────
+const SAFFRON     = "#FF9933";
+const NAVY        = "#003580";
+const IND_GREEN   = "#138808";
+const ASHOKA_BLUE = "#06038D";
+
+// ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
+const R = { sm: 10, md: 14, lg: 20, xl: 26 };
+const EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
+
+// ─── THEME ────────────────────────────────────────────────────────────────────
 const THEME = {
   light: {
-    appBg:"#f5f5f0", card:"#fff", card2:"#f8f9fa",
-    text:"#1a1a1a", textMid:"#444", textSub:"#777", textLight:"#bbb",
-    border:"#ebebeb", border2:"#e4e4e4",
-    divider:"#f0f0f0",
+    appBg:    "#EEF1FA",
+    card:     "#FFFFFF",
+    card2:    "#F6F8FE",
+    text:     "#0A1230",
+    textMid:  "#334170",
+    textSub:  "#7A88A8",
+    textLight:"#C0CCDE",
+    border:   "#DDE4F4",
+    border2:  "#CAD5EB",
+    divider:  "#ECF0FA",
+    shadowSm: "0 1px 3px rgba(10,18,48,0.06)",
+    shadowMd: "0 2px 8px rgba(10,18,48,0.05), 0 12px 32px rgba(10,18,48,0.05)",
+    shadowLg: "0 4px 16px rgba(10,18,48,0.07), 0 24px 56px rgba(10,18,48,0.07)",
   },
   dark: {
-    appBg:"#111111", card:"#1c1c1e", card2:"#252527",
-    text:"#f0f0f0", textMid:"#b0b0b0", textSub:"#777", textLight:"#3a3a3a",
-    border:"#2c2c2e", border2:"#3a3a3c",
-    divider:"#242424",
+    appBg:    "#060C1C",
+    card:     "#0C1528",
+    card2:    "#111E35",
+    text:     "#EBF0FF",
+    textMid:  "#8696BE",
+    textSub:  "#4A5A7A",
+    textLight:"#1A2840",
+    border:   "#172038",
+    border2:  "#1E2E4C",
+    divider:  "#0F1A2E",
+    shadowSm: "none",
+    shadowMd: "none",
+    shadowLg: "none",
   },
 };
 
 const fontFamily = (lang) =>
-  lang === "hi" ? "'Noto Sans Devanagari',sans-serif" : "'Noto Sans',sans-serif";
+  lang === "hi"
+    ? "'Noto Sans Devanagari', 'DM Sans', sans-serif"
+    : "'DM Sans', 'Noto Sans', sans-serif";
 
 // ─── BILINGUAL STRINGS ────────────────────────────────────────────────────────
 const STRINGS = {
   en: {
-    // Hero
     appName:      "YojanaSetu",
     tagline:      "Official Scheme Finder",
     madeInIndia:  "Made in India 🇮🇳",
     version:      "Current Release · Beta",
 
-    // Mission
     missionTitle: "Our Mission",
     missionBody:
       "YojanaSetu is dedicated to bridging the gap between Indian citizens and the government welfare ecosystem. Our platform ensures that every eligible citizen — regardless of location, language, or literacy level — can discover, understand, and access the schemes and benefits they rightfully deserve.",
 
-    // Stats row
-    statsTitle:   "Platform at a Glance",
+    statsTitle: "Platform at a Glance",
     stats: [
-      { number:"28+",    label:"States & UTs\nCovered" },
-      { number:"50L+",   label:"Citizens\nGuided" },
-      { number:"2",      label:"Languages\nSupported" },
-      { number:"100%",   label:"Free to\nUse" },
+      { number:"28+",  label:"States & UTs\nCovered" },
+      { number:"50L+", label:"Citizens\nGuided" },
+      { number:"2",    label:"Languages\nSupported" },
+      { number:"100%", label:"Free to\nUse" },
     ],
 
-    // Scheme database note
-    dbTitle:  "Comprehensive Scheme Database",
+    dbTitle: "Comprehensive Scheme Database",
     dbBody:
       "YojanaSetu indexes an extensive and continuously expanding catalogue of Central Government and State Government welfare schemes spanning across every state and union territory of India. Our dedicated team actively curates and updates scheme data to ensure accuracy, coverage, and relevance for citizens nationwide.",
 
-    // Core capabilities
     featuresTitle: "Core Capabilities",
     features: [
       {
-        icon: "🔍",
-        color: NAVY,
-        title: "Smart Scheme Discovery",
-        desc:  "Search and browse across Central and State government schemes, filtered by category, state, and beneficiary type. Instant results with detailed eligibility, benefits, and application guidance.",
+        icon:"🔍", color:NAVY,
+        title:"Smart Scheme Discovery",
+        desc:"Search and browse across Central and State government schemes, filtered by category, state, and beneficiary type. Instant results with detailed eligibility, benefits, and application guidance.",
       },
       {
-        icon: "🎯",
-        color: SAFFRON,
-        title: "Eligibility Checker",
-        desc:  "A six-step guided questionnaire that analyses your profile and instantly presents the schemes you qualify for — eliminating guesswork and saving time.",
+        icon:"🎯", color:SAFFRON,
+        title:"Eligibility Checker",
+        desc:"A six-step guided questionnaire that analyses your profile and instantly presents the schemes you qualify for — eliminating guesswork and saving time.",
       },
       {
-        icon: "🤖",
-        color: "#8B5CF6",
-        title: "AI Assistant",
-        desc:  "A real-time AI-powered assistant for scheme queries in Hindi and English. Provides personalised guidance, scheme comparisons, eligibility clarification, and actionable next steps.",
+        icon:"🤖", color:"#8B5CF6",
+        title:"AI Assistant",
+        desc:"A real-time AI-powered assistant for scheme queries in Hindi and English. Provides personalised guidance, scheme comparisons, eligibility clarification, and actionable next steps.",
       },
       {
-        icon: "📬",
-        color: IND_GREEN,
-        title: "Report & Resolution Centre",
-        desc:  "An in-app support system for submitting bugs, scheme requests, general queries, and feedback. Every submission is reviewed by the YojanaSetu team with status tracking and official response.",
+        icon:"📬", color:IND_GREEN,
+        title:"Report & Resolution Centre",
+        desc:"An in-app support system for submitting bugs, scheme requests, general queries, and feedback. Every submission is reviewed by the YojanaSetu team with status tracking and official response.",
       },
     ],
 
-    // AI section
     aiTitle:    "AI Assistant — Powered by Groq",
     aiSubtitle: "Intelligent · Bilingual · Personalised",
     aiPoints: [
@@ -96,67 +117,89 @@ const STRINGS = {
       { icon:"⚡", text:"Powered by Groq AI for high-speed, accurate responses" },
     ],
 
-    // Sign-in benefits
     signInTitle: "Benefits of Signing In",
     signInSub:   "Creating an account unlocks the full YojanaSetu experience.",
     signInPoints: [
-      { icon:"🎯", title:"Personalised Scheme Matching",   desc:"The eligibility checker and AI use your profile to surface schemes most relevant to you." },
-      { icon:"🤖", title:"Profile-Aware AI Responses",     desc:"The AI assistant tailors every recommendation based on your age, income, state, and occupation." },
-      { icon:"📬", title:"Report Tracking & Admin Replies",desc:"Track the status of your submissions — Open, In Progress, or Resolved — with full conversation threads." },
-      { icon:"✅", title:"Verified Identity Submissions",  desc:"Your reports carry a verified badge, ensuring priority handling by the support team." },
-      { icon:"📩", title:"Email Confirmation & Alerts",    desc:"Receive automatic email confirmation on submission and be notified when the team responds." },
+      { icon:"🎯", title:"Personalised Scheme Matching",    desc:"The eligibility checker and AI use your profile to surface schemes most relevant to you." },
+      { icon:"🤖", title:"Profile-Aware AI Responses",      desc:"The AI assistant tailors every recommendation based on your age, income, state, and occupation." },
+      { icon:"📬", title:"Report Tracking & Admin Replies", desc:"Track the status of your submissions — Open, In Progress, or Resolved — with full conversation threads." },
+      { icon:"✅", title:"Verified Identity Submissions",   desc:"Your reports carry a verified badge, ensuring priority handling by the support team." },
+      { icon:"📩", title:"Email Confirmation & Alerts",     desc:"Receive automatic email confirmation on submission and be notified when the team responds." },
     ],
 
-    // Report system
     reportTitle:    "Report, Query & Resolution",
     reportSubtitle: "Every Submission is Accounted For",
     reportBody:
       "YojanaSetu maintains a built-in, end-to-end support and resolution system directly within the app. Citizens and users may submit any of the following:",
     reportTypes: [
-      { icon:"🐛", color:"#DC2626", label:"Bug / Issue Report",    desc:"Report technical issues or unexpected behaviour in the app." },
-      { icon:"📋", color:NAVY,      label:"Scheme Addition Request",desc:"Request the addition of a scheme not yet listed on the platform." },
-      { icon:"❓", color:IND_GREEN, label:"General Query",         desc:"Submit a question or request for assistance regarding any scheme or feature." },
-      { icon:"💡", color:SAFFRON,   label:"Feedback & Suggestions",desc:"Share suggestions to improve the platform for citizens across India." },
+      { icon:"🐛", color:"#DC2626", label:"Bug / Issue Report",     desc:"Report technical issues or unexpected behaviour in the app." },
+      { icon:"📋", color:NAVY,      label:"Scheme Addition Request", desc:"Request the addition of a scheme not yet listed on the platform." },
+      { icon:"❓", color:IND_GREEN, label:"General Query",           desc:"Submit a question or request for assistance regarding any scheme or feature." },
+      { icon:"💡", color:SAFFRON,   label:"Feedback & Suggestions",  desc:"Share suggestions to improve the platform for citizens across India." },
     ],
     reportFlow:
       "All submissions are stored securely and reviewed by the YojanaSetu priority support team. Logged-in users receive automatic email confirmation upon submission and are notified when the team provides an official response. Status transitions — Open → In Progress → Resolved — are visible in real time within the app.",
 
-    // Legal
-    legalTitle:      "Legal & Disclaimer",
+    legalTitle:  "Legal & Disclaimer",
     legalPoints: [
       "YojanaSetu is an independent digital platform for government scheme discovery and is not affiliated with, endorsed by, or representative of any Central or State Government body or ministry.",
       "All scheme data is sourced from publicly available official government portals and communications. While we strive for accuracy, users are advised to verify scheme details directly from the respective government sources before applying.",
       "YojanaSetu does not facilitate direct scheme applications, financial transactions, or document processing. The platform serves solely as an informational and discovery service.",
     ],
 
-    // Technology
     techTitle: "Technology & Infrastructure",
-    techBody:  "YojanaSetu is built on a modern, secure, and scalable technology stack to ensure reliability and performance for citizens across India.",
+    techBody:  "YojanaSetu is engineered on a production-grade, security-first technology stack — combining trusted cloud infrastructure, globally distributed deployment, and version-controlled development to ensure reliability, transparency, and performance for every citizen across India.",
     techStack: [
-      { icon:"🔥", name:"Firebase",  role:"Authentication, Cloud Database & Real-time Sync" },
-      { icon:"⚡", name:"Groq AI",   role:"AI Assistant — High-speed Inference Engine" },
-      { icon:"📧", name:"EmailJS",   role:"Automated Email Confirmations & Alerts" },
+      { icon:"🔥", name:"Firebase",  role:"Authentication, Cloud Firestore Database & Real-time Sync",                                                     badge:null },
+      { icon:"⚡", name:"Groq AI",   role:"AI Assistant — High-speed, Low-latency Inference Engine",                                                       badge:null },
+      { icon:"📧", name:"EmailJS",   role:"Automated Email Confirmations & Support Alerts",                                                                 badge:null },
+      { icon:"▲",  name:"Vercel",    role:"Global Deployment & Hosting — Edge Network ensures fast, secure delivery across India",                          badge:"Trusted Hosting" },
+      { icon:"🐙", name:"GitHub",    role:"Source Code & Version Control — Full development history, issue tracking, and secure build pipeline",            badge:"Open Dev" },
     ],
 
-    // Privacy
     privacyTitle: "Privacy & Data",
     privacyBody:
       "User data is handled with strict confidentiality. Profile information is used solely to personalise the in-app experience and is never sold, shared, or disclosed to third parties. All data is stored securely on Firebase infrastructure.",
 
-    // Developer
     devTitle:   "About the Developer",
     devBody:    "YojanaSetu is designed, developed, and maintained by Sahnawaz — an independent developer with a vision to make government welfare more accessible to every citizen of India.",
     devWebsite: "https://sahnawaz-portfolio.vercel.app",
     devLink:    "Visit Official Website →",
 
-    // Contact
     contactTitle: "Official Contact",
     contactEmail: "yojanasetuofficial@gmail.com",
     contactNote:  "For platform-related inquiries only. For scheme-specific support, please use the in-app Report & Query feature.",
 
-    // Footer
-    copyright:   "© 2025 YojanaSetu. All rights reserved.",
-    footerNote:  "An independent civic technology platform · India",
+    lastUpdated: "Last Updated · May 2026",
+
+    whatsNewTitle: "What's New",
+    whatsNew: [
+      { version:"v1.3", date:"May 2026",   note:"Email & Google sign-in · Dark mode · Vercel edge deployment" },
+      { version:"v1.2", date:"Mar 2026",   note:"Report & Resolution Centre · Admin dashboard · Email alerts" },
+      { version:"v1.1", date:"Jan 2026",   note:"AI Assistant (Groq) · Bilingual support · Profile-aware responses" },
+      { version:"v1.0", date:"Nov 2025",   note:"Initial public Beta · Eligibility checker · 3,000+ schemes indexed" },
+    ],
+
+    shareTitle: "Share YojanaSetu",
+    shareBody:  "Know someone who could benefit from government schemes? Share this platform with them.",
+    shareBtn:   "Share with Someone 🙏",
+
+    ackTitle: "Acknowledgements",
+    ackBody:  "YojanaSetu is built on open-source tools and publicly available resources. We gratefully acknowledge the following:",
+    ackItems: [
+      { icon:"⚛️",  name:"React",                note:"UI library — Meta Open Source" },
+      { icon:"🇮🇳", name:"Digital India Spirit", note:"Built in the spirit of making government services more accessible to every Indian citizen" },
+      { icon:"📖",  name:"Open Source Community",note:"The libraries and tools that power this platform, freely available to all developers" },
+    ],
+
+    grievanceTitle:   "User Support & Complaints",
+    grievanceBody:    "YojanaSetu is committed to resolving every user concern promptly and transparently. Every submission made through the in-app Report & Query system receives an automatic confirmation email instantly. The platform administrator is notified immediately upon each submission and personally reviews every concern.",
+    grievanceContact: "yojanasetuofficial@gmail.com",
+    grievanceNote:    "Platform Administrator: Sahnawaz",
+
+    copyright:  "© 2026 YojanaSetu. All rights reserved.",
+    footerNote: "An independent civic technology platform · India",
+    platformId: "Platform ID: YS-2024-IND · Beta",
   },
 
   hi: {
@@ -171,10 +214,10 @@ const STRINGS = {
 
     statsTitle: "प्लेटफ़ॉर्म एक नज़र में",
     stats: [
-      { number:"28+",    label:"राज्य और\nकेंद्र शासित" },
-      { number:"50L+",   label:"नागरिक\nलाभान्वित" },
-      { number:"2",      label:"भाषाएं\nउपलब्ध" },
-      { number:"100%",   label:"बिल्कुल\nनिःशुल्क" },
+      { number:"28+",  label:"राज्य और\nकेंद्र शासित" },
+      { number:"50L+", label:"नागरिक\nलाभान्वित" },
+      { number:"2",    label:"भाषाएं\nउपलब्ध" },
+      { number:"100%", label:"बिल्कुल\nनिःशुल्क" },
     ],
 
     dbTitle: "विस्तृत योजना डेटाबेस",
@@ -183,30 +226,10 @@ const STRINGS = {
 
     featuresTitle: "मुख्य क्षमताएं",
     features: [
-      {
-        icon: "🔍",
-        color: NAVY,
-        title: "स्मार्ट योजना खोज",
-        desc:  "केंद्र और राज्य सरकार की योजनाओं को श्रेणी, राज्य और लाभार्थी प्रकार के अनुसार खोजें। पात्रता, लाभ और आवेदन मार्गदर्शन सहित तत्काल परिणाम।",
-      },
-      {
-        icon: "🎯",
-        color: SAFFRON,
-        title: "पात्रता जांचक",
-        desc:  "छह सरल प्रश्नों के माध्यम से आपकी प्रोफाइल का विश्लेषण कर तुरंत पात्र योजनाओं की सूची प्रस्तुत करता है।",
-      },
-      {
-        icon: "🤖",
-        color: "#8B5CF6",
-        title: "AI सहायक",
-        desc:  "हिंदी और अंग्रेजी में योजना संबंधी प्रश्नों के लिए वास्तविक समय AI सहायक। व्यक्तिगत मार्गदर्शन, योजना तुलना और अगले कदमों की जानकारी।",
-      },
-      {
-        icon: "📬",
-        color: IND_GREEN,
-        title: "रिपोर्ट और समाधान केंद्र",
-        desc:  "बग, योजना अनुरोध, सामान्य प्रश्न और सुझाव सबमिट करने की इन-ऐप सुविधा। टीम द्वारा हर सबमिशन की समीक्षा और आधिकारिक उत्तर।",
-      },
+      { icon:"🔍", color:NAVY,      title:"स्मार्ट योजना खोज",       desc:"केंद्र और राज्य सरकार की योजनाओं को श्रेणी, राज्य और लाभार्थी प्रकार के अनुसार खोजें। पात्रता, लाभ और आवेदन मार्गदर्शन सहित तत्काल परिणाम।" },
+      { icon:"🎯", color:SAFFRON,   title:"पात्रता जांचक",            desc:"छह सरल प्रश्नों के माध्यम से आपकी प्रोफाइल का विश्लेषण कर तुरंत पात्र योजनाओं की सूची प्रस्तुत करता है।" },
+      { icon:"🤖", color:"#8B5CF6", title:"AI सहायक",                 desc:"हिंदी और अंग्रेजी में योजना संबंधी प्रश्नों के लिए वास्तविक समय AI सहायक। व्यक्तिगत मार्गदर्शन, योजना तुलना और अगले कदमों की जानकारी।" },
+      { icon:"📬", color:IND_GREEN, title:"रिपोर्ट और समाधान केंद्र", desc:"बग, योजना अनुरोध, सामान्य प्रश्न और सुझाव सबमिट करने की इन-ऐप सुविधा। टीम द्वारा हर सबमिशन की समीक्षा और आधिकारिक उत्तर।" },
     ],
 
     aiTitle:    "AI सहायक — Groq द्वारा संचालित",
@@ -234,15 +257,15 @@ const STRINGS = {
     reportSubtitle: "हर सबमिशन का पूरा जवाब",
     reportBody:     "योजना सेतु में एक पूर्ण अंत-से-अंत सपोर्ट और समाधान प्रणाली उपलब्ध है। नागरिक निम्नलिखित में से कोई भी सबमिट कर सकते हैं:",
     reportTypes: [
-      { icon:"🐛", color:"#DC2626", label:"बग / समस्या रिपोर्ट",  desc:"ऐप में तकनीकी समस्या या अनुचित व्यवहार की जानकारी दें।" },
-      { icon:"📋", color:NAVY,      label:"योजना जोड़ने का अनुरोध",desc:"प्लेटफ़ॉर्म पर अनुपस्थित किसी योजना को जोड़ने का अनुरोध करें।" },
-      { icon:"❓", color:IND_GREEN, label:"सामान्य प्रश्न",        desc:"किसी योजना या सुविधा के बारे में सहायता या प्रश्न सबमिट करें।" },
-      { icon:"💡", color:SAFFRON,   label:"सुझाव और प्रतिक्रिया",  desc:"देशभर के नागरिकों के लिए प्लेटफ़ॉर्म सुधार के सुझाव साझा करें।" },
+      { icon:"🐛", color:"#DC2626", label:"बग / समस्या रिपोर्ट",   desc:"ऐप में तकनीकी समस्या या अनुचित व्यवहार की जानकारी दें।" },
+      { icon:"📋", color:NAVY,      label:"योजना जोड़ने का अनुरोध", desc:"प्लेटफ़ॉर्म पर अनुपस्थित किसी योजना को जोड़ने का अनुरोध करें।" },
+      { icon:"❓", color:IND_GREEN, label:"सामान्य प्रश्न",          desc:"किसी योजना या सुविधा के बारे में सहायता या प्रश्न सबमिट करें।" },
+      { icon:"💡", color:SAFFRON,   label:"सुझाव और प्रतिक्रिया",   desc:"देशभर के नागरिकों के लिए प्लेटफ़ॉर्म सुधार के सुझाव साझा करें।" },
     ],
     reportFlow:
       "सभी सबमिशन सुरक्षित रूप से संग्रहीत होते हैं और योजना सेतु की प्राथमिक सपोर्ट टीम द्वारा समीक्षा की जाती है। लॉगिन उपयोगकर्ताओं को सबमिशन पर स्वचालित ईमेल पुष्टि और टीम के उत्तर पर सूचना मिलती है। स्थिति — Open → In Progress → Resolved — ऐप में वास्तविक समय में दिखाई देती है।",
 
-    legalTitle: "कानूनी एवं अस्वीकरण",
+    legalTitle:  "कानूनी एवं अस्वीकरण",
     legalPoints: [
       "योजना सेतु सरकारी योजना खोज के लिए एक स्वतंत्र डिजिटल प्लेटफ़ॉर्म है और किसी भी केंद्र या राज्य सरकार निकाय या मंत्रालय से संबद्ध, अनुमोदित या प्रतिनिधि नहीं है।",
       "सभी योजना डेटा सार्वजनिक रूप से उपलब्ध आधिकारिक सरकारी पोर्टलों से प्राप्त किया गया है। सटीकता के प्रयास के बावजूद, उपयोगकर्ताओं को आवेदन से पूर्व संबंधित सरकारी स्रोतों से विवरण सत्यापित करने की सलाह दी जाती है।",
@@ -250,11 +273,13 @@ const STRINGS = {
     ],
 
     techTitle: "प्रौद्योगिकी और अवसंरचना",
-    techBody:  "योजना सेतु एक आधुनिक, सुरक्षित और स्केलेबल तकनीकी स्टैक पर निर्मित है।",
+    techBody:  "योजना सेतु एक उत्पादन-स्तरीय, सुरक्षा-प्रथम तकनीकी स्टैक पर निर्मित है — जिसमें विश्वसनीय क्लाउड अवसंरचना, वैश्विक वितरित डिप्लॉयमेंट और संस्करण-नियंत्रित विकास का संयोजन है।",
     techStack: [
-      { icon:"🔥", name:"Firebase",  role:"प्रमाणीकरण, क्लाउड डेटाबेस और रियल-टाइम सिंक" },
-      { icon:"⚡", name:"Groq AI",   role:"AI सहायक — हाई-स्पीड इनफेरेंस इंजन" },
-      { icon:"📧", name:"EmailJS",   role:"स्वचालित ईमेल पुष्टि और अलर्ट" },
+      { icon:"🔥", name:"Firebase",  role:"प्रमाणीकरण, क्लाउड डेटाबेस और रियल-टाइम सिंक",                                                         badge:null },
+      { icon:"⚡", name:"Groq AI",   role:"AI सहायक — हाई-स्पीड, लो-लेटेंसी इनफेरेंस इंजन",                                                        badge:null },
+      { icon:"📧", name:"EmailJS",   role:"स्वचालित ईमेल पुष्टि और सपोर्ट अलर्ट",                                                                   badge:null },
+      { icon:"▲",  name:"Vercel",    role:"वैश्विक डिप्लॉयमेंट और होस्टिंग — एज नेटवर्क द्वारा भारत में तेज़ और सुरक्षित डिलीवरी",               badge:"Trusted Hosting" },
+      { icon:"🐙", name:"GitHub",    role:"सोर्स कोड और संस्करण नियंत्रण — पूर्ण विकास इतिहास, इश्यू ट्रैकिंग और सुरक्षित बिल्ड पाइपलाइन",     badge:"Open Dev" },
     ],
 
     privacyTitle: "गोपनीयता और डेटा",
@@ -270,18 +295,48 @@ const STRINGS = {
     contactEmail: "yojanasetuofficial@gmail.com",
     contactNote:  "केवल प्लेटफ़ॉर्म संबंधी पूछताछ के लिए। योजना-विशिष्ट सहायता के लिए इन-ऐप Report & Query सुविधा का उपयोग करें।",
 
-    copyright:  "© 2025 योजना सेतु। सर्वाधिकार सुरक्षित।",
+    lastUpdated: "अंतिम अपडेट · मई 2026",
+
+    whatsNewTitle: "नया क्या है",
+    whatsNew: [
+      { version:"v1.3", date:"मई 2026",    note:"ईमेल & Google साइन-इन · डार्क मोड · Vercel एज डिप्लॉयमेंट" },
+      { version:"v1.2", date:"मार्च 2026", note:"रिपोर्ट & समाधान केंद्र · एडमिन डैशबोर्ड · ईमेल अलर्ट" },
+      { version:"v1.1", date:"जनवरी 2026", note:"AI सहायक (Groq) · द्विभाषी समर्थन · प्रोफाइल-आधारित उत्तर" },
+      { version:"v1.0", date:"नवंबर 2025", note:"पहला सार्वजनिक Beta · पात्रता जांचक · 3,000+ योजनाएं" },
+    ],
+
+    shareTitle: "योजना सेतु साझा करें",
+    shareBody:  "क्या आप किसी ऐसे व्यक्ति को जानते हैं जो सरकारी योजनाओं से लाभ उठा सकता है? यह प्लेटफ़ॉर्म उनके साथ साझा करें।",
+    shareBtn:   "किसी के साथ साझा करें 🙏",
+
+    ackTitle: "आभार",
+    ackBody:  "योजना सेतु ओपन-सोर्स टूल्स और सार्वजनिक रूप से उपलब्ध संसाधनों पर निर्मित है। हम निम्नलिखित का कृतज्ञतापूर्वक उल्लेख करते हैं:",
+    ackItems: [
+      { icon:"⚛️",  name:"React",                note:"UI लाइब्रेरी — Meta ओपन सोर्स" },
+      { icon:"🇮🇳", name:"डिजिटल इंडिया भावना", note:"हर भारतीय नागरिक तक सरकारी सेवाएं सुलभ बनाने की भावना से निर्मित" },
+      { icon:"📖",  name:"ओपन सोर्स समुदाय",   note:"इस प्लेटफ़ॉर्म को शक्ति देने वाले टूल्स और लाइब्रेरी, सभी डेवलपर्स के लिए निःशुल्क" },
+    ],
+
+    grievanceTitle:   "उपयोगकर्ता सहायता और शिकायत",
+    grievanceBody:    "योजना सेतु हर उपयोगकर्ता की समस्या को शीघ्र और पारदर्शी तरीके से हल करने के लिए प्रतिबद्ध है। इन-ऐप Report & Query के माध्यम से सबमिट की गई हर शिकायत पर तुरंत स्वचालित पुष्टि ईमेल भेजी जाती है। प्लेटफ़ॉर्म प्रशासक को प्रत्येक सबमिशन की तत्काल सूचना मिलती है और वे व्यक्तिगत रूप से हर समस्या की समीक्षा करते हैं।",
+    grievanceContact: "yojanasetuofficial@gmail.com",
+    grievanceNote:    "प्लेटफ़ॉर्म प्रशासक: Sahnawaz",
+
+    copyright:  "© 2026 योजना सेतु। सर्वाधिकार सुरक्षित।",
     footerNote: "एक स्वतंत्र नागरिक प्रौद्योगिकी प्लेटफ़ॉर्म · भारत",
+    platformId: "Platform ID: YS-2024-IND · Beta",
   },
 };
 
-// ─── ASHOKA CHAKRA (24 spokes — same as App.jsx) ──────────────────────────────
+// ─── ASHOKA CHAKRA (24-spoke SVG, same geometry as original) ─────────────────
 function AshokaChakra({ size = 18, color = ASHOKA_BLUE, spinning = false }) {
   const spokes = Array.from({ length: 24 }, (_, i) => i);
   const cx = size / 2, cy = size / 2, r = size / 2 - 1, innerR = r * 0.28;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}
-      style={{ flexShrink: 0, animation: spinning ? "about-chakra-spin 10s linear infinite" : "none" }}>
+    <svg
+      width={size} height={size} viewBox={`0 0 ${size} ${size}`}
+      style={{ flexShrink: 0, animation: spinning ? "ys-chakra-spin 14s linear infinite" : "none" }}
+    >
       <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={size * 0.055} />
       <circle cx={cx} cy={cy} r={innerR} fill={color} />
       {spokes.map(i => {
@@ -290,35 +345,102 @@ function AshokaChakra({ size = 18, color = ASHOKA_BLUE, spinning = false }) {
           <line key={i}
             x1={cx + innerR * Math.cos(a)} y1={cy + innerR * Math.sin(a)}
             x2={cx + r * 0.78 * Math.cos(a)} y2={cy + r * 0.78 * Math.sin(a)}
-            stroke={color} strokeWidth={size * 0.042} />
+            stroke={color} strokeWidth={size * 0.042}
+          />
         );
       })}
     </svg>
   );
 }
 
-// ─── SECTION HEADER ───────────────────────────────────────────────────────────
-function SectionHeader({ title, accent = NAVY, dark, bf }) {
+// ─── PREMIUM SECTION HEADER ───────────────────────────────────────────────────
+function SectionHeader({ title, accent = NAVY, dark, bf, eyebrow }) {
   const th = THEME[dark ? "dark" : "light"];
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-      <div style={{ width: 3, height: 18, borderRadius: 3, background: accent, flexShrink: 0 }} />
-      <div style={{ fontSize: 13, fontWeight: 800, color: th.text, letterSpacing: 0.2, fontFamily: bf }}>
-        {title}
+    <div style={{ marginBottom: 18 }}>
+      {eyebrow && (
+        <div style={{
+          fontSize: 9, fontWeight: 700, letterSpacing: 1.8,
+          textTransform: "uppercase", color: accent,
+          marginBottom: 6, fontFamily: bf,
+          opacity: 0.85,
+        }}>
+          {eyebrow}
+        </div>
+      )}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{
+          width: 4, height: 20, borderRadius: 4, flexShrink: 0,
+          background: `linear-gradient(180deg, ${accent}, ${accent}88)`,
+        }} />
+        <div style={{
+          fontSize: 14, fontWeight: 700,
+          color: th.text, letterSpacing: 0.1, fontFamily: bf,
+        }}>
+          {title}
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── DIVIDER ──────────────────────────────────────────────────────────────────
+// ─── CARD WRAPPER ─────────────────────────────────────────────────────────────
+function Card({ dark, children, accentColor, style = {} }) {
+  const th = THEME[dark ? "dark" : "light"];
+  const borderColor = accentColor ? `${accentColor}30` : th.border;
+  return (
+    <div style={{
+      background: th.card,
+      borderRadius: R.xl,
+      padding: "24px 20px",
+      border: `1px solid ${borderColor}`,
+      boxShadow: dark ? "none" : th.shadowMd,
+      transition: `box-shadow 0.2s ${EASE}`,
+      ...style,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+// ─── INLINE DIVIDER ───────────────────────────────────────────────────────────
 function Divider({ dark }) {
   const th = THEME[dark ? "dark" : "light"];
   return (
     <div style={{
       height: 1,
-      background: `linear-gradient(to right, transparent, ${th.border2}, transparent)`,
-      margin: "4px 0",
+      background: `linear-gradient(to right, transparent, ${th.border2}80, transparent)`,
+      margin: "14px 0",
     }} />
+  );
+}
+
+// ─── INFO ROW (icon + title + desc) ──────────────────────────────────────────
+function InfoRow({ icon, iconBg, title, desc, dark, bf, last }) {
+  const th = THEME[dark ? "dark" : "light"];
+  return (
+    <>
+      <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: R.md, flexShrink: 0,
+          background: iconBg || (dark ? "rgba(255,255,255,0.06)" : "#F0F3FA"),
+          border: `1px solid ${dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)"}`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 18,
+        }}>
+          {icon}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: th.text, marginBottom: 3, fontFamily: bf }}>
+            {title}
+          </div>
+          <div style={{ fontSize: 12, color: th.textMid, lineHeight: 1.7, fontFamily: bf }}>
+            {desc}
+          </div>
+        </div>
+      </div>
+      {!last && <Divider dark={dark} />}
+    </>
   );
 }
 
@@ -329,22 +451,65 @@ export default function AboutTab({ lang = "en", dark = false }) {
   const bf = fontFamily(lang);
   const isHindi = lang === "hi";
 
-  const KEYFRAMES = `
-    @keyframes about-chakra-spin {
+  // ── Google Fonts + keyframes ──────────────────────────────────────────────
+  const STYLES = `
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap');
+
+    @keyframes ys-chakra-spin {
       from { transform-origin: center; transform: rotate(0deg); }
       to   { transform-origin: center; transform: rotate(360deg); }
     }
-    @keyframes about-fade-up {
-      from { opacity: 0; transform: translateY(14px); }
+    @keyframes ys-fade-up {
+      from { opacity: 0; transform: translateY(20px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    @keyframes about-shimmer {
-      0%   { background-position: -200% center; }
-      100% { background-position: 200% center; }
+    @keyframes ys-fade-in {
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
-    .about-link:hover { opacity: 0.78; }
-    .about-card-hover:active { transform: scale(0.985); }
+    @keyframes ys-pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.6; transform: scale(0.85); }
+    }
+    @keyframes ys-shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position:  200% center; }
+    }
+
+    .ys-card {
+      animation: ys-fade-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+    .ys-card:nth-child(1)  { animation-delay: 0.05s; }
+    .ys-card:nth-child(2)  { animation-delay: 0.10s; }
+    .ys-card:nth-child(3)  { animation-delay: 0.15s; }
+    .ys-card:nth-child(4)  { animation-delay: 0.20s; }
+    .ys-card:nth-child(5)  { animation-delay: 0.25s; }
+    .ys-card:nth-child(6)  { animation-delay: 0.30s; }
+    .ys-card:nth-child(7)  { animation-delay: 0.35s; }
+    .ys-card:nth-child(8)  { animation-delay: 0.40s; }
+    .ys-card:nth-child(9)  { animation-delay: 0.45s; }
+    .ys-card:nth-child(10) { animation-delay: 0.50s; }
+    .ys-card:nth-child(11) { animation-delay: 0.55s; }
+    .ys-card:nth-child(12) { animation-delay: 0.60s; }
+    .ys-card:nth-child(13) { animation-delay: 0.65s; }
+    .ys-card:nth-child(14) { animation-delay: 0.70s; }
+    .ys-card:nth-child(15) { animation-delay: 0.75s; }
+
+    .ys-link-row {
+      transition: opacity 0.18s cubic-bezier(0.4,0,0.2,1),
+                  transform 0.18s cubic-bezier(0.4,0,0.2,1);
+    }
+    .ys-link-row:active { opacity: 0.75; transform: scale(0.985); }
+
+    .ys-share-btn {
+      transition: opacity 0.18s cubic-bezier(0.4,0,0.2,1),
+                  transform 0.18s cubic-bezier(0.4,0,0.2,1),
+                  box-shadow 0.18s cubic-bezier(0.4,0,0.2,1);
+    }
+    .ys-share-btn:active { opacity: 0.85; transform: scale(0.97); }
   `;
+
+  const statColors = [SAFFRON, "#4ADE80", "#60A5FA", "#F9FAFB"];
 
   return (
     <div style={{
@@ -353,524 +518,833 @@ export default function AboutTab({ lang = "en", dark = false }) {
       fontFamily: bf,
       overflowX: "hidden",
     }}>
-      <style>{KEYFRAMES}</style>
+      <style>{STYLES}</style>
 
-      {/* ══════════════════════════════════════════════════════════════
+      {/* ════════════════════════════════════════════════════════════════
           HERO BANNER
-      ══════════════════════════════════════════════════════════════ */}
+      ════════════════════════════════════════════════════════════════ */}
       <div style={{
-        background: `linear-gradient(160deg, ${NAVY} 0%, #05256E 45%, #0a1f5c 70%, #001a40 100%)`,
-        padding: "36px 22px 32px",
+        background: `linear-gradient(155deg, #002060 0%, ${NAVY} 35%, #04206A 65%, #001538 100%)`,
+        padding: "40px 22px 36px",
         position: "relative",
         overflow: "hidden",
       }}>
-        {/* Background decorative circles */}
+
+        {/* Atmospheric glow blobs */}
         <div style={{
-          position: "absolute", top: -60, right: -60,
-          width: 200, height: 200, borderRadius: "50%",
-          background: "rgba(255,153,51,0.07)", pointerEvents: "none",
+          position: "absolute", top: -80, right: -60, width: 260, height: 260,
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${SAFFRON}18 0%, transparent 70%)`,
+          pointerEvents: "none",
         }} />
         <div style={{
-          position: "absolute", bottom: -40, left: -40,
-          width: 150, height: 150, borderRadius: "50%",
-          background: "rgba(19,136,8,0.06)", pointerEvents: "none",
+          position: "absolute", bottom: -60, left: -40, width: 200, height: 200,
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${IND_GREEN}14 0%, transparent 70%)`,
+          pointerEvents: "none",
+        }} />
+        <div style={{
+          position: "absolute", top: "40%", left: "50%", transform: "translate(-50%,-50%)",
+          width: 340, height: 340, borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(255,255,255,0.015) 0%, transparent 70%)",
+          pointerEvents: "none",
         }} />
 
-        {/* Top row — Chakra + Made in India */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-          <AshokaChakra size={38} color="rgba(255,255,255,0.18)" spinning />
+        {/* Large watermark Chakra */}
+        <div style={{
+          position: "absolute", top: "50%", right: -30,
+          transform: "translateY(-50%)",
+          opacity: 0.04, pointerEvents: "none",
+        }}>
+          <AshokaChakra size={200} color="#FFFFFF" spinning />
+        </div>
+
+        {/* Subtle dot-grid texture */}
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          backgroundImage:
+            "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+          backgroundSize: "22px 22px",
+          opacity: 0.5,
+        }} />
+
+        {/* Top row */}
+        <div style={{
+          display: "flex", alignItems: "center",
+          justifyContent: "flex-end", marginBottom: 28,
+          animation: "ys-fade-in 0.5s ease both",
+          position: "relative",
+        }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 6,
-            background: "rgba(255,255,255,0.10)",
-            border: "1px solid rgba(255,255,255,0.20)",
-            borderRadius: 20, padding: "4px 12px",
+            background: "rgba(255,255,255,0.09)",
+            border: "1px solid rgba(255,255,255,0.18)",
+            borderRadius: 20, padding: "5px 14px",
+            backdropFilter: "blur(8px)",
           }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.85)", letterSpacing: 0.4 }}>
+            <span style={{
+              fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.88)",
+              letterSpacing: 0.5, fontFamily: bf,
+            }}>
               {s.madeInIndia}
             </span>
           </div>
         </div>
 
         {/* App identity */}
-        <div style={{ animation: "about-fade-up 0.5s ease-out" }}>
+        <div style={{ animation: "ys-fade-up 0.55s cubic-bezier(0.4,0,0.2,1) 0.1s both", position: "relative" }}>
+
           {/* App icon */}
           <div style={{
-            width: 72, height: 72, borderRadius: 22,
-            background: "linear-gradient(135deg, rgba(255,153,51,0.22), rgba(255,255,255,0.10))",
-            border: "1.5px solid rgba(255,255,255,0.25)",
+            width: 76, height: 76, borderRadius: 24,
+            background: "linear-gradient(135deg, rgba(255,153,51,0.28) 0%, rgba(255,255,255,0.08) 100%)",
+            border: "1.5px solid rgba(255,255,255,0.22)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 34, marginBottom: 18,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.30)",
+            fontSize: 36, marginBottom: 20,
+            boxShadow: "0 12px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15)",
+            backdropFilter: "blur(4px)",
           }}>
             🏛️
           </div>
 
-          <div style={{ fontSize: 28, fontWeight: 900, color: "#fff", letterSpacing: -0.3, lineHeight: 1.15, marginBottom: 6, fontFamily: bf }}>
+          {/* App name */}
+          <div style={{
+            fontSize: 30, fontWeight: 800, color: "#FFFFFF",
+            letterSpacing: -0.5, lineHeight: 1.1, marginBottom: 10, fontFamily: bf,
+          }}>
             {s.appName}
           </div>
 
-          {/* Tricolour underline */}
-          <div style={{ display: "flex", gap: 3, marginBottom: 10 }}>
-            <div style={{ height: 3, width: 32, borderRadius: 3, background: SAFFRON }} />
-            <div style={{ height: 3, width: 14, borderRadius: 3, background: "#fff" }} />
-            <div style={{ height: 3, width: 32, borderRadius: 3, background: IND_GREEN }} />
+          {/* Tricolour accent bar */}
+          <div style={{ display: "flex", alignItems: "center", gap: 3, marginBottom: 12 }}>
+            <div style={{ height: 3, width: 36, borderRadius: 3, background: SAFFRON }} />
+            <div style={{ height: 3, width: 3, borderRadius: "50%", background: "rgba(255,255,255,0.6)" }} />
+            <div style={{ height: 3, width: 16, borderRadius: 3, background: "rgba(255,255,255,0.9)" }} />
+            <div style={{ height: 3, width: 3, borderRadius: "50%", background: "rgba(255,255,255,0.6)" }} />
+            <div style={{ height: 3, width: 36, borderRadius: 3, background: IND_GREEN }} />
           </div>
 
-          <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.72)", letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 18, fontFamily: bf }}>
+          {/* Tagline */}
+          <div style={{
+            fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.65)",
+            letterSpacing: 1.6, textTransform: "uppercase", marginBottom: 22, fontFamily: bf,
+          }}>
             {s.tagline}
           </div>
 
-          {/* Version badge */}
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            background: "rgba(255,255,255,0.09)",
-            border: "1px solid rgba(255,255,255,0.18)",
-            borderRadius: 8, padding: "5px 12px",
-          }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", flexShrink: 0 }} />
-            <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.75)", letterSpacing: 0.3 }}>
-              {s.version}
-            </span>
+          {/* Version + Last Updated */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              background: "rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.16)",
+              borderRadius: R.sm, padding: "6px 12px",
+              backdropFilter: "blur(6px)",
+            }}>
+              <div style={{
+                width: 6, height: 6, borderRadius: "50%", background: "#4ADE80", flexShrink: 0,
+                animation: "ys-pulse-dot 2.2s ease-in-out infinite",
+              }} />
+              <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.80)", fontFamily: bf }}>
+                {s.version}
+              </span>
+            </div>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              background: `${SAFFRON}18`,
+              border: `1px solid ${SAFFRON}35`,
+              borderRadius: R.sm, padding: "6px 12px",
+              backdropFilter: "blur(6px)",
+            }}>
+              <span style={{ fontSize: 10 }}>🕐</span>
+              <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,200,100,0.92)", fontFamily: bf }}>
+                {s.lastUpdated}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════
+      {/* ════════════════════════════════════════════════════════════════
           CONTENT BODY
-      ══════════════════════════════════════════════════════════════ */}
-      <div style={{ padding: "20px 16px 40px", display: "flex", flexDirection: "column", gap: 16 }}>
+      ════════════════════════════════════════════════════════════════ */}
+      <div style={{ padding: "22px 16px 48px", display: "flex", flexDirection: "column", gap: 14 }}>
 
-        {/* ── MISSION ──────────────────────────────────────────────── */}
-        <div style={{
-          background: th.card,
-          borderRadius: 18,
-          padding: "20px 18px",
-          border: `1.5px solid ${th.border}`,
-          boxShadow: dark ? "none" : "0 2px 12px rgba(0,0,0,0.04)",
-        }}>
-          <SectionHeader title={s.missionTitle} accent={NAVY} dark={dark} bf={bf} />
-          <div style={{ fontSize: 13, color: th.textMid, lineHeight: 1.75, fontFamily: bf }}>
-            {s.missionBody}
-          </div>
+        {/* ── MISSION ─────────────────────────────────────────────────── */}
+        <div className="ys-card">
+          <Card dark={dark} accentColor={NAVY}>
+            <SectionHeader title={s.missionTitle} accent={NAVY} dark={dark} bf={bf} />
+            <div style={{ fontSize: 13, color: th.textMid, lineHeight: 1.85, fontFamily: bf }}>
+              {s.missionBody}
+            </div>
+          </Card>
         </div>
 
-        {/* ── STATS ROW ─────────────────────────────────────────────── */}
-        <div style={{
-          background: `linear-gradient(135deg, ${NAVY}f0, #05256E)`,
-          borderRadius: 18,
-          padding: "20px 16px",
-          boxShadow: "0 6px 24px rgba(0,53,128,0.28)",
-        }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.55)", letterSpacing: 1.1, textTransform: "uppercase", marginBottom: 16, fontFamily: bf }}>
-            {s.statsTitle}
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
-            {s.stats.map((stat, i) => (
-              <div key={i} style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 20, fontWeight: 900, color: i === 0 ? SAFFRON : i === 1 ? "#4ade80" : i === 2 ? "#60a5fa" : "#f0f0f0", lineHeight: 1.1, fontFamily: bf }}>
-                  {stat.number}
+        {/* ── WHAT'S NEW ───────────────────────────────────────────────── */}
+        <div className="ys-card">
+          <Card dark={dark} accentColor={ASHOKA_BLUE}>
+            <SectionHeader title={s.whatsNewTitle} accent={ASHOKA_BLUE} dark={dark} bf={bf} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+              {s.whatsNew.map((item, i) => (
+                <div key={i}>
+                  {i > 0 && <Divider dark={dark} />}
+                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                    {/* Version pill */}
+                    <div style={{
+                      minWidth: 38, height: 22, borderRadius: 7, flexShrink: 0,
+                      background: i === 0
+                        ? `linear-gradient(135deg, ${SAFFRON}, #D97706)`
+                        : dark ? "rgba(255,255,255,0.06)" : "#EEF1FB",
+                      border: i === 0 ? "none" : `1px solid ${th.border2}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      padding: "0 8px",
+                    }}>
+                      <span style={{
+                        fontSize: 9, fontWeight: 800, letterSpacing: 0.4,
+                        color: i === 0 ? "#fff" : th.textSub,
+                        fontFamily: "monospace",
+                      }}>{item.version}</span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        display: "flex", alignItems: "center", gap: 7,
+                        marginBottom: 3,
+                      }}>
+                        <span style={{ fontSize: 10, color: th.textSub, fontFamily: bf }}>
+                          {item.date}
+                        </span>
+                        {i === 0 && (
+                          <span style={{
+                            fontSize: 8, fontWeight: 700,
+                            background: IND_GREEN, color: "#fff",
+                            borderRadius: 4, padding: "1px 6px", letterSpacing: 0.5,
+                          }}>LATEST</span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 12, color: th.textMid, lineHeight: 1.6, fontFamily: bf }}>
+                        {item.note}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.55)", marginTop: 5, lineHeight: 1.4, fontFamily: bf, whiteSpace: "pre-line" }}>
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </Card>
         </div>
 
-        {/* ── SCHEME DATABASE ───────────────────────────────────────── */}
-        <div style={{
-          background: th.card,
-          borderRadius: 18,
-          padding: "20px 18px",
-          border: `1.5px solid ${IND_GREEN}28`,
-          boxShadow: dark ? "none" : "0 2px 12px rgba(19,136,8,0.06)",
-        }}>
-          <SectionHeader title={s.dbTitle} accent={IND_GREEN} dark={dark} bf={bf} />
-          <div style={{ fontSize: 13, color: th.textMid, lineHeight: 1.75, fontFamily: bf }}>
-            {s.dbBody}
-          </div>
-          {/* Expanding indicator */}
+        {/* ── STATS ────────────────────────────────────────────────────── */}
+        <div className="ys-card">
           <div style={{
-            display: "flex", alignItems: "center", gap: 8, marginTop: 14,
-            background: dark ? "rgba(19,136,8,0.12)" : "rgba(19,136,8,0.06)",
-            border: `1px solid ${IND_GREEN}30`,
-            borderRadius: 10, padding: "9px 13px",
+            background: `linear-gradient(140deg, #002060 0%, ${NAVY} 50%, #04206A 100%)`,
+            borderRadius: R.xl,
+            padding: "26px 20px",
+            boxShadow: "0 8px 32px rgba(0,53,128,0.32)",
+            position: "relative", overflow: "hidden",
           }}>
-            <div style={{ fontSize: 13 }}>🔄</div>
-            <div style={{ fontSize: 11, color: IND_GREEN, fontWeight: 700, fontFamily: bf }}>
-              {isHindi
-                ? "डेटाबेस सक्रिय रूप से विस्तारित हो रहा है · टीम नियमित रूप से अपडेट करती है"
-                : "Database actively expanding · Team regularly curates & updates"}
+            {/* Background texture */}
+            <div style={{
+              position: "absolute", inset: 0, pointerEvents: "none",
+              backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)",
+              backgroundSize: "18px 18px",
+            }} />
+            <div style={{
+              fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.45)",
+              letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 20,
+              fontFamily: bf, position: "relative",
+            }}>
+              {s.statsTitle}
+            </div>
+            <div style={{
+              display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr",
+              gap: 0, position: "relative",
+            }}>
+              {s.stats.map((stat, i) => (
+                <div key={i} style={{
+                  textAlign: "center", padding: "0 4px",
+                  borderRight: i < 3 ? "1px solid rgba(255,255,255,0.10)" : "none",
+                }}>
+                  <div style={{
+                    fontSize: 22, fontWeight: 800, lineHeight: 1.05,
+                    color: statColors[i],
+                    fontFamily: bf,
+                    textShadow: `0 0 20px ${statColors[i]}40`,
+                  }}>
+                    {stat.number}
+                  </div>
+                  <div style={{
+                    fontSize: 9, color: "rgba(255,255,255,0.50)", marginTop: 6,
+                    lineHeight: 1.45, fontFamily: bf, whiteSpace: "pre-line",
+                    letterSpacing: 0.2,
+                  }}>
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* ── CORE CAPABILITIES ─────────────────────────────────────── */}
-        <div style={{
-          background: th.card,
-          borderRadius: 18,
-          padding: "20px 18px",
-          border: `1.5px solid ${th.border}`,
-          boxShadow: dark ? "none" : "0 2px 12px rgba(0,0,0,0.04)",
-        }}>
-          <SectionHeader title={s.featuresTitle} accent={SAFFRON} dark={dark} bf={bf} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        {/* ── SCHEME DATABASE ──────────────────────────────────────────── */}
+        <div className="ys-card">
+          <Card dark={dark} accentColor={IND_GREEN}>
+            <SectionHeader title={s.dbTitle} accent={IND_GREEN} dark={dark} bf={bf} />
+            <div style={{ fontSize: 13, color: th.textMid, lineHeight: 1.85, fontFamily: bf }}>
+              {s.dbBody}
+            </div>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10, marginTop: 16,
+              background: dark ? `${IND_GREEN}15` : `${IND_GREEN}09`,
+              border: `1px solid ${IND_GREEN}28`,
+              borderRadius: R.md, padding: "11px 14px",
+            }}>
+              <div style={{ fontSize: 15 }}>🔄</div>
+              <div style={{ fontSize: 11, color: IND_GREEN, fontWeight: 700, fontFamily: bf, lineHeight: 1.4 }}>
+                {isHindi
+                  ? "डेटाबेस सक्रिय रूप से विस्तारित हो रहा है · टीम नियमित रूप से अपडेट करती है"
+                  : "Database actively expanding · Team regularly curates & updates"}
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* ── CORE CAPABILITIES ────────────────────────────────────────── */}
+        <div className="ys-card">
+          <Card dark={dark}>
+            <SectionHeader title={s.featuresTitle} accent={SAFFRON} dark={dark} bf={bf} />
             {s.features.map((f, i) => (
               <div key={i}>
-                {i > 0 && <div style={{ height: 1, background: th.divider, margin: "13px 0" }} />}
-                <div style={{ display: "flex", gap: 13, alignItems: "flex-start" }}>
+                {i > 0 && <Divider dark={dark} />}
+                <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
                   <div style={{
-                    width: 42, height: 42, borderRadius: 13, flexShrink: 0,
-                    background: `${f.color}14`,
-                    border: `1.5px solid ${f.color}28`,
+                    width: 46, height: 46, borderRadius: R.md, flexShrink: 0,
+                    background: `linear-gradient(135deg, ${f.color}22, ${f.color}0C)`,
+                    border: `1.5px solid ${f.color}30`,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 18,
+                    fontSize: 20,
+                    boxShadow: `0 4px 12px ${f.color}18`,
                   }}>
                     {f.icon}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: th.text, marginBottom: 4, fontFamily: bf }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: th.text, marginBottom: 5, fontFamily: bf }}>
                       {f.title}
                     </div>
-                    <div style={{ fontSize: 12, color: th.textMid, lineHeight: 1.65, fontFamily: bf }}>
+                    <div style={{ fontSize: 12, color: th.textMid, lineHeight: 1.75, fontFamily: bf }}>
                       {f.desc}
                     </div>
                   </div>
                 </div>
               </div>
             ))}
-          </div>
+          </Card>
         </div>
 
-        {/* ── AI ASSISTANT ──────────────────────────────────────────── */}
-        <div style={{
-          background: dark
-            ? "linear-gradient(135deg, rgba(139,92,246,0.12), rgba(0,53,128,0.18))"
-            : "linear-gradient(135deg, rgba(139,92,246,0.05), rgba(0,53,128,0.04))",
-          borderRadius: 18,
-          padding: "20px 18px",
-          border: `1.5px solid rgba(139,92,246,0.25)`,
-          boxShadow: dark ? "none" : "0 2px 16px rgba(139,92,246,0.07)",
-        }}>
-          {/* AI section header */}
-          <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 6 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-              background: "linear-gradient(135deg, #8B5CF6, #6D28D9)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 18, boxShadow: "0 4px 14px rgba(139,92,246,0.35)",
-            }}>🤖</div>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: th.text, fontFamily: bf }}>{s.aiTitle}</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "#8B5CF6", letterSpacing: 0.5, marginTop: 2, fontFamily: bf }}>
-                {s.aiSubtitle}
+        {/* ── AI ASSISTANT ─────────────────────────────────────────────── */}
+        <div className="ys-card">
+          <div style={{
+            background: dark
+              ? "linear-gradient(135deg, rgba(109,40,217,0.14) 0%, rgba(0,53,128,0.18) 100%)"
+              : "linear-gradient(135deg, rgba(139,92,246,0.06) 0%, rgba(0,53,128,0.04) 100%)",
+            borderRadius: R.xl,
+            padding: "24px 20px",
+            border: "1.5px solid rgba(139,92,246,0.22)",
+            boxShadow: dark ? "none" : "0 4px 20px rgba(139,92,246,0.08)",
+          }}>
+            {/* AI header */}
+            <div style={{ display: "flex", alignItems: "center", gap: 13, marginBottom: 18 }}>
+              <div style={{
+                width: 46, height: 46, borderRadius: R.md, flexShrink: 0,
+                background: "linear-gradient(135deg, #8B5CF6, #6D28D9)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 20, boxShadow: "0 6px 18px rgba(139,92,246,0.38)",
+              }}>🤖</div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: th.text, fontFamily: bf }}>
+                  {s.aiTitle}
+                </div>
+                <div style={{
+                  fontSize: 10, fontWeight: 600, color: "#A78BFA",
+                  letterSpacing: 0.6, marginTop: 3, fontFamily: bf,
+                }}>
+                  {s.aiSubtitle}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div style={{ height: 1, background: "rgba(139,92,246,0.18)", margin: "14px 0" }} />
+            <div style={{ height: 1, background: "rgba(139,92,246,0.20)", marginBottom: 16 }} />
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-            {s.aiPoints.map((pt, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-                  background: "rgba(139,92,246,0.12)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 13,
-                }}>
-                  {pt.icon}
-                </div>
-                <div style={{ fontSize: 12, color: th.textMid, lineHeight: 1.6, fontFamily: bf, paddingTop: 5 }}>
-                  {pt.text}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── SIGN IN BENEFITS ──────────────────────────────────────── */}
-        <div style={{
-          background: th.card,
-          borderRadius: 18,
-          padding: "20px 18px",
-          border: `1.5px solid ${SAFFRON}22`,
-          boxShadow: dark ? "none" : "0 2px 12px rgba(255,153,51,0.06)",
-        }}>
-          <SectionHeader title={s.signInTitle} accent={SAFFRON} dark={dark} bf={bf} />
-          <div style={{ fontSize: 12, color: th.textSub, marginBottom: 14, fontFamily: bf }}>{s.signInSub}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-            {s.signInPoints.map((pt, i) => (
-              <div key={i}>
-                {i > 0 && <div style={{ height: 1, background: th.divider, margin: "12px 0" }} />}
-                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {s.aiPoints.map((pt, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
                   <div style={{
-                    width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-                    background: `${SAFFRON}12`, border: `1px solid ${SAFFRON}28`,
-                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15,
+                    width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+                    background: "rgba(139,92,246,0.14)",
+                    border: "1px solid rgba(139,92,246,0.20)",
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
                   }}>
                     {pt.icon}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: th.text, marginBottom: 3, fontFamily: bf }}>{pt.title}</div>
-                    <div style={{ fontSize: 11, color: th.textMid, lineHeight: 1.6, fontFamily: bf }}>{pt.desc}</div>
+                  <div style={{ fontSize: 12, color: th.textMid, lineHeight: 1.65, fontFamily: bf, paddingTop: 6 }}>
+                    {pt.text}
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* ── REPORT & RESOLUTION ───────────────────────────────────── */}
-        <div style={{
-          background: th.card,
-          borderRadius: 18,
-          padding: "20px 18px",
-          border: `1.5px solid ${th.border}`,
-          boxShadow: dark ? "none" : "0 2px 12px rgba(0,0,0,0.04)",
-        }}>
-          <SectionHeader title={s.reportTitle} accent={IND_GREEN} dark={dark} bf={bf} />
-          <div style={{ fontSize: 11, fontWeight: 700, color: IND_GREEN, marginBottom: 10, letterSpacing: 0.3, fontFamily: bf }}>
-            {s.reportSubtitle}
-          </div>
-          <div style={{ fontSize: 12, color: th.textMid, lineHeight: 1.7, marginBottom: 16, fontFamily: bf }}>
-            {s.reportBody}
-          </div>
+        {/* ── SIGN-IN BENEFITS ─────────────────────────────────────────── */}
+        <div className="ys-card">
+          <Card dark={dark} accentColor={SAFFRON}>
+            <SectionHeader title={s.signInTitle} accent={SAFFRON} dark={dark} bf={bf} />
+            <div style={{ fontSize: 12, color: th.textSub, marginBottom: 16, fontFamily: bf }}>
+              {s.signInSub}
+            </div>
+            {s.signInPoints.map((pt, i) => (
+              <InfoRow
+                key={i}
+                icon={pt.icon}
+                iconBg={dark ? `${SAFFRON}15` : `${SAFFRON}0E`}
+                title={pt.title}
+                desc={pt.desc}
+                dark={dark} bf={bf}
+                last={i === s.signInPoints.length - 1}
+              />
+            ))}
+          </Card>
+        </div>
 
-          {/* 2×2 Report types grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
-            {s.reportTypes.map((rt, i) => (
-              <div key={i} style={{
-                background: dark ? `${rt.color}14` : `${rt.color}08`,
-                border: `1.5px solid ${rt.color}28`,
-                borderRadius: 14, padding: "12px 11px",
-              }}>
-                <div style={{ fontSize: 18, marginBottom: 6 }}>{rt.icon}</div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: rt.color, marginBottom: 4, lineHeight: 1.3, fontFamily: bf }}>
-                  {rt.label}
+        {/* ── REPORT & RESOLUTION ──────────────────────────────────────── */}
+        <div className="ys-card">
+          <Card dark={dark}>
+            <SectionHeader title={s.reportTitle} accent={IND_GREEN} dark={dark} bf={bf} />
+            <div style={{
+              fontSize: 11, fontWeight: 600, color: IND_GREEN,
+              letterSpacing: 0.4, marginBottom: 10, fontFamily: bf,
+            }}>
+              {s.reportSubtitle}
+            </div>
+            <div style={{ fontSize: 13, color: th.textMid, lineHeight: 1.8, marginBottom: 18, fontFamily: bf }}>
+              {s.reportBody}
+            </div>
+
+            {/* 2×2 report type grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+              {s.reportTypes.map((rt, i) => (
+                <div key={i} style={{
+                  background: dark ? `${rt.color}12` : `${rt.color}07`,
+                  border: `1px solid ${rt.color}28`,
+                  borderRadius: R.lg, padding: "14px 12px",
+                }}>
+                  <div style={{ fontSize: 20, marginBottom: 8 }}>{rt.icon}</div>
+                  <div style={{
+                    fontSize: 11, fontWeight: 700, color: rt.color,
+                    marginBottom: 5, lineHeight: 1.35, fontFamily: bf,
+                  }}>
+                    {rt.label}
+                  </div>
+                  <div style={{ fontSize: 10, color: th.textSub, lineHeight: 1.55, fontFamily: bf }}>
+                    {rt.desc}
+                  </div>
                 </div>
-                <div style={{ fontSize: 10, color: th.textSub, lineHeight: 1.5, fontFamily: bf }}>
-                  {rt.desc}
+              ))}
+            </div>
+
+            {/* Flow note */}
+            <div style={{
+              background: dark ? `${IND_GREEN}12` : `${IND_GREEN}07`,
+              border: `1px solid ${IND_GREEN}28`,
+              borderRadius: R.md, padding: "13px 15px",
+            }}>
+              <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+                <div style={{ fontSize: 15, flexShrink: 0, paddingTop: 1 }}>📌</div>
+                <div style={{ fontSize: 11, color: th.textMid, lineHeight: 1.75, fontFamily: bf }}>
+                  {s.reportFlow}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          </Card>
+        </div>
 
-          {/* Flow note */}
+        {/* ── LEGAL & DISCLAIMER ───────────────────────────────────────── */}
+        <div className="ys-card">
+          <Card dark={dark}>
+            <SectionHeader title={s.legalTitle} accent="#DC2626" dark={dark} bf={bf} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {s.legalPoints.map((pt, i) => (
+                <div key={i} style={{ display: "flex", gap: 11, alignItems: "flex-start" }}>
+                  <div style={{
+                    width: 22, height: 22, borderRadius: 7, flexShrink: 0,
+                    background: dark ? "rgba(220,38,38,0.12)" : "rgba(220,38,38,0.08)",
+                    border: "1px solid rgba(220,38,38,0.20)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 9, fontWeight: 800, color: "#DC2626", marginTop: 1,
+                  }}>
+                    {i + 1}
+                  </div>
+                  <div style={{ fontSize: 11, color: th.textMid, lineHeight: 1.8, fontFamily: bf }}>
+                    {pt}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        {/* ── USER SUPPORT & COMPLAINTS ────────────────────────────────── */}
+        <div className="ys-card">
           <div style={{
-            background: dark ? "rgba(19,136,8,0.10)" : "rgba(19,136,8,0.05)",
-            border: `1px solid ${IND_GREEN}28`,
-            borderRadius: 12, padding: "12px 14px",
+            background: dark ? "rgba(220,38,38,0.07)" : "rgba(220,38,38,0.03)",
+            borderRadius: R.xl, padding: "24px 20px",
+            border: "1px solid rgba(220,38,38,0.18)",
           }}>
-            <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-              <div style={{ fontSize: 14, flexShrink: 0, paddingTop: 1 }}>📌</div>
-              <div style={{ fontSize: 11, color: th.textMid, lineHeight: 1.7, fontFamily: bf }}>
-                {s.reportFlow}
+            <SectionHeader title={s.grievanceTitle} accent="#DC2626" dark={dark} bf={bf} />
+            <div style={{ fontSize: 13, color: th.textMid, lineHeight: 1.85, marginBottom: 16, fontFamily: bf }}>
+              {s.grievanceBody}
+            </div>
+            <div style={{
+              background: dark ? "rgba(255,255,255,0.04)" : "#FFFFFF",
+              border: "1px solid rgba(220,38,38,0.18)",
+              borderRadius: R.md, padding: "14px 16px",
+              display: "flex", flexDirection: "column", gap: 7,
+              boxShadow: dark ? "none" : "0 1px 4px rgba(220,38,38,0.06)",
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#DC2626", fontFamily: bf }}>
+                📋 {s.grievanceNote}
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: th.textMid, fontFamily: bf }}>
+                📧 {s.grievanceContact}
+              </div>
+              <div style={{
+                height: 1, background: `linear-gradient(to right, transparent, rgba(220,38,38,0.18), transparent)`,
+              }} />
+              <div style={{ fontSize: 10, color: th.textSub, fontFamily: bf, lineHeight: 1.5 }}>
+                {isHindi
+                  ? "⚡ तत्काल पुष्टि ईमेल  •  ✅ 72 घंटे में समाधान"
+                  : "⚡ Instant confirmation email  •  ✅ Resolution within 72 hours"}
               </div>
             </div>
           </div>
         </div>
 
-        {/* ── LEGAL & DISCLAIMER ────────────────────────────────────── */}
-        <div style={{
-          background: th.card,
-          borderRadius: 18,
-          padding: "20px 18px",
-          border: `1.5px solid ${th.border}`,
-          boxShadow: dark ? "none" : "0 2px 12px rgba(0,0,0,0.04)",
-        }}>
-          <SectionHeader title={s.legalTitle} accent="#DC2626" dark={dark} bf={bf} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {s.legalPoints.map((pt, i) => (
-              <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                <div style={{
-                  width: 20, height: 20, borderRadius: 6, flexShrink: 0,
-                  background: "rgba(220,38,38,0.10)", border: "1px solid rgba(220,38,38,0.20)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 9, fontWeight: 800, color: "#DC2626", marginTop: 1,
-                }}>
-                  {i + 1}
-                </div>
-                <div style={{ fontSize: 11, color: th.textMid, lineHeight: 1.7, fontFamily: bf }}>{pt}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── TECHNOLOGY ────────────────────────────────────────────── */}
-        <div style={{
-          background: th.card,
-          borderRadius: 18,
-          padding: "20px 18px",
-          border: `1.5px solid ${th.border}`,
-          boxShadow: dark ? "none" : "0 2px 12px rgba(0,0,0,0.04)",
-        }}>
-          <SectionHeader title={s.techTitle} accent={ASHOKA_BLUE} dark={dark} bf={bf} />
-          <div style={{ fontSize: 12, color: th.textSub, marginBottom: 14, lineHeight: 1.6, fontFamily: bf }}>
-            {s.techBody}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        {/* ── TECHNOLOGY & INFRASTRUCTURE ──────────────────────────────── */}
+        <div className="ys-card">
+          <Card dark={dark} accentColor={ASHOKA_BLUE}>
+            <SectionHeader title={s.techTitle} accent={ASHOKA_BLUE} dark={dark} bf={bf} />
+            <div style={{ fontSize: 12, color: th.textSub, marginBottom: 18, lineHeight: 1.75, fontFamily: bf }}>
+              {s.techBody}
+            </div>
             {s.techStack.map((t, i) => (
               <div key={i}>
-                {i > 0 && <div style={{ height: 1, background: th.divider, margin: "11px 0" }} />}
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {i > 0 && <Divider dark={dark} />}
+                <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
                   <div style={{
-                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                    background: dark ? "rgba(255,255,255,0.06)" : "#f3f4f8",
+                    width: 40, height: 40, borderRadius: R.md, flexShrink: 0,
+                    background: dark ? "rgba(255,255,255,0.06)" : "#EEF1FB",
                     border: `1px solid ${th.border2}`,
-                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: t.name === "Vercel" ? 13 : 17,
+                    fontWeight: 900,
+                    color: t.name === "Vercel"
+                      ? (dark ? "#fff" : "#000")
+                      : t.name === "GitHub"
+                      ? (dark ? "#ccc" : "#1a1a1a")
+                      : "inherit",
                   }}>
                     {t.icon}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: th.text, fontFamily: bf }}>{t.name}</div>
-                    <div style={{ fontSize: 10, color: th.textSub, marginTop: 2, fontFamily: bf }}>{t.role}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: th.text, fontFamily: bf }}>
+                        {t.name}
+                      </div>
+                      {t.badge && (
+                        <span style={{
+                          fontSize: 8, fontWeight: 700, letterSpacing: 0.5,
+                          background: dark ? "rgba(255,255,255,0.10)" : `${ASHOKA_BLUE}12`,
+                          color: dark ? "rgba(255,255,255,0.60)" : ASHOKA_BLUE,
+                          borderRadius: 5, padding: "2px 7px",
+                          border: `1px solid ${dark ? "rgba(255,255,255,0.12)" : `${ASHOKA_BLUE}22`}`,
+                        }}>
+                          {t.badge}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 11, color: th.textSub, lineHeight: 1.5, fontFamily: bf }}>
+                      {t.role}
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
-          </div>
+          </Card>
         </div>
 
-        {/* ── PRIVACY ───────────────────────────────────────────────── */}
-        <div style={{
-          background: dark ? "rgba(0,53,128,0.14)" : "rgba(0,53,128,0.04)",
-          borderRadius: 18,
-          padding: "16px 18px",
-          border: `1.5px solid ${NAVY}22`,
-        }}>
-          <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-            <div style={{ fontSize: 18, flexShrink: 0, paddingTop: 1 }}>🔒</div>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 800, color: th.text, marginBottom: 5, fontFamily: bf }}>
-                {s.privacyTitle}
-              </div>
-              <div style={{ fontSize: 11, color: th.textMid, lineHeight: 1.7, fontFamily: bf }}>
-                {s.privacyBody}
-              </div>
+        {/* ── ACKNOWLEDGEMENTS ─────────────────────────────────────────── */}
+        <div className="ys-card">
+          <Card dark={dark}>
+            <SectionHeader title={s.ackTitle} accent={IND_GREEN} dark={dark} bf={bf} />
+            <div style={{ fontSize: 12, color: th.textSub, lineHeight: 1.7, marginBottom: 16, fontFamily: bf }}>
+              {s.ackBody}
             </div>
-          </div>
+            {s.ackItems.map((item, i) => (
+              <div key={i}>
+                {i > 0 && <Divider dark={dark} />}
+                <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
+                  <div style={{
+                    width: 38, height: 38, borderRadius: R.md, flexShrink: 0,
+                    background: dark ? "rgba(255,255,255,0.06)" : "#F0F3FA",
+                    border: `1px solid ${th.border2}`,
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17,
+                  }}>
+                    {item.icon}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: th.text, marginBottom: 3, fontFamily: bf }}>
+                      {item.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: th.textSub, lineHeight: 1.55, fontFamily: bf }}>
+                      {item.note}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </Card>
         </div>
 
-        {/* ── DEVELOPER ─────────────────────────────────────────────── */}
-        <div style={{
-          background: th.card,
-          borderRadius: 18,
-          padding: "20px 18px",
-          border: `1.5px solid ${th.border}`,
-          boxShadow: dark ? "none" : "0 2px 12px rgba(0,0,0,0.04)",
-        }}>
-          <SectionHeader title={s.devTitle} accent={NAVY} dark={dark} bf={bf} />
-          <div style={{ fontSize: 12, color: th.textMid, lineHeight: 1.75, marginBottom: 16, fontFamily: bf }}>
-            {s.devBody}
-          </div>
-          {/* Website link */}
-          <div
-            className="about-link"
-            onClick={() => window.open(s.devWebsite, "_blank")}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              background: `linear-gradient(135deg, ${NAVY}, #1a3a8a)`,
-              borderRadius: 13, padding: "13px 16px",
-              cursor: "pointer", transition: "opacity 0.18s",
-              boxShadow: "0 6px 20px rgba(0,53,128,0.28)",
-            }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {/* ── PRIVACY & DATA ───────────────────────────────────────────── */}
+        <div className="ys-card">
+          <div style={{
+            background: dark ? `${NAVY}22` : `${NAVY}06`,
+            borderRadius: R.xl, padding: "20px",
+            border: `1px solid ${NAVY}22`,
+          }}>
+            <div style={{ display: "flex", gap: 13, alignItems: "flex-start" }}>
               <div style={{
-                width: 32, height: 32, borderRadius: 9,
-                background: "rgba(255,255,255,0.14)",
-                border: "1px solid rgba(255,255,255,0.22)",
-                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
-              }}>🌐</div>
+                width: 40, height: 40, borderRadius: R.md, flexShrink: 0,
+                background: dark ? `${NAVY}30` : `${NAVY}10`,
+                border: `1px solid ${NAVY}22`,
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
+              }}>
+                🔒
+              </div>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "#fff", fontFamily: bf }}>{s.devLink}</div>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.55)", marginTop: 2, fontFamily: bf }}>
-                  sahnawaz-portfolio.vercel.app
+                <div style={{ fontSize: 13, fontWeight: 700, color: th.text, marginBottom: 6, fontFamily: bf }}>
+                  {s.privacyTitle}
+                </div>
+                <div style={{ fontSize: 12, color: th.textMid, lineHeight: 1.8, fontFamily: bf }}>
+                  {s.privacyBody}
                 </div>
               </div>
             </div>
-            <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 16 }}>›</div>
           </div>
         </div>
 
-        {/* ── OFFICIAL CONTACT ──────────────────────────────────────── */}
-        <div style={{
-          background: th.card,
-          borderRadius: 18,
-          padding: "20px 18px",
-          border: `1.5px solid ${th.border}`,
-          boxShadow: dark ? "none" : "0 2px 12px rgba(0,0,0,0.04)",
-        }}>
-          <SectionHeader title={s.contactTitle} accent={SAFFRON} dark={dark} bf={bf} />
-          {/* Email row */}
-          <div
-            className="about-link"
-            onClick={() => window.open(`mailto:${s.contactEmail}`, "_blank")}
-            style={{
-              display: "flex", alignItems: "center", gap: 12,
-              background: dark ? "rgba(255,153,51,0.10)" : "rgba(255,153,51,0.06)",
-              border: `1.5px solid ${SAFFRON}30`,
-              borderRadius: 13, padding: "13px 14px", cursor: "pointer",
-              marginBottom: 12, transition: "opacity 0.18s",
-            }}>
-            <div style={{
-              width: 38, height: 38, borderRadius: 11, flexShrink: 0,
-              background: `${SAFFRON}18`, border: `1.5px solid ${SAFFRON}28`,
-              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17,
-            }}>📧</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{
-                fontSize: 12, fontWeight: 700, color: SAFFRON,
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: bf,
+        {/* ── ABOUT THE DEVELOPER ──────────────────────────────────────── */}
+        <div className="ys-card">
+          <Card dark={dark} accentColor={NAVY}>
+            <SectionHeader title={s.devTitle} accent={NAVY} dark={dark} bf={bf} />
+            <div style={{ fontSize: 13, color: th.textMid, lineHeight: 1.85, marginBottom: 18, fontFamily: bf }}>
+              {s.devBody}
+            </div>
+            {/* Website CTA */}
+            <div
+              className="ys-link-row"
+              onClick={() => safeOpen(s.devWebsite)}
+              role="link"
+              tabIndex={0}
+              aria-label="Visit developer website"
+              onKeyDown={e => e.key === "Enter" && safeOpen(s.devWebsite)}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                background: `linear-gradient(135deg, ${NAVY} 0%, #1A3A8A 100%)`,
+                borderRadius: R.lg, padding: "14px 16px",
+                cursor: "pointer",
+                boxShadow: "0 8px 24px rgba(0,53,128,0.32), inset 0 1px 0 rgba(255,255,255,0.10)",
               }}>
-                {s.contactEmail}
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 34, height: 34, borderRadius: 10,
+                  background: "rgba(255,255,255,0.12)",
+                  border: "1px solid rgba(255,255,255,0.20)",
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15,
+                }}>🌐</div>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", fontFamily: bf }}>
+                    {s.devLink}
+                  </div>
+                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.50)", marginTop: 2, fontFamily: bf }}>
+                    sahnawaz-portfolio.vercel.app
+                  </div>
+                </div>
               </div>
-              <div style={{ fontSize: 10, color: th.textSub, marginTop: 2, fontFamily: bf }}>
-                {isHindi ? "आधिकारिक ईमेल पता" : "Official Email Address"}
+              <div style={{
+                color: "rgba(255,255,255,0.55)", fontSize: 18, lineHeight: 1,
+              }}>›</div>
+            </div>
+          </Card>
+        </div>
+
+        {/* ── OFFICIAL CONTACT ─────────────────────────────────────────── */}
+        <div className="ys-card">
+          <Card dark={dark} accentColor={SAFFRON}>
+            <SectionHeader title={s.contactTitle} accent={SAFFRON} dark={dark} bf={bf} />
+            {/* Email row */}
+            <div
+              className="ys-link-row"
+              onClick={() => safeOpen(`mailto:${s.contactEmail}`)}
+              role="link"
+              tabIndex={0}
+              aria-label={`Email ${s.contactEmail}`}
+              onKeyDown={e => e.key === "Enter" && safeOpen(`mailto:${s.contactEmail}`)}
+              style={{
+                display: "flex", alignItems: "center", gap: 13,
+                background: dark ? `${SAFFRON}12` : `${SAFFRON}07`,
+                border: `1px solid ${SAFFRON}28`,
+                borderRadius: R.lg, padding: "14px 15px",
+                cursor: "pointer", marginBottom: 12,
+              }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: R.md, flexShrink: 0,
+                background: `${SAFFRON}18`, border: `1.5px solid ${SAFFRON}28`,
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
+              }}>📧</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: 12, fontWeight: 700, color: SAFFRON,
+                  overflow: "hidden", textOverflow: "ellipsis",
+                  whiteSpace: "nowrap", fontFamily: bf,
+                }}>
+                  {s.contactEmail}
+                </div>
+                <div style={{ fontSize: 10, color: th.textSub, marginTop: 2, fontFamily: bf }}>
+                  {isHindi ? "आधिकारिक ईमेल पता" : "Official Email Address"}
+                </div>
+              </div>
+              <div style={{ color: th.textSub, fontSize: 16 }}>›</div>
+            </div>
+            <div style={{
+              background: dark ? "rgba(255,255,255,0.03)" : th.card2,
+              border: `1px solid ${th.border}`,
+              borderRadius: R.md, padding: "10px 13px",
+            }}>
+              <div style={{ fontSize: 10, color: th.textSub, lineHeight: 1.7, fontFamily: bf }}>
+                ⚠️ {s.contactNote}
               </div>
             </div>
-            <div style={{ color: th.textSub, fontSize: 14 }}>›</div>
-          </div>
+          </Card>
+        </div>
+
+        {/* ── SHARE ────────────────────────────────────────────────────── */}
+        <div className="ys-card">
           <div style={{
-            background: dark ? "rgba(255,255,255,0.04)" : "#fafafa",
-            border: `1px solid ${th.border}`,
-            borderRadius: 10, padding: "9px 12px",
+            background: dark
+              ? "linear-gradient(135deg, rgba(19,136,8,0.12) 0%, rgba(0,53,128,0.16) 100%)"
+              : "linear-gradient(135deg, rgba(19,136,8,0.06) 0%, rgba(0,53,128,0.05) 100%)",
+            borderRadius: R.xl, padding: "26px 20px",
+            border: `1px solid ${IND_GREEN}28`,
+            textAlign: "center",
           }}>
-            <div style={{ fontSize: 10, color: th.textSub, lineHeight: 1.65, fontFamily: bf }}>
-              ⚠️ {s.contactNote}
+            <div style={{ fontSize: 32, marginBottom: 10 }}>🙏</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: th.text, marginBottom: 8, fontFamily: bf }}>
+              {s.shareTitle}
+            </div>
+            <div style={{ fontSize: 12, color: th.textSub, lineHeight: 1.7, marginBottom: 20, fontFamily: bf }}>
+              {s.shareBody}
+            </div>
+            <div
+              className="ys-share-btn"
+              onClick={() => {
+                if (typeof navigator !== "undefined" && navigator.share) {
+                  navigator.share({
+                    title: "YojanaSetu — Official Scheme Finder",
+                    text: "Find government schemes you qualify for. Free, bilingual, and made in India 🇮🇳",
+                    url: "https://sahnawaz-portfolio.vercel.app",
+                  }).catch(() => {/* user cancelled or not supported — silent fail */});
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Share YojanaSetu"
+              onKeyDown={e => e.key === "Enter" && e.currentTarget.click()}
+              style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 9,
+                background: `linear-gradient(135deg, ${IND_GREEN} 0%, #0D6A06 100%)`,
+                borderRadius: R.md, padding: "14px 28px",
+                fontSize: 13, fontWeight: 700, color: "#fff",
+                cursor: "pointer", fontFamily: bf,
+                boxShadow: "0 8px 24px rgba(19,136,8,0.34)",
+              }}>
+              {s.shareBtn}
             </div>
           </div>
         </div>
 
-        {/* ── FOOTER ────────────────────────────────────────────────── */}
-        <div style={{
-          borderRadius: 18,
-          padding: "22px 18px",
-          background: `linear-gradient(160deg, ${NAVY}f5, #05256E)`,
-          display: "flex", flexDirection: "column", alignItems: "center",
-          gap: 12, textAlign: "center",
-          boxShadow: "0 6px 24px rgba(0,53,128,0.25)",
-        }}>
-          {/* Tricolour stripe */}
-          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-            <div style={{ height: 2, width: 24, borderRadius: 2, background: SAFFRON }} />
-            <AshokaChakra size={20} color="rgba(255,255,255,0.45)" spinning />
-            <div style={{ height: 2, width: 24, borderRadius: 2, background: IND_GREEN }} />
-          </div>
+        {/* ── FOOTER ───────────────────────────────────────────────────── */}
+        <div className="ys-card">
+          <div style={{
+            borderRadius: R.xl,
+            padding: "28px 20px",
+            background: `linear-gradient(155deg, #002060 0%, ${NAVY}F8 40%, #05256E 75%, #001538 100%)`,
+            display: "flex", flexDirection: "column", alignItems: "center",
+            gap: 14, textAlign: "center",
+            boxShadow: "0 10px 36px rgba(0,53,128,0.30)",
+            position: "relative", overflow: "hidden",
+          }}>
+            {/* Background texture */}
+            <div style={{
+              position: "absolute", inset: 0, pointerEvents: "none",
+              backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
+              backgroundSize: "20px 20px",
+            }} />
 
-          <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.90)", letterSpacing: 0.4, fontFamily: bf }}>
-            {s.copyright}
-          </div>
-          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.42)", letterSpacing: 0.3, fontFamily: bf }}>
-            {s.footerNote}
-          </div>
+            {/* Chakra + tricolour */}
+            <div style={{ display: "flex", gap: 6, alignItems: "center", position: "relative" }}>
+              <div style={{ height: 2, width: 28, borderRadius: 2, background: SAFFRON }} />
+              <AshokaChakra size={22} color="rgba(255,255,255,0.40)" spinning />
+              <div style={{ height: 2, width: 28, borderRadius: 2, background: IND_GREEN }} />
+            </div>
 
-          {/* Bottom tricolour bar */}
-          <div style={{ display: "flex", width: "100%", height: 3, borderRadius: 3, overflow: "hidden", marginTop: 4 }}>
-            <div style={{ flex: 1, background: SAFFRON }} />
-            <div style={{ flex: 1, background: "#fff" }} />
-            <div style={{ flex: 1, background: IND_GREEN }} />
+            <div style={{
+              fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.88)",
+              letterSpacing: 0.5, fontFamily: bf, position: "relative",
+            }}>
+              {s.copyright}
+            </div>
+            <div style={{
+              fontSize: 10, color: "rgba(255,255,255,0.40)",
+              letterSpacing: 0.4, fontFamily: bf, position: "relative",
+            }}>
+              {s.footerNote}
+            </div>
+
+            {/* Platform ID badge */}
+            <div style={{
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 8, padding: "5px 14px",
+              position: "relative",
+            }}>
+              <span style={{
+                fontSize: 9, fontWeight: 600,
+                color: "rgba(255,255,255,0.36)",
+                letterSpacing: 0.9, fontFamily: "monospace",
+              }}>
+                {s.platformId}
+              </span>
+            </div>
+
+            {/* Bottom tricolour bar */}
+            <div style={{
+              display: "flex", width: "100%", height: 3,
+              borderRadius: 3, overflow: "hidden", marginTop: 2,
+              position: "relative",
+            }}>
+              <div style={{ flex: 1, background: SAFFRON }} />
+              <div style={{ flex: 1, background: "rgba(255,255,255,0.90)" }} />
+              <div style={{ flex: 1, background: IND_GREEN }} />
+            </div>
           </div>
         </div>
 
