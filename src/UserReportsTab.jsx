@@ -668,6 +668,7 @@ function ReportCard({ report, dark, lang, isExpanded, onToggle, onReopen }) {
         reopenedAt: serverTimestamp(),
         replyHistory: arrayUnion({
           who:      "user",
+          userName: auth.currentUser?.displayName || "User",
           text:     reopenMsg.trim(),
           sentAt:   new Date().toISOString(),
           isReopen: true,

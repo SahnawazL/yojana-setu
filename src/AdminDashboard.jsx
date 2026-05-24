@@ -882,7 +882,7 @@ function ConversationThread({ report, dark }) {
       key:      `reply-${i}`,
       who:      r.who === "user" ? "user" : "admin",
       icon:     r.who === "user" ? "👤" : "🛡️",
-      label:    r.who === "user" ? (report.userName || "User") : "Admin",
+      label:    r.who === "user" ? (r.userName || report.userName || "User") : "Admin",
       text:     r.text || "—",
       time:     r.sentAt
                   ? new Date(r.sentAt).toLocaleString("en-IN",
