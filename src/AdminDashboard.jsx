@@ -851,10 +851,127 @@ const TYPE_META = {
   feedback:       { icon:"💡", label:"Feedback",          color:SAFFRON   },
 };
 const STATUS_META = {
-  open:        { label:"Open",        color:"#DC2626",  bg:"#FEF2F2" },
-  in_progress: { label:"In Progress", color:"#D97706",  bg:"#FFFBEB" },
-  resolved:    { label:"Resolved",    color:IND_GREEN,  bg:"#F0FDF4" },
+  open:        { label:"Open",        color:"#DC2626",  bg:"#FEF2F2",  emoji:"🔴" },
+  in_progress: { label:"In Progress", color:"#D97706",  bg:"#FFFBEB",  emoji:"🟡" },
+  resolved:    { label:"Resolved",    color:IND_GREEN,  bg:"#F0FDF4",  emoji:"✅" },
 };
+
+// ── Conversation Thread component ──────────────────────────────────────────
+function ConversationThread({ report, dark }) {
+  const th = THEME[dark ? "dark" : "light"];
+  const thread = [];
+
+  // Original user message
+  thread.push({
+    key:    "original",
+    who:    "user",
+    icon:   "👤",
+    label:  report.userName || "User",
+    text:   report.message || "—",
+    time:   report.createdAt?.seconds
+              ? new Date(report.createdAt.seconds * 1000).toLocaleString("en-IN",
+                  { day:"numeric", month:"short", year:"2-digit", hour:"2-digit", minute:"2-digit" })
+              : "—",
+    status: null,
+  });
+
+  // Admin replies from replyHistory (chronological)
+  const history = Array.isArray(report.replyHistory) ? report.replyHistory : [];
+  history.forEach((r, i) => {
+    thread.push({
+      key:    `reply-${i}`,
+      who:    "admin",
+      icon:   "🛡️",
+      label:  "Admin",
+      text:   r.text || "—",
+      time:   r.sentAt
+                ? new Date(r.sentAt).toLocaleString("en-IN",
+                    { day:"numeric", month:"short", year:"2-digit", hour:"2-digit", minute:"2-digit" })
+                : "—",
+      status: r.status || null,
+    });
+  });
+
+  if (thread.length === 1 && !report.adminReply) return null; // nothing beyond original message
+
+  return (
+    <div style={{
+      background: dark ? "rgba(255,255,255,0.03)" : "#F8FAFF",
+      border:`1.5px solid ${NAVY}22`,
+      borderRadius:14, padding:"12px 14px",
+      display:"flex", flexDirection:"column", gap:0,
+    }}>
+      <div style={{ fontSize:10, fontWeight:800, color:NAVY, letterSpacing:0.5, marginBottom:10 }}>
+        💬 CONVERSATION THREAD ({thread.length} message{thread.length !== 1 ? "s" : ""})
+      </div>
+
+      {thread.map((msg, idx) => {
+        const isAdmin  = msg.who === "admin";
+        const isLast   = idx === thread.length - 1;
+        const smeta    = msg.status ? STATUS_META[msg.status] : null;
+
+        return (
+          <div key={msg.key} style={{ display:"flex", gap:10, position:"relative" }}>
+            {/* Vertical connector line */}
+            {!isLast && (
+              <div style={{
+                position:"absolute",
+                left:15, top:32,
+                width:2, height:"calc(100% - 4px)",
+                background: dark ? "rgba(255,255,255,0.1)" : "#E2E8F0",
+                borderRadius:1,
+              }} />
+            )}
+
+            {/* Avatar bubble */}
+            <div style={{
+              width:30, height:30, borderRadius:"50%", flexShrink:0, zIndex:1,
+              background: isAdmin
+                ? `linear-gradient(135deg,${NAVY},#1a56db)`
+                : `linear-gradient(135deg,${SAFFRON},#f97316)`,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:13, boxShadow:"0 2px 6px rgba(0,0,0,0.15)",
+            }}>
+              {msg.icon}
+            </div>
+
+            {/* Bubble content */}
+            <div style={{
+              flex:1, minWidth:0,
+              background: isAdmin
+                ? (dark ? "rgba(0,53,128,0.2)" : "#EFF6FF")
+                : (dark ? "rgba(255,255,255,0.06)" : "#fff"),
+              border:`1px solid ${isAdmin ? NAVY+"33" : th.border}`,
+              borderRadius: isAdmin ? "4px 14px 14px 14px" : "14px 14px 14px 4px",
+              padding:"9px 12px",
+              marginBottom: isLast ? 0 : 12,
+            }}>
+              <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4, flexWrap:"wrap" }}>
+                <span style={{ fontSize:11, fontWeight:800, color: isAdmin ? NAVY : SAFFRON }}>
+                  {msg.label}
+                </span>
+                {smeta && (
+                  <span style={{
+                    fontSize:9, fontWeight:700, color:smeta.color,
+                    background: dark ? `${smeta.color}22` : smeta.bg,
+                    border:`1px solid ${smeta.color}44`,
+                    borderRadius:5, padding:"1px 6px",
+                  }}>
+                    {smeta.emoji} {smeta.label}
+                  </span>
+                )}
+                <span style={{ fontSize:9, color:th.textSub, marginLeft:"auto" }}>{msg.time}</span>
+              </div>
+              <div style={{ fontSize:12, color:th.text, lineHeight:1.65, whiteSpace:"pre-wrap" }}>
+                {msg.text}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
   const th = THEME[dark ? "dark" : "light"];
@@ -863,11 +980,15 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
   const [expanded, setExpanded] = useState(null);   // expanded report id
 
   // ── Reply state ────────────────────────────────────────────────────────────
-  const [replyText,   setReplyText]   = useState("");
-  const [replySending,setReplySending]= useState(false);
-  const [aiLoading,   setAiLoading]   = useState(false);
-  const [replyDone,   setReplyDone]   = useState(false);  // sent success flash
-  const [replyError,  setReplyError]  = useState("");
+  const [replyText,    setReplyText]    = useState("");
+  const [replySending, setReplySending] = useState(false);
+  const [aiLoading,    setAiLoading]    = useState(false);
+  const [replyDone,    setReplyDone]    = useState(false);
+  const [replyError,   setReplyError]   = useState("");
+
+  // ── NEW: targetStatus tracks admin's intent for the next reply ────────────
+  // null = keep report's current status; otherwise one of "open"|"in_progress"|"resolved"
+  const [targetStatus, setTargetStatus] = useState(null);
 
   // Reset reply state whenever a different card is expanded
   useEffect(() => {
@@ -876,25 +997,59 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
     setAiLoading(false);
     setReplyDone(false);
     setReplyError("");
+    setTargetStatus(null);
   }, [expanded]);
 
-  // ── AI Suggest ────────────────────────────────────────────────────────────
+  // ── AI Suggest — aware of which status button the admin clicked ───────────
   async function handleAiSuggest(report) {
     setAiLoading(true);
     setReplyError("");
     try {
-      const typeLabel = TYPE_META[report.type]?.label || report.type;
+      const typeLabel     = TYPE_META[report.type]?.label || report.type;
+      const effectiveStatus = targetStatus || report.status;
+
+      // Status-specific instructions for the AI
+      const statusGuide = {
+        open:
+          "The admin is keeping this report OPEN — more investigation is needed.\n" +
+          "Acknowledge the report warmly, confirm we received it, and let the user know " +
+          "we are reviewing it. Do NOT promise a resolution yet. If helpful, ask a " +
+          "clarifying follow-up question.",
+        in_progress:
+          "The admin has marked this IN PROGRESS — they are actively working on it.\n" +
+          "Reassure the user that we are investigating their concern. Give them an " +
+          "encouraging update without overpromising. Do NOT say it is resolved.",
+        resolved:
+          "The admin has RESOLVED this report.\n" +
+          "Write a clear, friendly resolution message. Briefly explain what was done or " +
+          "what the user should know/do. Thank them for reaching out and close warmly.",
+      }[effectiveStatus] || "Write a helpful, warm response.";
+
+      // Summarise prior replies so AI has full context
+      const history = Array.isArray(report.replyHistory) ? report.replyHistory : [];
+      const historyContext = history.length
+        ? "\n\nPrevious admin replies (for context — do NOT repeat them):\n" +
+          history.map((r, i) =>
+            `Reply ${i + 1} [${r.status || "—"}]: ${r.text}`
+          ).join("\n")
+        : "";
+
       const systemPrompt =
-        `You are a helpful, warm support agent for YojanaSetu — a government scheme discovery app for Indian citizens.\n` +
-        `Reply in plain text only. No markdown, no bullet points, no headers.`;
+        `You are a warm, professional support agent for YojanaSetu — a government scheme ` +
+        `discovery app for Indian citizens.\n` +
+        `Reply in plain text only. No markdown, no bullet points, no headers.\n\n` +
+        `Current admin action: ${effectiveStatus.replace("_", " ").toUpperCase()}\n` +
+        `Instruction: ${statusGuide}`;
+
       const userPrompt =
-        `A user named "${report.userName || "a user"}" submitted a ${typeLabel}.\n` +
+        `Report type: ${typeLabel}\n` +
+        `User: ${report.userName || "a user"}\n` +
         `Subject: ${report.subject || "(none)"}\n` +
-        `Message: ${report.message}\n\n` +
-        `Write a warm, concise admin reply in 2–4 sentences. Address their concern directly. ` +
+        `Original message: ${report.message}` +
+        `${historyContext}\n\n` +
+        `Write a concise admin reply (2–4 sentences) matching the admin action above. ` +
         `End with a polite closing from the YojanaSetu Team.`;
 
-      // Call /api/chat — same pattern as groqClient.js sendMessage()
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -923,25 +1078,30 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
     }
   }
 
-  // ── Send Admin Reply ───────────────────────────────────────────────────────
+  // ── Send Admin Reply — respects targetStatus, NOT hardcoded "resolved" ────
   async function handleSendReply(report) {
     if (!replyText.trim()) { setReplyError("Please write a reply first."); return; }
     setReplySending(true);
     setReplyError("");
+
+    // Use admin's chosen status; fall back to current report status
+    const statusToSave = targetStatus || report.status;
     let firestoreOk = false;
+
     try {
       // ── Step 1: Save to Firestore ────────────────────────────────────────
       await updateDoc(doc(db, "reports", report.id), {
         adminReply:   replyText.trim(),
         repliedAt:    serverTimestamp(),
-        status:       "resolved",
+        status:       statusToSave,           // ← respect admin's choice
         replyHistory: arrayUnion({
           text:   replyText.trim(),
           sentAt: new Date().toISOString(),
+          status: statusToSave,               // ← record what status this reply was sent under
         }),
       });
       firestoreOk = true;
-      onStatusChange(report.id, "resolved");
+      onStatusChange(report.id, statusToSave);
     } catch (err) {
       console.error("❌ Firestore write failed:", err);
       setReplyError(`Firestore error: ${err.message}`);
@@ -965,19 +1125,22 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
         );
       } catch (err) {
         console.error("❌ EmailJS send failed:", err);
-        // Firestore already saved — show partial success
         setReplyError(`Reply saved ✓ but email failed: ${err?.text || err?.message || "EmailJS error"}`);
         setReplySending(false);
-        setReplyDone(true); // still show success since Firestore worked
+        setReplyDone(true);
         setReplyText("");
+        // Auto-clear flash if not resolved so admin can send more replies
+        if (statusToSave !== "resolved") setTimeout(() => setReplyDone(false), 3500);
         return;
       }
     }
 
-    // ── Both succeeded ────────────────────────────────────────────────────
+    // ── Success ───────────────────────────────────────────────────────────
     setReplyDone(true);
     setReplyText("");
     setReplySending(false);
+    // If not resolved, auto-clear the success flash so admin can keep replying
+    if (statusToSave !== "resolved") setTimeout(() => setReplyDone(false), 3500);
   }
 
   const filtered = useMemo(() => {
@@ -1213,29 +1376,64 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
                   ))}
                 </div>
 
-                {/* Status changer */}
+                {/* ── STATUS CHANGER — also sets AI intent ── */}
                 <div>
                   <div style={{ fontSize:10, fontWeight:700, color:th.textSub, marginBottom:8, letterSpacing:0.4 }}>
                     UPDATE STATUS
                   </div>
                   <div style={{ display:"flex", gap:7 }}>
-                    {Object.entries(STATUS_META).map(([v, meta]) => (
-                      <div key={v} onClick={() => onStatusChange(report.id, v)} style={{
-                        flex:1, padding:"9px 6px",
-                        borderRadius:10, textAlign:"center",
-                        fontSize:10, fontWeight:700, cursor:"pointer",
-                        background: report.status === v
-                          ? (dark ? `${meta.color}30` : meta.bg)
-                          : th.border,
-                        color:  report.status === v ? meta.color : th.textMid,
-                        border: `1.5px solid ${report.status === v ? meta.color : "transparent"}`,
-                        transition:"all 0.18s",
-                      }}>
-                        {meta.label}
-                      </div>
-                    ))}
+                    {Object.entries(STATUS_META).map(([v, meta]) => {
+                      const isActive  = report.status === v;
+                      const isTarget  = (targetStatus || report.status) === v;
+                      return (
+                        <div
+                          key={v}
+                          onClick={() => {
+                            onStatusChange(report.id, v);   // update Firestore immediately
+                            setTargetStatus(v);             // set AI + send intent
+                            setReplyDone(false);
+                          }}
+                          style={{
+                            flex:1, padding:"9px 6px",
+                            borderRadius:10, textAlign:"center",
+                            fontSize:10, fontWeight:700, cursor:"pointer",
+                            background: isTarget
+                              ? (dark ? `${meta.color}30` : meta.bg)
+                              : th.border,
+                            color:  isTarget ? meta.color : th.textMid,
+                            border: `1.5px solid ${isTarget ? meta.color : "transparent"}`,
+                            transition:"all 0.18s",
+                            boxShadow: isTarget ? `0 2px 10px ${meta.color}33` : "none",
+                          }}
+                        >
+                          {meta.emoji} {meta.label}
+                          {isActive && !isTarget && (
+                            <div style={{ fontSize:8, color:th.textSub, marginTop:1 }}>current</div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
+
+                  {/* Intent hint banner */}
+                  {targetStatus && (
+                    <div style={{
+                      marginTop:8,
+                      background: dark
+                        ? `${STATUS_META[targetStatus].color}18`
+                        : `${STATUS_META[targetStatus].bg}`,
+                      border:`1px dashed ${STATUS_META[targetStatus].color}66`,
+                      borderRadius:8, padding:"6px 10px",
+                      fontSize:10, color:STATUS_META[targetStatus].color, fontWeight:600,
+                    }}>
+                      {STATUS_META[targetStatus].emoji} AI Suggest & Send Reply will use{" "}
+                      <strong>{STATUS_META[targetStatus].label}</strong> intent
+                    </div>
+                  )}
                 </div>
+
+                {/* ── CONVERSATION THREAD ── */}
+                <ConversationThread report={report} dark={dark} />
 
                 {/* ── ADMIN REPLY SECTION ── */}
                 <div style={{
@@ -1245,46 +1443,41 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
                   display:"flex", flexDirection:"column", gap:10,
                 }}>
                   <div style={{ fontSize:10, fontWeight:800, color:NAVY, letterSpacing:0.5 }}>
-                    ✉️ REPLY TO USER
+                    ✉️ {report.status === "resolved" ? "CASE CLOSED — ADD A NOTE" : "REPLY TO USER"}
                   </div>
 
-                  {/* Prior reply badge */}
-                  {report.adminReply && !replyDone && (
-                    <div style={{
-                      background: dark ? "rgba(19,136,8,0.15)" : "#F0FDF4",
-                      border:`1px solid ${IND_GREEN}44`,
-                      borderRadius:10, padding:"9px 12px",
-                    }}>
-                      <div style={{ fontSize:9, fontWeight:700, color:IND_GREEN, marginBottom:4, letterSpacing:0.4 }}>
-                        LAST REPLY SENT
+                  {/* Success flash (auto-clears if not resolved) */}
+                  {replyDone && (() => {
+                    const s = targetStatus || report.status;
+                    const flashMap = {
+                      open:        { bg: dark?"rgba(220,38,38,0.15)":"#FEF2F2", border:"#DC262655", color:"#DC2626", text:"✓ Acknowledged — report kept Open" },
+                      in_progress: { bg: dark?"rgba(217,119,6,0.15)":"#FFFBEB",  border:"#D9770655", color:"#D97706", text:"✓ Reply sent — marked In Progress" },
+                      resolved:    { bg: dark?"rgba(19,136,8,0.2)":"#F0FDF4",    border:`${IND_GREEN}`,  color:IND_GREEN, text:"✅ Reply sent & case Resolved!" },
+                    };
+                    const f = flashMap[s] || flashMap.resolved;
+                    return (
+                      <div style={{
+                        background:f.bg, border:`1.5px solid ${f.border}`,
+                        borderRadius:10, padding:"10px 12px",
+                        fontSize:13, fontWeight:700, color:f.color, textAlign:"center",
+                      }}>
+                        {f.text}
                       </div>
-                      <div style={{ fontSize:12, color:th.text, lineHeight:1.6, whiteSpace:"pre-wrap" }}>
-                        {report.adminReply}
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
-                  {/* Success flash */}
-                  {replyDone && (
-                    <div style={{
-                      background: dark ? "rgba(19,136,8,0.2)" : "#F0FDF4",
-                      border:`1.5px solid ${IND_GREEN}`,
-                      borderRadius:10, padding:"10px 12px",
-                      fontSize:13, fontWeight:700, color:IND_GREEN,
-                      textAlign:"center",
-                    }}>
-                      ✅ Reply sent & status set to Resolved!
-                    </div>
-                  )}
-
-                  {/* Reply textarea */}
-                  {!replyDone && (
+                  {/* Reply form — stays open UNLESS status is resolved AND replyDone flash is showing */}
+                  {!(report.status === "resolved" && replyDone) && (
                     <>
                       <div style={{ position:"relative" }}>
                         <textarea
                           value={replyText}
                           onChange={e => { setReplyText(e.target.value.slice(0, 800)); setReplyError(""); }}
-                          placeholder="Write your reply here… or use ✨ AI Suggest below"
+                          placeholder={
+                            !targetStatus
+                              ? "Select a status above first, then write your reply… or use ✨ AI Suggest"
+                              : `Write your reply (${STATUS_META[targetStatus]?.label} intent)… or use ✨ AI Suggest`
+                          }
                           rows={4}
                           style={{
                             width:"100%", boxSizing:"border-box",
@@ -1330,7 +1523,11 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
                             opacity: aiLoading ? 0.7 : 1,
                           }}
                         >
-                          {aiLoading ? "⏳ Thinking…" : "✨ AI Suggest"}
+                          {aiLoading
+                            ? "⏳ Thinking…"
+                            : targetStatus
+                              ? `✨ AI for ${STATUS_META[targetStatus]?.label}`
+                              : "✨ AI Suggest"}
                         </div>
 
                         {/* Send Reply */}
@@ -1343,14 +1540,22 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
                             cursor: replySending ? "default" : "pointer",
                             background: replySending
                               ? th.border
-                              : `linear-gradient(135deg,${NAVY},rgba(0,53,128,0.85))`,
+                              : targetStatus === "resolved"
+                                ? `linear-gradient(135deg,${IND_GREEN},#16a34a)`
+                                : targetStatus === "in_progress"
+                                  ? `linear-gradient(135deg,#D97706,#F59E0B)`
+                                  : `linear-gradient(135deg,${NAVY},rgba(0,53,128,0.85))`,
                             color: replySending ? th.textSub : "#fff",
                             boxShadow: replySending ? "none" : `0 4px 16px ${NAVY}44`,
                             transition:"all 0.2s",
                             opacity: replySending ? 0.7 : 1,
                           }}
                         >
-                          {replySending ? "Sending…" : report.userEmail ? "📨 Send Reply" : "💾 Save Reply"}
+                          {replySending
+                            ? "Sending…"
+                            : report.userEmail
+                              ? `📨 Send & ${targetStatus ? STATUS_META[targetStatus]?.label : "Save"}`
+                              : `💾 Save & ${targetStatus ? STATUS_META[targetStatus]?.label : "Update"}`}
                         </div>
                       </div>
 
@@ -1366,6 +1571,16 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
                         </div>
                       )}
                     </>
+                  )}
+
+                  {/* Resolved & done — locked state */}
+                  {report.status === "resolved" && replyDone && (
+                    <div style={{
+                      textAlign:"center", padding:"8px 0",
+                      fontSize:11, color:th.textSub,
+                    }}>
+                      This report is closed. Reopen it by clicking <strong style={{ color:"#DC2626" }}>Open</strong> or <strong style={{ color:"#D97706" }}>In Progress</strong> above.
+                    </div>
                   )}
                 </div>
               </div>
