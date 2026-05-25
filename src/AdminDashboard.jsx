@@ -1,12 +1,14 @@
 // AdminDashboard.jsx — YojanaSetu Admin Panel (Advanced)
 // Enhanced with: Analytics tab, donut charts, user detail drawer,
-// sorting, pagination, filtered CSV export, refresh, more metrics
+// sorting, pagination, filtered CSV export, refresh, more metrics,
+// and Cleanup tab for purging old resolved reports.
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { collection, getDocs, updateDoc, doc, serverTimestamp, arrayUnion } from "firebase/firestore";
 import { db } from "./firebase.js";
 import { SCHEME_DB, INDIA_STATES } from "./schemesData.js";
 import emailjs from "@emailjs/browser";
+import ResolvedReportsCleaner from "./ResolvedReportsCleaner.jsx";
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const THEME = {
@@ -2063,6 +2065,7 @@ export default function AdminDashboard({ onClose, dark = false }) {
     ["activity",  "🕐 Activity"],
     ["schemes",   "🗺️ Schemes"],
     ["reports",   "📬 Reports"],
+    ["cleanup",   "🗑️ Cleanup"],
   ];
 
   return (
@@ -2656,6 +2659,14 @@ export default function AdminDashboard({ onClose, dark = false }) {
               }
             }
           }}
+        />
+      )}
+
+      {/* ══ CLEANUP — Delete old resolved reports ══ */}
+      {activeSection === "cleanup" && (
+        <ResolvedReportsCleaner
+          dark={dark}
+          onDeleteDone={fetchReports}
         />
       )}
 
