@@ -704,7 +704,7 @@ export default function ResolvedReportsCleaner({ dark = false, lang = "en", onDe
       )}
 
       {/* ── MAIN CLEANER (only shown when unlocked) ── */}
-      {!locked && (
+      {!locked && (<>
       <div style={{
         background: th.bg,
         minHeight: "100%",
@@ -977,7 +977,7 @@ export default function ResolvedReportsCleaner({ dark = false, lang = "en", onDe
       )}
 
       <style>{`@keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }`}</style>
-    </div>
+    </>
     )} {/* end !locked */}
     </>
   );
