@@ -1,5 +1,5 @@
 /**
- * YojanaSetu — AboutTab.jsx
+ * YojanaSahay — AboutTab.jsx
  * Premium Official About Screen · v2.0
  *
  * Copyright (c) 2026 Sahnawaz Ahmed Laskar
@@ -70,14 +70,14 @@ const fontFamily = (lang) =>
 // ─── BILINGUAL STRINGS ────────────────────────────────────────────────────────
 const STRINGS = {
   en: {
-    appName:      "YojanaSetu",
-    tagline:      "Official Scheme Finder",
+    appName:      "YojanaSahay",
+    tagline:      "Free Government Scheme Finder",
     madeInIndia:  "Made in India 🇮🇳",
     version:      "Current Release · Beta",
 
     missionTitle: "Our Mission",
     missionBody:
-      "YojanaSetu is dedicated to bridging the gap between Indian citizens and the government welfare ecosystem. Our platform ensures that every eligible citizen — regardless of location, language, or literacy level — can discover, understand, and access the schemes and benefits they rightfully deserve.",
+      "YojanaSahay is dedicated to bridging the gap between Indian citizens and the government welfare ecosystem. Our platform ensures that every eligible citizen — regardless of location, language, or literacy level — can discover, understand, and access the schemes and benefits they rightfully deserve.",
 
     statsTitle: "Platform at a Glance",
     stats: [
@@ -89,7 +89,7 @@ const STRINGS = {
 
     dbTitle: "Comprehensive Scheme Database",
     dbBody:
-      "YojanaSetu indexes an extensive and continuously expanding catalogue of Central Government and State Government welfare schemes spanning across every state and union territory of India. Our dedicated team actively curates and updates scheme data to ensure accuracy, coverage, and relevance for citizens nationwide.",
+      "YojanaSahay indexes an extensive and continuously expanding catalogue of Central Government and State Government welfare schemes spanning across every state and union territory of India. Our dedicated team actively curates and updates scheme data to ensure accuracy, coverage, and relevance for citizens nationwide.",
 
     featuresTitle: "Core Capabilities",
     features: [
@@ -111,7 +111,7 @@ const STRINGS = {
       {
         icon:"📬", color:IND_GREEN,
         title:"Report & Resolution Centre",
-        desc:"An in-app support system for submitting bugs, scheme requests, general queries, and feedback. Every submission is reviewed by the YojanaSetu team with status tracking and official response.",
+        desc:"An in-app support system for submitting bugs, scheme requests, general queries, and feedback. Every submission is reviewed by the YojanaSahay team with status tracking and official response.",
       },
     ],
 
@@ -127,7 +127,7 @@ const STRINGS = {
     ],
 
     signInTitle: "Benefits of Signing In",
-    signInSub:   "Creating an account unlocks the full YojanaSetu experience.",
+    signInSub:   "Creating an account unlocks the full YojanaSahay experience.",
     signInPoints: [
       { icon:"🎯", title:"Personalised Scheme Matching",    desc:"The eligibility checker and AI use your profile to surface schemes most relevant to you." },
       { icon:"🤖", title:"Profile-Aware AI Responses",      desc:"The AI assistant tailors every recommendation based on your age, income, state, and occupation." },
@@ -139,7 +139,7 @@ const STRINGS = {
     reportTitle:    "Report, Query & Resolution",
     reportSubtitle: "Every Submission is Accounted For",
     reportBody:
-      "YojanaSetu maintains a built-in, end-to-end support and resolution system directly within the app. Citizens and users may submit any of the following:",
+      "YojanaSahay maintains a built-in, end-to-end support and resolution system directly within the app. Citizens and users may submit any of the following:",
     reportTypes: [
       { icon:"🐛", color:"#DC2626", label:"Bug / Issue Report",     desc:"Report technical issues or unexpected behaviour in the app." },
       { icon:"📋", color:NAVY,      label:"Scheme Addition Request", desc:"Request the addition of a scheme not yet listed on the platform." },
@@ -147,17 +147,17 @@ const STRINGS = {
       { icon:"💡", color:SAFFRON,   label:"Feedback & Suggestions",  desc:"Share suggestions to improve the platform for citizens across India." },
     ],
     reportFlow:
-      "All submissions are stored securely and reviewed by the YojanaSetu priority support team. Logged-in users receive automatic email confirmation upon submission and are notified when the team provides an official response. Status transitions — Open → In Progress → Resolved — are visible in real time within the app.",
+      "All submissions are stored securely and reviewed by the YojanaSahay priority support team. Logged-in users receive automatic email confirmation upon submission and are notified when the team provides an official response. Status transitions — Open → In Progress → Resolved — are visible in real time within the app.",
 
     legalTitle:  "Legal & Disclaimer",
     legalPoints: [
-      "YojanaSetu is an independent digital platform for government scheme discovery and is not affiliated with, endorsed by, or representative of any Central or State Government body or ministry.",
+      "YojanaSahay is an independent digital platform for government scheme discovery and is not affiliated with, endorsed by, or representative of any Central or State Government body or ministry.",
       "All scheme data is sourced from publicly available official government portals and communications. While we strive for accuracy, users are advised to verify scheme details directly from the respective government sources before applying.",
-      "YojanaSetu does not facilitate direct scheme applications, financial transactions, or document processing. The platform serves solely as an informational and discovery service.",
+      "YojanaSahay does not facilitate direct scheme applications, financial transactions, or document processing. The platform serves solely as an informational and discovery service.",
     ],
 
     techTitle: "Technology & Infrastructure",
-    techBody:  "YojanaSetu is engineered on a production-grade, security-first technology stack — combining trusted cloud infrastructure, globally distributed deployment, and version-controlled development to ensure reliability, transparency, and performance for every citizen across India.",
+    techBody:  "YojanaSahay is engineered on a production-grade, security-first technology stack — combining trusted cloud infrastructure, globally distributed deployment, and version-controlled development to ensure reliability, transparency, and performance for every citizen across India.",
     techStack: [
       { icon:"🔥", name:"Firebase",  role:"Authentication, Cloud Firestore Database & Real-time Sync",                                                     badge:null },
       { icon:"⚡", name:"Groq AI",   role:"AI Assistant — High-speed, Low-latency Inference Engine",                                                       badge:null },
@@ -171,12 +171,12 @@ const STRINGS = {
       "User data is handled with strict confidentiality. Profile information is used solely to personalise the in-app experience and is never sold, shared, or disclosed to third parties. All data is stored securely on Firebase infrastructure.",
 
     devTitle:   "About the Developer",
-    devBody:    "YojanaSetu is designed, developed, and maintained by Sahnawaz Ahmed Laskar — an independent developer with a vision to make government welfare more accessible to every citizen of India.",
+    devBody:    "YojanaSahay is designed, developed, and maintained by Sahnawaz Ahmed Laskar — an independent developer with a vision to make government welfare more accessible to every citizen of India.",
     devWebsite: "https://sahnawaz-portfolio.vercel.app",
     devLink:    "Visit Official Website →",
 
     contactTitle: "Official Contact",
-    contactEmail: "yojanasetuofficial@gmail.com",
+    contactEmail: "yojanasahayofficial@gmail.com",
     contactNote:  "For platform-related inquiries only. For scheme-specific support, please use the in-app Report & Query feature.",
 
     lastUpdated: "Last Updated · May 2026",
@@ -189,12 +189,12 @@ const STRINGS = {
       { version:"v1.0", date:"Nov 2025",   note:"Initial public Beta · Eligibility checker · 3,000+ schemes indexed" },
     ],
 
-    shareTitle: "Share YojanaSetu",
+    shareTitle: "Share YojanaSahay",
     shareBody:  "Know someone who could benefit from government schemes? Share this platform with them.",
     shareBtn:   "Share with Someone 🙏",
 
     ackTitle: "Acknowledgements",
-    ackBody:  "YojanaSetu is built on open-source tools and publicly available resources. We gratefully acknowledge the following:",
+    ackBody:  "YojanaSahay is built on open-source tools and publicly available resources. We gratefully acknowledge the following:",
     ackItems: [
       { icon:"⚛️",  name:"React",                note:"UI library — Meta Open Source" },
       { icon:"🇮🇳", name:"Digital India Spirit", note:"Built in the spirit of making government services more accessible to every Indian citizen" },
@@ -202,24 +202,24 @@ const STRINGS = {
     ],
 
     grievanceTitle:   "User Support & Complaints",
-    grievanceBody:    "YojanaSetu is committed to resolving every user concern promptly and transparently. Every submission made through the in-app Report & Query system receives an automatic confirmation email instantly. The platform administrator is notified immediately upon each submission and personally reviews every concern.",
-    grievanceContact: "yojanasetuofficial@gmail.com",
+    grievanceBody:    "YojanaSahay is committed to resolving every user concern promptly and transparently. Every submission made through the in-app Report & Query system receives an automatic confirmation email instantly. The platform administrator is notified immediately upon each submission and personally reviews every concern.",
+    grievanceContact: "yojanasahayofficial@gmail.com",
     grievanceNote:    "Platform Administrator: Sahnawaz Ahmed Laskar",
 
     copyright:  "© 2026 Sahnawaz Ahmed Laskar · Open source under MIT License",
-    footerNote: "YojanaSetu · An independent civic technology platform · India",
-    platformId: "Platform ID: YS-2026-IND · MIT Licensed · Beta",
+    footerNote: "YojanaSahay · An independent civic technology platform · India",
+    platformId: "Platform ID: YSH-2026-IND · MIT Licensed · Beta",
   },
 
   hi: {
-    appName:      "योजना सेतु",
-    tagline:      "आधिकारिक योजना खोजक",
+    appName:      "योजना सहाय",
+    tagline:      "निःशुल्क योजना सहायक",
     madeInIndia:  "मेड इन इंडिया 🇮🇳",
     version:      "वर्तमान संस्करण · Beta",
 
     missionTitle: "हमारा उद्देश्य",
     missionBody:
-      "योजना सेतु भारत के नागरिकों और सरकारी कल्याण योजनाओं के बीच की दूरी को मिटाने के लिए समर्पित है। हमारा मंच यह सुनिश्चित करता है कि हर पात्र नागरिक — चाहे वह किसी भी स्थान, भाषा या शिक्षा स्तर का हो — अपने अधिकार की योजनाओं तक सरलता से पहुँच सके।",
+      "योजना सहाय भारत के नागरिकों और सरकारी कल्याण योजनाओं के बीच की दूरी को मिटाने के लिए समर्पित है। हमारा मंच यह सुनिश्चित करता है कि हर पात्र नागरिक — चाहे वह किसी भी स्थान, भाषा या शिक्षा स्तर का हो — अपने अधिकार की योजनाओं तक सरलता से पहुँच सके।",
 
     statsTitle: "प्लेटफ़ॉर्म एक नज़र में",
     stats: [
@@ -231,7 +231,7 @@ const STRINGS = {
 
     dbTitle: "विस्तृत योजना डेटाबेस",
     dbBody:
-      "योजना सेतु केंद्र सरकार और सभी राज्य सरकारों की कल्याण योजनाओं का एक व्यापक और निरंतर विस्तारित होता डेटाबेस बनाए रखता है। हमारी टीम नागरिकों के लिए सटीक, प्रासंगिक और अद्यतन जानकारी सुनिश्चित करने हेतु लगातार कार्यरत रहती है।",
+      "योजना सहाय केंद्र सरकार और सभी राज्य सरकारों की कल्याण योजनाओं का एक व्यापक और निरंतर विस्तारित होता डेटाबेस बनाए रखता है। हमारी टीम नागरिकों के लिए सटीक, प्रासंगिक और अद्यतन जानकारी सुनिश्चित करने हेतु लगातार कार्यरत रहती है।",
 
     featuresTitle: "मुख्य क्षमताएं",
     features: [
@@ -253,7 +253,7 @@ const STRINGS = {
     ],
 
     signInTitle: "साइन इन के लाभ",
-    signInSub:   "खाता बनाकर YojanaSetu का पूरा अनुभव प्राप्त करें।",
+    signInSub:   "खाता बनाकर YojanaSahay का पूरा अनुभव प्राप्त करें।",
     signInPoints: [
       { icon:"🎯", title:"व्यक्तिगत योजना मिलान",       desc:"पात्रता जांचक और AI आपकी प्रोफाइल के अनुसार सर्वाधिक प्रासंगिक योजनाएं दिखाते हैं।" },
       { icon:"🤖", title:"प्रोफाइल-आधारित AI उत्तर",    desc:"AI सहायक आपकी आयु, आय, राज्य और व्यवसाय के अनुसार हर सुझाव तैयार करता है।" },
@@ -264,7 +264,7 @@ const STRINGS = {
 
     reportTitle:    "रिपोर्ट, प्रश्न और समाधान",
     reportSubtitle: "हर सबमिशन का पूरा जवाब",
-    reportBody:     "योजना सेतु में एक पूर्ण अंत-से-अंत सपोर्ट और समाधान प्रणाली उपलब्ध है। नागरिक निम्नलिखित में से कोई भी सबमिट कर सकते हैं:",
+    reportBody:     "योजना सहाय में एक पूर्ण अंत-से-अंत सपोर्ट और समाधान प्रणाली उपलब्ध है। नागरिक निम्नलिखित में से कोई भी सबमिट कर सकते हैं:",
     reportTypes: [
       { icon:"🐛", color:"#DC2626", label:"बग / समस्या रिपोर्ट",   desc:"ऐप में तकनीकी समस्या या अनुचित व्यवहार की जानकारी दें।" },
       { icon:"📋", color:NAVY,      label:"योजना जोड़ने का अनुरोध", desc:"प्लेटफ़ॉर्म पर अनुपस्थित किसी योजना को जोड़ने का अनुरोध करें।" },
@@ -272,17 +272,17 @@ const STRINGS = {
       { icon:"💡", color:SAFFRON,   label:"सुझाव और प्रतिक्रिया",   desc:"देशभर के नागरिकों के लिए प्लेटफ़ॉर्म सुधार के सुझाव साझा करें।" },
     ],
     reportFlow:
-      "सभी सबमिशन सुरक्षित रूप से संग्रहीत होते हैं और योजना सेतु की प्राथमिक सपोर्ट टीम द्वारा समीक्षा की जाती है। लॉगिन उपयोगकर्ताओं को सबमिशन पर स्वचालित ईमेल पुष्टि और टीम के उत्तर पर सूचना मिलती है। स्थिति — Open → In Progress → Resolved — ऐप में वास्तविक समय में दिखाई देती है।",
+      "सभी सबमिशन सुरक्षित रूप से संग्रहीत होते हैं और योजना सहाय की प्राथमिक सपोर्ट टीम द्वारा समीक्षा की जाती है। लॉगिन उपयोगकर्ताओं को सबमिशन पर स्वचालित ईमेल पुष्टि और टीम के उत्तर पर सूचना मिलती है। स्थिति — Open → In Progress → Resolved — ऐप में वास्तविक समय में दिखाई देती है।",
 
     legalTitle:  "कानूनी एवं अस्वीकरण",
     legalPoints: [
-      "योजना सेतु सरकारी योजना खोज के लिए एक स्वतंत्र डिजिटल प्लेटफ़ॉर्म है और किसी भी केंद्र या राज्य सरकार निकाय या मंत्रालय से संबद्ध, अनुमोदित या प्रतिनिधि नहीं है।",
+      "योजना सहाय सरकारी योजना खोज के लिए एक स्वतंत्र डिजिटल प्लेटफ़ॉर्म है और किसी भी केंद्र या राज्य सरकार निकाय या मंत्रालय से संबद्ध, अनुमोदित या प्रतिनिधि नहीं है।",
       "सभी योजना डेटा सार्वजनिक रूप से उपलब्ध आधिकारिक सरकारी पोर्टलों से प्राप्त किया गया है। सटीकता के प्रयास के बावजूद, उपयोगकर्ताओं को आवेदन से पूर्व संबंधित सरकारी स्रोतों से विवरण सत्यापित करने की सलाह दी जाती है।",
-      "योजना सेतु सीधे आवेदन, वित्तीय लेनदेन या दस्तावेज़ प्रसंस्करण की सुविधा नहीं देता। यह प्लेटफ़ॉर्म केवल सूचना और खोज सेवा के रूप में कार्य करता है।",
+      "योजना सहाय सीधे आवेदन, वित्तीय लेनदेन या दस्तावेज़ प्रसंस्करण की सुविधा नहीं देता। यह प्लेटफ़ॉर्म केवल सूचना और खोज सेवा के रूप में कार्य करता है।",
     ],
 
     techTitle: "प्रौद्योगिकी और अवसंरचना",
-    techBody:  "योजना सेतु एक उत्पादन-स्तरीय, सुरक्षा-प्रथम तकनीकी स्टैक पर निर्मित है — जिसमें विश्वसनीय क्लाउड अवसंरचना, वैश्विक वितरित डिप्लॉयमेंट और संस्करण-नियंत्रित विकास का संयोजन है।",
+    techBody:  "योजना सहाय एक उत्पादन-स्तरीय, सुरक्षा-प्रथम तकनीकी स्टैक पर निर्मित है — जिसमें विश्वसनीय क्लाउड अवसंरचना, वैश्विक वितरित डिप्लॉयमेंट और संस्करण-नियंत्रित विकास का संयोजन है।",
     techStack: [
       { icon:"🔥", name:"Firebase",  role:"प्रमाणीकरण, क्लाउड डेटाबेस और रियल-टाइम सिंक",                                                         badge:null },
       { icon:"⚡", name:"Groq AI",   role:"AI सहायक — हाई-स्पीड, लो-लेटेंसी इनफेरेंस इंजन",                                                        badge:null },
@@ -296,12 +296,12 @@ const STRINGS = {
       "उपयोगकर्ता डेटा को सख्त गोपनीयता के साथ संभाला जाता है। प्रोफाइल जानकारी केवल इन-ऐप अनुभव को वैयक्तिकृत करने के लिए उपयोग की जाती है और इसे कभी बेचा, साझा या तीसरे पक्ष को प्रकट नहीं किया जाता।",
 
     devTitle:   "डेवलपर के बारे में",
-    devBody:    "योजना सेतु को Sahnawaz Ahmed Laskar द्वारा — एक स्वतंत्र डेवलपर जो भारत के प्रत्येक नागरिक तक सरकारी कल्याण को सुलभ बनाने की दृष्टि रखते हैं — डिज़ाइन, विकसित और अनुरक्षित किया गया है।",
+    devBody:    "योजना सहाय को Sahnawaz Ahmed Laskar द्वारा — एक स्वतंत्र डेवलपर जो भारत के प्रत्येक नागरिक तक सरकारी कल्याण को सुलभ बनाने की दृष्टि रखते हैं — डिज़ाइन, विकसित और अनुरक्षित किया गया है।",
     devWebsite: "https://sahnawaz-portfolio.vercel.app",
     devLink:    "आधिकारिक वेबसाइट देखें →",
 
     contactTitle: "आधिकारिक संपर्क",
-    contactEmail: "yojanasetuofficial@gmail.com",
+    contactEmail: "yojanasahayofficial@gmail.com",
     contactNote:  "केवल प्लेटफ़ॉर्म संबंधी पूछताछ के लिए। योजना-विशिष्ट सहायता के लिए इन-ऐप Report & Query सुविधा का उपयोग करें।",
 
     lastUpdated: "अंतिम अपडेट · मई 2026",
@@ -314,12 +314,12 @@ const STRINGS = {
       { version:"v1.0", date:"नवंबर 2025", note:"पहला सार्वजनिक Beta · पात्रता जांचक · 3,000+ योजनाएं" },
     ],
 
-    shareTitle: "योजना सेतु साझा करें",
+    shareTitle: "योजना सहाय साझा करें",
     shareBody:  "क्या आप किसी ऐसे व्यक्ति को जानते हैं जो सरकारी योजनाओं से लाभ उठा सकता है? यह प्लेटफ़ॉर्म उनके साथ साझा करें।",
     shareBtn:   "किसी के साथ साझा करें 🙏",
 
     ackTitle: "आभार",
-    ackBody:  "योजना सेतु ओपन-सोर्स टूल्स और सार्वजनिक रूप से उपलब्ध संसाधनों पर निर्मित है। हम निम्नलिखित का कृतज्ञतापूर्वक उल्लेख करते हैं:",
+    ackBody:  "योजना सहाय ओपन-सोर्स टूल्स और सार्वजनिक रूप से उपलब्ध संसाधनों पर निर्मित है। हम निम्नलिखित का कृतज्ञतापूर्वक उल्लेख करते हैं:",
     ackItems: [
       { icon:"⚛️",  name:"React",                note:"UI लाइब्रेरी — Meta ओपन सोर्स" },
       { icon:"🇮🇳", name:"डिजिटल इंडिया भावना", note:"हर भारतीय नागरिक तक सरकारी सेवाएं सुलभ बनाने की भावना से निर्मित" },
@@ -327,13 +327,13 @@ const STRINGS = {
     ],
 
     grievanceTitle:   "उपयोगकर्ता सहायता और शिकायत",
-    grievanceBody:    "योजना सेतु हर उपयोगकर्ता की समस्या को शीघ्र और पारदर्शी तरीके से हल करने के लिए प्रतिबद्ध है। इन-ऐप Report & Query के माध्यम से सबमिट की गई हर शिकायत पर तुरंत स्वचालित पुष्टि ईमेल भेजी जाती है। प्लेटफ़ॉर्म प्रशासक को प्रत्येक सबमिशन की तत्काल सूचना मिलती है और वे व्यक्तिगत रूप से हर समस्या की समीक्षा करते हैं।",
-    grievanceContact: "yojanasetuofficial@gmail.com",
+    grievanceBody:    "योजना सहाय हर उपयोगकर्ता की समस्या को शीघ्र और पारदर्शी तरीके से हल करने के लिए प्रतिबद्ध है। इन-ऐप Report & Query के माध्यम से सबमिट की गई हर शिकायत पर तुरंत स्वचालित पुष्टि ईमेल भेजी जाती है। प्लेटफ़ॉर्म प्रशासक को प्रत्येक सबमिशन की तत्काल सूचना मिलती है और वे व्यक्तिगत रूप से हर समस्या की समीक्षा करते हैं।",
+    grievanceContact: "yojanasahayofficial@gmail.com",
     grievanceNote:    "प्लेटफ़ॉर्म प्रशासक: Sahnawaz Ahmed Laskar",
 
     copyright:  "© 2026 Sahnawaz Ahmed Laskar · MIT License के अंतर्गत ओपन सोर्स",
-    footerNote: "योजना सेतु · एक स्वतंत्र नागरिक प्रौद्योगिकी प्लेटफ़ॉर्म · भारत",
-    platformId: "Platform ID: YS-2026-IND · MIT Licensed · Beta",
+    footerNote: "योजना सहाय · एक स्वतंत्र नागरिक प्रौद्योगिकी प्लेटफ़ॉर्म · भारत",
+    platformId: "Platform ID: YSH-2026-IND · MIT Licensed · Beta",
   },
 };
 
@@ -1342,15 +1342,15 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
               onClick={() => {
                 if (typeof navigator !== "undefined" && navigator.share) {
                   navigator.share({
-                    title: "YojanaSetu — Official Scheme Finder",
+                    title: "YojanaSahay — Free Government Scheme Finder",
                     text: "Find government schemes you qualify for. Free, bilingual, and made in India 🇮🇳",
-                    url: "https://yojana-setu-bice.vercel.app",
+                    url: "https://yojanasahay.vercel.app",
                   }).catch(() => {/* user cancelled or not supported — silent fail */});
                 }
               }}
               role="button"
               tabIndex={0}
-              aria-label="Share YojanaSetu"
+              aria-label="Share YojanaSahay"
               onKeyDown={e => e.key === "Enter" && e.currentTarget.click()}
               style={{
                 display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 9,
