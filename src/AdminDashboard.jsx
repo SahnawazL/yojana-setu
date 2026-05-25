@@ -1818,7 +1818,6 @@ export default function AdminDashboard({ onClose, dark = false }) {
   const [page,          setPage]          = useState(1);
   const [activeSection, setActiveSection] = useState("overview");
   const [selectedUser,  setSelectedUser]  = useState(null);
-  const [lang,          setLang]          = useState("en");       // "en" | "hi"
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   const fetchUsers = useCallback(async (isRefresh = false) => {
@@ -2013,50 +2012,305 @@ export default function AdminDashboard({ onClose, dark = false }) {
     [...new Set(users.map(u => u.state).filter(Boolean))].sort()
   , [users]);
 
-  // ── CSV Export (filtered) ─────────────────────────────────────────────────
-  const exportCSV = useCallback((list = users) => {
-    const headers = [
-      "Name","Phone","Email","Gender","Age Group",
-      "Marital Status","State","Area","Occupation","Income",
-      "Housing","Ration Card","Disability",
-      "Children","Girl Child",
-      "Land Holding (Farmer)","Kisan Card (Farmer)",
-      "Education Level (Student)","Institution (Student)",
-      "Joined","Last Seen","UID",
+  // ── Full Dashboard PDF Export (all sections, single button) ───────────────
+  const exportAllPDF = useCallback(() => {
+    const date = new Date().toLocaleDateString("en-IN", { day:"numeric", month:"long", year:"numeric" });
+    const now  = Date.now();
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+    function summaryTable(rows) {
+      return `<table class="sum-tbl"><tbody>
+        ${rows.map(([k, v]) =>
+          `<tr><td class="sum-key">${k}</td><td class="sum-val">${v}</td></tr>`
+        ).join("")}
+      </tbody></table>`;
+    }
+
+    function dataTable(headers, rows) {
+      return `<table>
+        <thead><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr></thead>
+        <tbody>
+          ${rows.map((r, i) =>
+            `<tr style="background:${i % 2 === 0 ? "#fff" : "#f8f9fa"}">
+              ${r.map(v => `<td>${v ?? "—"}</td>`).join("")}
+            </tr>`
+          ).join("")}
+        </tbody>
+      </table>`;
+    }
+
+    function breakdownBlock(title, entries) {
+      const total = entries.reduce((s, [, v]) => s + v, 0);
+      return `<div class="breakdown">
+        <div class="bd-title">${title}</div>
+        <table>
+          <thead><tr><th>Category</th><th>Count</th><th>%</th></tr></thead>
+          <tbody>
+            ${entries.sort((a, b) => b[1] - a[1]).map(([k, v], i) =>
+              `<tr style="background:${i % 2 === 0 ? "#fff" : "#f8f9fa"}">
+                <td>${k}</td><td>${v}</td>
+                <td>${total ? Math.round(v / total * 100) + "%" : "—"}</td>
+              </tr>`
+            ).join("")}
+          </tbody>
+        </table>
+      </div>`;
+    }
+
+    // ── SECTION 1: Overview ───────────────────────────────────────────────
+    const activeToday = users.filter(u => u.lastSeen?.seconds && (now - u.lastSeen.seconds * 1000) < 86400000).length;
+    const activeWeek  = users.filter(u => u.lastSeen?.seconds && (now - u.lastSeen.seconds * 1000) < 7 * 86400000).length;
+    const newThisWeek = users.filter(u => u.createdAt?.seconds && (now - u.createdAt.seconds * 1000) < 7 * 86400000).length;
+    const withPhone   = users.filter(u => u.phone).length;
+    const withEmail   = users.filter(u => u.email).length;
+    const openRep     = reports.filter(r => r.status === "open").length;
+    const inProgRep   = reports.filter(r => r.status === "in_progress").length;
+    const resolvedRep = reports.filter(r => r.status === "resolved").length;
+
+    const overviewHTML = `
+      <div class="section">
+        <div class="section-title">📊 Overview — Key Metrics</div>
+        <div class="two-col">
+          ${summaryTable([
+            ["👥 Total Users",        users.length],
+            ["🟢 Active Today",        activeToday],
+            ["📅 Active This Week",    activeWeek],
+            ["🆕 Joined This Week",    newThisWeek],
+            ["📱 Users with Phone",    withPhone],
+            ["✉️ Users with Email",    withEmail],
+          ])}
+          ${summaryTable([
+            ["📬 Total Reports",       reports.length],
+            ["🔴 Open",                openRep],
+            ["🟡 In Progress",         inProgRep],
+            ["✅ Resolved",             resolvedRep],
+          ])}
+        </div>
+      </div>`;
+
+    // ── SECTION 2: Analytics ──────────────────────────────────────────────
+    const byOcc     = groupBy(users, "occupation");
+    const byInc     = groupBy(users, "income");
+    const byAge     = groupBy(users, "age");
+    const byArea    = groupBy(users, "area");
+    const byGender  = groupBy(users, "gender");
+    const byRation  = groupBy(users, "ration");
+    const byMarital = groupBy(users, "marital");
+    const byDisab   = groupBy(users, "disability");
+    const byState   = groupBy(users, "state");
+
+    const analyticsHTML = `
+      <div class="section page-break">
+        <div class="section-title">🧮 Analytics Breakdown</div>
+        <div class="two-col">
+          ${breakdownBlock("💼 Occupation",    Object.entries(byOcc).map(([k, v])    => [OCC_LABELS[k]    || k, v]))}
+          ${breakdownBlock("💰 Income Range",  Object.entries(byInc).map(([k, v])    => [INC_LABELS[k]    || k, v]))}
+        </div>
+        <div class="two-col">
+          ${breakdownBlock("🎂 Age Group",     Object.entries(byAge).map(([k, v])    => [AGE_LABELS[k]    || k, v]))}
+          ${breakdownBlock("🏘️ Area Type",     Object.entries(byArea).map(([k, v])   => [AREA_LABELS[k]   || k, v]))}
+        </div>
+        <div class="two-col">
+          ${breakdownBlock("⚧ Gender",         Object.entries(byGender).map(([k, v]) => [GENDER_LABELS[k]?.replace(/[👨👩🧑]/gu,"").trim()   || k, v]))}
+          ${breakdownBlock("🪪 Ration Card",    Object.entries(byRation).map(([k, v]) => [RATION_LABELS[k]?.replace(/[🚫🟡🔴]/gu,"").trim()   || k, v]))}
+        </div>
+        <div class="two-col">
+          ${breakdownBlock("💍 Marital Status", Object.entries(byMarital).map(([k, v])=> [MARITAL_LABELS[k]?.replace(/[💍🕊️]/gu,"").trim()    || k, v]))}
+          ${breakdownBlock("♿ Disability",      Object.entries(byDisab).map(([k, v])  => [DISAB_LABELS[k]?.replace(/[✅🦽👁🦻🧠]/gu,"").trim() || k, v]))}
+        </div>
+        <div class="sub-title" style="margin-top:10px">📍 All States Distribution</div>
+        ${dataTable(
+          ["State", "Users", "%"],
+          Object.entries(byState).sort((a, b) => b[1] - a[1]).map(([st, cnt]) =>
+            [st, cnt, users.length ? Math.round(cnt / users.length * 100) + "%" : "—"]
+          )
+        )}
+      </div>`;
+
+    // ── SECTION 3: All Users ──────────────────────────────────────────────
+    const uHeaders = [
+      "Name","Phone","Email","Gender","Age","Marital",
+      "State","Area","Occupation","Income","House","Ration","Disability","Children","Joined","Last Seen",
     ];
-    const rows = list.map(u => [
-      u.name    || "",
-      u.phone   || "",
-      u.email   || "",
-      GENDER_LABELS[u.gender]?.replace(/[👨👩🧑]/gu,"").trim()       || u.gender     || "",
-      AGE_LABELS[u.age]                                               || u.age        || "",
-      MARITAL_LABELS[u.marital]?.replace(/[💍🕊️]/gu,"").trim()      || u.marital    || "",
-      u.state   || "",
-      AREA_LABELS[u.area]                                             || u.area       || "",
-      OCC_LABELS[u.occupation]                                        || u.occupation || "",
-      INC_LABELS[u.income]                                            || u.income     || "",
-      HOUSE_LABELS[u.house]?.replace(/[✅❌]/gu,"").trim()           || u.house      || "",
-      RATION_LABELS[u.ration]?.replace(/[🚫🟡🔴]/gu,"").trim()      || u.ration     || "",
-      DISAB_LABELS[u.disability]?.replace(/[✅🦽👁🦻🧠]/gu,"").trim() || u.disability || "",
-      CHILDREN_LABELS[u.numChildren]                                  || u.numChildren || "",
-      u.numChildren && u.numChildren !== "0" ? (u.hasGirls === "yes" ? "Yes" : "No") : "N/A",
-      u.occupation === "farmer"  ? (LAND_LABELS[u.landHolding]           || u.landHolding  || "") : "N/A",
-      u.occupation === "farmer"  ? (KISAN_LABELS[u.kisanCard]            || u.kisanCard    || "") : "N/A",
-      u.occupation === "student" ? (EDUC_LABELS[u.educationLevel]        || u.educationLevel  || "") : "N/A",
-      u.occupation === "student" ? (INST_LABELS[u.institutionType]       || u.institutionType || "") : "N/A",
-      formatDate(u.createdAt), formatDate(u.lastSeen), u.id || "",
+    const uRows = users.map(u => [
+      u.name    || "—",
+      u.phone   || "—",
+      u.email   || "—",
+      GENDER_LABELS[u.gender]?.replace(/[👨👩🧑]/gu,"").trim()         || u.gender      || "—",
+      AGE_LABELS[u.age]                                                  || u.age         || "—",
+      MARITAL_LABELS[u.marital]?.replace(/[💍🕊️]/gu,"").trim()        || u.marital     || "—",
+      u.state   || "—",
+      AREA_LABELS[u.area]                                                || u.area        || "—",
+      OCC_LABELS[u.occupation]                                           || u.occupation  || "—",
+      INC_LABELS[u.income]                                               || u.income      || "—",
+      HOUSE_LABELS[u.house]?.replace(/[✅❌]/gu,"").trim()              || u.house       || "—",
+      RATION_LABELS[u.ration]?.replace(/[🚫🟡🔴]/gu,"").trim()        || u.ration      || "—",
+      DISAB_LABELS[u.disability]?.replace(/[✅🦽👁🦻🧠]/gu,"").trim()  || u.disability  || "—",
+      CHILDREN_LABELS[u.numChildren]                                     || u.numChildren || "—",
+      formatDate(u.createdAt),
+      formatDate(u.lastSeen),
     ]);
-    const csv = [headers, ...rows]
-      .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
-      .join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type:"text/csv;charset=utf-8;" });
+
+    const usersHTML = `
+      <div class="section page-break">
+        <div class="section-title">👥 All Users <span class="badge">${users.length}</span></div>
+        ${dataTable(uHeaders, uRows)}
+      </div>`;
+
+    // ── SECTION 4: Activity ───────────────────────────────────────────────
+    const recentActive = [...users]
+      .filter(u => u.lastSeen?.seconds)
+      .sort((a, b) => (b.lastSeen.seconds || 0) - (a.lastSeen.seconds || 0))
+      .slice(0, 20);
+    const newWeekUsers = users.filter(u => u.createdAt?.seconds &&
+      (now - u.createdAt.seconds * 1000) < 7 * 86400000);
+
+    const activityHTML = `
+      <div class="section page-break">
+        <div class="section-title">🕐 Activity</div>
+        <div class="sub-title">Recent Activity — Last 20 Active Users</div>
+        ${dataTable(
+          ["Name", "State", "Occupation", "Last Seen"],
+          recentActive.map(u => [
+            u.name || "—", u.state || "—",
+            OCC_LABELS[u.occupation] || u.occupation || "—",
+            formatDate(u.lastSeen),
+          ])
+        )}
+        <div class="sub-title" style="margin-top:14px">🆕 Joined This Week <span class="badge">${newWeekUsers.length}</span></div>
+        ${newWeekUsers.length === 0
+          ? `<div style="color:#999;padding:8px 0">No new users this week.</div>`
+          : dataTable(
+              ["Name", "State", "Occupation", "Joined"],
+              newWeekUsers.map(u => [
+                u.name || "—", u.state || "—",
+                OCC_LABELS[u.occupation] || u.occupation || "—",
+                formatDate(u.createdAt),
+              ])
+            )
+        }
+      </div>`;
+
+    // ── SECTION 5: Schemes Coverage ───────────────────────────────────────
+    const allSchemes   = Array.isArray(SCHEME_DB) ? SCHEME_DB : Object.values(SCHEME_DB || {});
+    const centralCnt   = allSchemes.filter(s => s.scope === "national").length;
+    const stSchCounts  = {};
+    allSchemes.forEach(s => {
+      if (s.scope === "state" && s.state) stSchCounts[s.state] = (stSchCounts[s.state] || 0) + 1;
+    });
+    const stateList = Array.isArray(INDIA_STATES) ? INDIA_STATES : Object.values(INDIA_STATES || {});
+    const schemeRows = stateList
+      .map(st => {
+        const cnt   = stSchCounts[st] || 0;
+        const level = cnt === 0 ? "None" : cnt <= 2 ? "Low" : cnt <= 5 ? "Medium" : "Good";
+        return [st, cnt, level];
+      })
+      .sort((a, b) => b[1] - a[1]);
+
+    const schemesHTML = `
+      <div class="section page-break">
+        <div class="section-title">🗺️ Schemes Coverage</div>
+        ${summaryTable([
+          ["🇮🇳 Central Schemes",       centralCnt],
+          ["📋 Total Schemes",           allSchemes.length],
+          ["✅ States with Schemes",     stateList.filter(s => stSchCounts[s]).length],
+          ["🔴 States with 0 Schemes",  stateList.filter(s => !stSchCounts[s]).length],
+        ])}
+        <div class="sub-title" style="margin-top:12px">State-wise Scheme Count</div>
+        ${dataTable(["State", "Schemes", "Coverage Level"], schemeRows)}
+      </div>`;
+
+    // ── SECTION 6: Reports ────────────────────────────────────────────────
+    const rRows = reports.map(r => [
+      r.userName || r.userEmail || "—",
+      TYPE_META[r.type]?.label    || r.type   || "—",
+      STATUS_META[r.status]?.label || r.status || "—",
+      (r.message || "—").slice(0, 100) + ((r.message || "").length > 100 ? "…" : ""),
+      formatDate(r.createdAt),
+      formatDate(r.updatedAt || r.createdAt),
+    ]);
+
+    const reportsHTML = `
+      <div class="section page-break">
+        <div class="section-title">📬 Reports / Queries <span class="badge">${reports.length}</span></div>
+        ${dataTable(["User","Type","Status","Message (preview)","Submitted","Updated"], rRows)}
+      </div>`;
+
+    // ── Assemble ──────────────────────────────────────────────────────────
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>YojanaSetu — Full Admin Report</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: Arial, sans-serif; font-size: 9px; color: #111; padding: 16px; }
+    .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; border-bottom:3px solid #003580; padding-bottom:10px; }
+    .brand { font-size:20px; font-weight:900; color:#003580; }
+    .brand span { color:#FF9933; }
+    .meta { font-size:9px; color:#666; text-align:right; line-height:1.7; }
+    .section { margin-bottom:22px; }
+    .section-title { font-size:12px; font-weight:800; color:#003580; margin-bottom:8px; border-left:4px solid #FF9933; padding-left:8px; }
+    .sub-title { font-size:10px; font-weight:700; color:#444; margin-bottom:6px; }
+    .badge { display:inline-block; background:#003580; color:#fff; font-size:8px; font-weight:700; padding:2px 8px; border-radius:10px; margin-left:6px; vertical-align:middle; }
+    .two-col { display:flex; gap:14px; margin-bottom:10px; }
+    .two-col > * { flex:1; min-width:0; }
+    .breakdown { margin-bottom:4px; }
+    .bd-title { font-size:9px; font-weight:700; color:#444; margin-bottom:4px; }
+    .sum-tbl { width:100%; border-collapse:collapse; margin-bottom:4px; }
+    .sum-key { font-size:9px; color:#666; padding:4px 6px; border-bottom:1px solid #eee; }
+    .sum-val { font-size:10px; font-weight:800; color:#003580; padding:4px 6px; border-bottom:1px solid #eee; text-align:right; }
+    table { width:100%; border-collapse:collapse; margin-bottom:6px; }
+    th { background:#003580; color:#fff; padding:5px 4px; text-align:left; font-size:8px; font-weight:700; white-space:nowrap; }
+    td { padding:4px 4px; border-bottom:1px solid #eee; vertical-align:top; word-break:break-word; font-size:8px; }
+    .footer { margin-top:16px; font-size:8px; color:#999; text-align:center; border-top:1px solid #eee; padding-top:8px; }
+    .page-break { page-break-before: always; }
+    @media print {
+      body { padding:8px; }
+      @page { size: A4 landscape; margin:10mm; }
+      .page-break { page-break-before: always; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="brand">Yojana<span>Setu</span></div>
+      <div style="font-size:9px;color:#666;margin-top:3px;">Admin Full Report — Confidential</div>
+    </div>
+    <div class="meta">
+      <div><strong>Generated:</strong> ${date}</div>
+      <div><strong>Users:</strong> ${users.length} &nbsp;·&nbsp; <strong>Reports:</strong> ${reports.length}</div>
+      <div style="color:#DC2626;font-weight:700;margin-top:2px;">Confidential — Do not share</div>
+    </div>
+  </div>
+
+  ${overviewHTML}
+  ${analyticsHTML}
+  ${usersHTML}
+  ${activityHTML}
+  ${schemesHTML}
+  ${reportsHTML}
+
+  <div class="footer">
+    YojanaSetu Admin Dashboard &nbsp;·&nbsp; ${date} &nbsp;·&nbsp;
+    Sections: Overview · Analytics · Users · Activity · Schemes · Reports
+  </div>
+  <script>window.onload = function() { window.print(); }<\/script>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type:"text/html;charset=utf-8;" });
     const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href = url;
-    a.download = `yojanasetu_users_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [users]);
+    const win  = window.open(url, "_blank");
+    if (!win) {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `yojanasetu_full_report_${new Date().toISOString().slice(0,10)}.html`;
+      a.click();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }, [users, reports]);
 
   // ─────────────────────────────────────────────────────────────────────────
   const TABS = [
@@ -2100,15 +2354,6 @@ export default function AdminDashboard({ onClose, dark = false }) {
               YojanaSetu · {loading ? "Loading…" : `${users.length} users`}
             </div>
           </div>
-          {/* Lang toggle */}
-          <div onClick={() => setLang(l => l === "en" ? "hi" : "en")} style={{
-            background:"rgba(255,255,255,0.12)", border:"1px solid rgba(255,255,255,0.25)",
-            borderRadius:10, padding:"7px 10px",
-            color:"#fff", fontSize:11, fontWeight:700, cursor:"pointer",
-            letterSpacing:0.3,
-          }}>
-            {lang === "en" ? "हि" : "EN"}
-          </div>
           {/* Refresh */}
           <div onClick={() => fetchUsers(true)} style={{
             background:"rgba(255,255,255,0.12)", border:"1px solid rgba(255,255,255,0.25)",
@@ -2118,15 +2363,15 @@ export default function AdminDashboard({ onClose, dark = false }) {
           }}>
             {refreshing ? "…" : "↻"}
           </div>
-          {/* Export */}
-          {!loading && users.length > 0 && (
-            <div onClick={() => exportCSV(activeSection === "users" ? filtered : users)} style={{
+          {/* Export All — single button for full dashboard PDF */}
+          {!loading && (users.length > 0 || reports.length > 0) && (
+            <div onClick={exportAllPDF} style={{
               background:"rgba(255,255,255,0.18)", border:"1px solid rgba(255,255,255,0.3)",
               borderRadius:10, padding:"7px 12px",
               color:"#fff", fontSize:11, fontWeight:700, cursor:"pointer",
               display:"flex", alignItems:"center", gap:5,
             }}>
-              ⬇ {activeSection === "users" && filtered.length < users.length ? `${filtered.length}` : "All"}
+              📄 Export All
             </div>
           )}
         </div>
@@ -2414,11 +2659,9 @@ export default function AdminDashboard({ onClose, dark = false }) {
               )}
             </div>
             {filtered.length < users.length && (
-              <div onClick={() => exportCSV(filtered)} style={{
-                fontSize:11, color:NAVY, fontWeight:700, cursor:"pointer",
-              }}>
-                ⬇ Export {filtered.length}
-              </div>
+              <span style={{ fontSize:10, color:SAFFRON, fontWeight:600 }}>
+                Use "📄 Export All" in the header to download the full PDF.
+              </span>
             )}
           </div>
 
@@ -2676,7 +2919,6 @@ export default function AdminDashboard({ onClose, dark = false }) {
       {activeSection === "cleanup" && (
         <ResolvedReportsCleaner
           dark={dark}
-          lang={lang}
           onDeleteDone={fetchReports}
         />
       )}
