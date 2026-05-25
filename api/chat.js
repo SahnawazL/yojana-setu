@@ -1,4 +1,4 @@
-// api/chat.js — Vercel Serverless Function · YojanaSetu
+// api/chat.js — Vercel Serverless Function · Yojana Sahay
 // ─────────────────────────────────────────────────────────────────────────────
 // SIMPLE KEY ROTATION — no external KV/Redis required.
 // Reads up to 5 Groq keys from env vars, tries them in round-robin order.
@@ -63,17 +63,17 @@ export default async function handler(req, res) {
       if (groqRes.status === 429) {
         const errData = await groqRes.json().catch(() => ({}));
         lastError = errData;
-        console.warn(`[YojanaSetu] Key #${i + 1} → 429 rate limited. Trying next key…`);
+        console.warn(`[Yojana Sahay] Key #${i + 1} → 429 rate limited. Trying next key…`);
         continue;
       }
 
       // Success or any other Groq error — return as-is
       const data = await groqRes.json();
       if (groqRes.status === 200) {
-        console.log(`[YojanaSetu] ✓ Key #${i + 1} succeeded.`);
+        console.log(`[Yojana Sahay] ✓ Key #${i + 1} succeeded.`);
       } else {
         console.error(
-          `[YojanaSetu] Groq error ${groqRes.status} on Key #${i + 1}:`,
+          `[Yojana Sahay] Groq error ${groqRes.status} on Key #${i + 1}:`,
           JSON.stringify(data).slice(0, 200)
         );
       }
@@ -81,7 +81,7 @@ export default async function handler(req, res) {
 
     } catch (err) {
       // Network error — try next key
-      console.error(`[YojanaSetu] Network error on Key #${i + 1}:`, err.message);
+      console.error(`[Yojana Sahay] Network error on Key #${i + 1}:`, err.message);
       lastError = { message: err.message };
     }
   }
@@ -91,7 +91,7 @@ export default async function handler(req, res) {
     ? `All ${keys.length} API keys are rate-limited or unavailable. Please wait a moment and try again.`
     : "API key is rate-limited or unavailable. Please wait a moment and try again.";
 
-  console.error(`[YojanaSetu] ✗ All ${keys.length} key(s) exhausted.`);
+  console.error(`[Yojana Sahay] ✗ All ${keys.length} key(s) exhausted.`);
 
   return res.status(429).json({
     error: {
