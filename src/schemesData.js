@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// schemesData.js  —  Single source of truth for YojanaSetu
-// Import this file in YojanaSetu.jsx instead of defining data inline.
+// schemesData.js  —  Single source of truth for Yojana Sahay
+// Import this file in App.jsx instead of defining data inline.
 //
 // Exports:
 //   INDIA_STATES   — array of all state/UT names
