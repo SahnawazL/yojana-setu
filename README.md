@@ -86,6 +86,7 @@ yojana-setu/
 │   ├── schemesData.js      # Scheme database & categories
 │   ├── groqClient.js       # Groq AI API client
 │   └── firebase.js         # Firebase config & initialization
+├── .env.example
 ├── index.html
 ├── package.json
 ├── vite.config.js
@@ -119,22 +120,32 @@ npm run dev
 
 ### Environment Variables
 
-Create a `.env` file in the project root with the following:
+A `.env.example` file is included in the repo. Copy it and fill in your values:
 
-```env
-# Firebase
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-
-# Groq (set in Vercel environment variables — never expose in frontend)
-GROQ_API_KEY=your_groq_api_key
+```bash
+cp .env.example .env
 ```
 
-> ⚠️ The Groq API key must be set as a **Vercel environment variable** only. It is proxied through `/api/chat` and never exposed in client-side code.
+Key variables you need to set:
+
+```env
+# Groq API keys — YojanaSetu rotates across 5 keys to stay within free-tier limits
+# Get yours from: https://console.groq.com
+GROQ_API_KEY_1=your_groq_api_key_1
+GROQ_API_KEY_2=your_groq_api_key_2
+GROQ_API_KEY_3=your_groq_api_key_3
+GROQ_API_KEY_4=your_groq_api_key_4
+GROQ_API_KEY_5=your_groq_api_key_5
+
+# Vercel KV / Redis — auto-populated when you add a KV database in Vercel dashboard
+KV_URL=your_kv_url
+KV_REST_API_URL=your_kv_rest_api_url
+KV_REST_API_TOKEN=your_kv_rest_api_token
+KV_REST_API_READ_ONLY_TOKEN=your_kv_rest_api_read_only_token
+REDIS_URL=your_redis_url
+```
+
+> ⚠️ All Groq and KV keys must be set as **Vercel environment variables** only — they are used server-side via `/api/chat` and never exposed in client-side code.
 
 ### Build for Production
 
