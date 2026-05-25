@@ -1,0 +1,209 @@
+<div align="center">
+
+# 🇮🇳 YojanaSetu
+### Official Government Scheme Finder
+
+**Bridging every Indian citizen to the welfare benefits they rightfully deserve**
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-yojana--setu--bice.vercel.app-blue?style=for-the-badge&logo=vercel)](https://yojana-setu-bice.vercel.app)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![Made in India](https://img.shields.io/badge/Made%20in-India%20🇮🇳-orange?style=for-the-badge)](#)
+[![React](https://img.shields.io/badge/React-Vite-61DAFB?style=for-the-badge&logo=react)](https://vitejs.dev)
+
+</div>
+
+---
+
+## 📖 About
+
+**YojanaSetu** (योजना सेतु — *"Scheme Bridge"*) is an independent civic technology platform built to help citizens of India discover and access the government welfare schemes they are legally entitled to.
+
+The platform eliminates the information gap between citizens and the government welfare ecosystem — regardless of location, language, or literacy level — through smart search, an AI-powered assistant, and a personalized eligibility checker.
+
+> ⚠️ YojanaSetu is an independent platform and is **not affiliated with, endorsed by, or representative of** any Central or State Government body or ministry.
+
+---
+
+## ✨ Features
+
+### 🔍 Smart Scheme Discovery
+Search and browse 3,000+ Central and State government schemes, filtered by category, state, and beneficiary type. Instant results with detailed eligibility criteria, benefits, and application guidance.
+
+### 🎯 Eligibility Checker
+A 6-step guided questionnaire that analyses your profile and instantly matches the schemes you qualify for — no guesswork, no wasted time.
+
+### 🤖 AI Assistant (Bilingual)
+A real-time AI-powered assistant for scheme queries in **Hindi and English**. Provides personalised guidance, scheme comparisons, eligibility clarification, and actionable next steps — powered by **Groq AI**.
+
+### 📬 Report & Resolution Centre
+An in-app support system for submitting bug reports, scheme addition requests, general queries, and feedback. Every submission is reviewed by the YojanaSetu team with real-time status tracking (Open → In Progress → Resolved) and email responses.
+
+### 🛡️ Admin Dashboard
+A comprehensive admin panel with user analytics, donut charts, bar charts, cross-tab breakdowns, scheme coverage metrics, paginated user management, and filtered CSV export.
+
+### 🌙 Dark Mode & Bilingual UI
+Full dark/light theme toggle and seamless Hindi ↔ English language switching throughout the entire app.
+
+---
+
+## 📊 Platform Stats
+
+| Metric | Value |
+|--------|-------|
+| Government Schemes Indexed | 3,000+ |
+| States & UTs Covered | 28+ |
+| Languages Supported | 2 (Hindi & English) |
+| Cost to Citizens | Free |
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| **Frontend** | React + Vite | UI framework & build tool |
+| **Auth & Database** | Firebase (Auth + Firestore) | Authentication, user data, real-time sync |
+| **AI** | Groq AI (`llama-3.3-70b-versatile`) | Bilingual AI assistant |
+| **Email** | EmailJS | Report confirmations & admin replies |
+| **Deployment** | Vercel | Hosting & serverless API routes |
+| **Fonts** | Noto Sans / Noto Sans Devanagari | Hindi & English typography |
+
+---
+
+## 📁 Project Structure
+
+```
+yojana-setu/
+├── api/                    # Vercel serverless functions (Groq API proxy)
+├── src/
+│   ├── App.jsx             # Main app — home, search, schemes, profile tabs
+│   ├── AIChat.jsx          # Bilingual AI assistant chat screen
+│   ├── AdminDashboard.jsx  # Admin panel with analytics & user management
+│   ├── AboutTab.jsx        # About screen with mission, features & legal info
+│   ├── ReportIssueSheet.jsx
+│   ├── UserReportsTab.jsx
+│   ├── ResolvedReportsCleaner.jsx
+│   ├── schemesData.js      # Scheme database & categories
+│   ├── groqClient.js       # Groq AI API client
+│   └── firebase.js         # Firebase config & initialization
+├── index.html
+├── package.json
+├── vite.config.js
+└── .gitignore
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- A Firebase project (Auth + Firestore enabled)
+- A Groq API key
+- A Vercel account (for deployment)
+- An EmailJS account (for report email notifications)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/SahnawazL/yojana-setu.git
+cd yojana-setu
+
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
+```
+
+### Environment Variables
+
+Create a `.env` file in the project root with the following:
+
+```env
+# Firebase
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+
+# Groq (set in Vercel environment variables — never expose in frontend)
+GROQ_API_KEY=your_groq_api_key
+```
+
+> ⚠️ The Groq API key must be set as a **Vercel environment variable** only. It is proxied through `/api/chat` and never exposed in client-side code.
+
+### Build for Production
+
+```bash
+npm run build
+```
+
+---
+
+## 🔐 Authentication
+
+YojanaSetu supports three sign-in methods:
+
+- 📱 **Phone OTP** — via Firebase Phone Auth
+- 🔵 **Google Sign-In** — via Firebase Google Provider
+- 📧 **Email & Password** — via Firebase Email Auth
+
+Signing in unlocks personalized scheme matching, profile-aware AI responses, report tracking, and email notifications.
+
+---
+
+## 🤖 AI Assistant — How It Works
+
+The AI assistant uses **Groq's `llama-3.3-70b-versatile`** model via a secure Vercel serverless route (`/api/chat`). Key behaviours:
+
+- Full conversation history is sent with each request for context continuity
+- If the user has a saved profile, it is injected as a context prefix so the AI personalises every response without asking repeated questions
+- A **reading-time cooldown** is applied after each AI reply (10–15 seconds based on reply length) to promote healthy reading pacing
+- Follow-up suggestion chips are AI-generated and filtered to avoid repetition
+- Chat history is persisted per user in `localStorage` (keyed by Firebase UID)
+
+---
+
+## 📬 Report System
+
+Citizens can submit four types of reports directly from the app:
+
+| Type | Description |
+|------|-------------|
+| 🐛 Bug / Issue Report | Technical issues or unexpected app behaviour |
+| 📋 Scheme Addition Request | Request for a missing scheme to be added |
+| ❓ General Query | Questions about any scheme or feature |
+| 💡 Feedback & Suggestions | Suggestions to improve the platform |
+
+Logged-in users receive **automatic email confirmation** on submission and are **notified by email** when the admin team responds.
+
+---
+
+## ⚖️ Legal & Disclaimer
+
+- YojanaSetu is an **independent** digital platform and is not affiliated with any government body.
+- All scheme data is sourced from publicly available official government portals.
+- Users are advised to **verify scheme details directly from official government sources** before applying.
+- YojanaSetu does not facilitate direct applications, financial transactions, or document processing. It is solely an informational and discovery service.
+
+---
+
+## 📄 License
+
+Copyright © 2026 **Sahnawaz Ahmed Laskar**
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+
+**Made with ❤️ in India 🇮🇳**
+
+[Live App](https://yojana-setu-bice.vercel.app) · [Report an Issue](https://yojana-setu-bice.vercel.app) · [Request a Scheme](https://yojana-setu-bice.vercel.app)
+
+</div>
