@@ -1,4 +1,4 @@
-// ReportIssueSheet.jsx — YojanaSetu
+// ReportIssueSheet.jsx — Yojana Sahay
 // Bottom-sheet for users to report issues, request schemes, or ask queries.
 // Saves to Firestore: collection("reports")
 
