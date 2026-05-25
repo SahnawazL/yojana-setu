@@ -1,34 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  YojanaSetu — sitemap.xml
+  YojanaSahay — sitemap.xml
   Developer : Sahnawaz Ahmed Laskar
   Portfolio : https://sahnawaz-portfolio.vercel.app
-  App URL   : https://yojana-setu-bice.vercel.app
+  App URL   : https://yojanasahay.vercel.app
 -->
 <urlset
   xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml"
 >
   <url>
-    <loc>https://yojana-setu-bice.vercel.app/</loc>
+    <loc>https://yojanasahay.vercel.app/</loc>
     <lastmod>2026-05-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-    <!-- Alternate language versions (same single-page app) -->
-    <xhtml:link
-      rel="alternate"
-      hreflang="en-IN"
-      href="https://yojana-setu-bice.vercel.app/"
-    />
-    <xhtml:link
-      rel="alternate"
-      hreflang="hi-IN"
-      href="https://yojana-setu-bice.vercel.app/"
-    />
-    <xhtml:link
-      rel="alternate"
-      hreflang="x-default"
-      href="https://yojana-setu-bice.vercel.app/"
-    />
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://yojanasahay.vercel.app/" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://yojanasahay.vercel.app/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yojanasahay.vercel.app/" />
   </url>
 </urlset>
