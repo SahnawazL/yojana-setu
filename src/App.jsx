@@ -1,3 +1,16 @@
+/**
+ * YojanaSetu — Official Government Scheme Finder
+ *
+ * Copyright (c) 2026 Sahnawaz Ahmed Laskar
+ * SPDX-License-Identifier: MIT
+ *
+ * This file is part of YojanaSetu — an independent civic technology
+ * platform built to help citizens of India discover and access
+ * government welfare schemes they are legally entitled to.
+ *
+ * See the LICENSE file in the project root for full license terms.
+ */
+
 import { useState, useEffect, useRef, useMemo, useCallback, useDeferredValue } from "react";
 import {
   INDIA_STATES,

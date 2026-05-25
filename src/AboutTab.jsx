@@ -1,6 +1,13 @@
-// AboutTab.jsx — YojanaSetu
-// Premium Official About Screen · v2.0
-// Drop-in component: <AboutTab lang={lang} dark={dark} />
+/**
+ * YojanaSetu — AboutTab.jsx
+ * Premium Official About Screen · v2.0
+ *
+ * Copyright (c) 2026 Sahnawaz Ahmed Laskar
+ * SPDX-License-Identifier: MIT
+ *
+ * Drop-in component: <AboutTab lang={lang} dark={dark} />
+ * See the LICENSE file in the project root for full license terms.
+ */
 
 import { useState, useEffect } from "react";
 
@@ -164,7 +171,7 @@ const STRINGS = {
       "User data is handled with strict confidentiality. Profile information is used solely to personalise the in-app experience and is never sold, shared, or disclosed to third parties. All data is stored securely on Firebase infrastructure.",
 
     devTitle:   "About the Developer",
-    devBody:    "YojanaSetu is designed, developed, and maintained by Sahnawaz — an independent developer with a vision to make government welfare more accessible to every citizen of India.",
+    devBody:    "YojanaSetu is designed, developed, and maintained by Sahnawaz Ahmed Laskar — an independent developer with a vision to make government welfare more accessible to every citizen of India.",
     devWebsite: "https://sahnawaz-portfolio.vercel.app",
     devLink:    "Visit Official Website →",
 
@@ -197,11 +204,11 @@ const STRINGS = {
     grievanceTitle:   "User Support & Complaints",
     grievanceBody:    "YojanaSetu is committed to resolving every user concern promptly and transparently. Every submission made through the in-app Report & Query system receives an automatic confirmation email instantly. The platform administrator is notified immediately upon each submission and personally reviews every concern.",
     grievanceContact: "yojanasetuofficial@gmail.com",
-    grievanceNote:    "Platform Administrator: Sahnawaz",
+    grievanceNote:    "Platform Administrator: Sahnawaz Ahmed Laskar",
 
-    copyright:  "© 2026 YojanaSetu. All rights reserved.",
-    footerNote: "An independent civic technology platform · India",
-    platformId: "Platform ID: YS-2024-IND · Beta",
+    copyright:  "© 2026 Sahnawaz Ahmed Laskar · Open source under MIT License",
+    footerNote: "YojanaSetu · An independent civic technology platform · India",
+    platformId: "Platform ID: YS-2026-IND · MIT Licensed · Beta",
   },
 
   hi: {
@@ -289,7 +296,7 @@ const STRINGS = {
       "उपयोगकर्ता डेटा को सख्त गोपनीयता के साथ संभाला जाता है। प्रोफाइल जानकारी केवल इन-ऐप अनुभव को वैयक्तिकृत करने के लिए उपयोग की जाती है और इसे कभी बेचा, साझा या तीसरे पक्ष को प्रकट नहीं किया जाता।",
 
     devTitle:   "डेवलपर के बारे में",
-    devBody:    "योजना सेतु को Sahnawaz द्वारा — एक स्वतंत्र डेवलपर जो भारत के प्रत्येक नागरिक तक सरकारी कल्याण को सुलभ बनाने की दृष्टि रखते हैं — डिज़ाइन, विकसित और अनुरक्षित किया गया है।",
+    devBody:    "योजना सेतु को Sahnawaz Ahmed Laskar द्वारा — एक स्वतंत्र डेवलपर जो भारत के प्रत्येक नागरिक तक सरकारी कल्याण को सुलभ बनाने की दृष्टि रखते हैं — डिज़ाइन, विकसित और अनुरक्षित किया गया है।",
     devWebsite: "https://sahnawaz-portfolio.vercel.app",
     devLink:    "आधिकारिक वेबसाइट देखें →",
 
@@ -322,11 +329,11 @@ const STRINGS = {
     grievanceTitle:   "उपयोगकर्ता सहायता और शिकायत",
     grievanceBody:    "योजना सेतु हर उपयोगकर्ता की समस्या को शीघ्र और पारदर्शी तरीके से हल करने के लिए प्रतिबद्ध है। इन-ऐप Report & Query के माध्यम से सबमिट की गई हर शिकायत पर तुरंत स्वचालित पुष्टि ईमेल भेजी जाती है। प्लेटफ़ॉर्म प्रशासक को प्रत्येक सबमिशन की तत्काल सूचना मिलती है और वे व्यक्तिगत रूप से हर समस्या की समीक्षा करते हैं।",
     grievanceContact: "yojanasetuofficial@gmail.com",
-    grievanceNote:    "प्लेटफ़ॉर्म प्रशासक: Sahnawaz",
+    grievanceNote:    "प्लेटफ़ॉर्म प्रशासक: Sahnawaz Ahmed Laskar",
 
-    copyright:  "© 2026 योजना सेतु। सर्वाधिकार सुरक्षित।",
-    footerNote: "एक स्वतंत्र नागरिक प्रौद्योगिकी प्लेटफ़ॉर्म · भारत",
-    platformId: "Platform ID: YS-2024-IND · Beta",
+    copyright:  "© 2026 Sahnawaz Ahmed Laskar · MIT License के अंतर्गत ओपन सोर्स",
+    footerNote: "योजना सेतु · एक स्वतंत्र नागरिक प्रौद्योगिकी प्लेटफ़ॉर्म · भारत",
+    platformId: "Platform ID: YS-2026-IND · MIT Licensed · Beta",
   },
 };
 
