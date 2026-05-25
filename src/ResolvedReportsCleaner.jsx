@@ -1,3 +1,11 @@
+/**
+ * YojanaSetu — ResolvedReportsCleaner.jsx
+ * Copyright (c) 2026 Sahnawaz Ahmed Laskar
+ * SPDX-License-Identifier: MIT
+ *
+ * See the LICENSE file in the project root for full license terms.
+ */
+
 // ResolvedReportsCleaner.jsx — YojanaSetu Admin Panel
 // Safely delete old resolved reports from Firestore with age filters.
 // Drop this anywhere in your admin panel and pass dark={true/false}.

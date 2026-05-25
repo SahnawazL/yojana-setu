@@ -1,3 +1,11 @@
+/**
+ * YojanaSetu — AdminDashboard.jsx
+ * Copyright (c) 2026 Sahnawaz Ahmed Laskar
+ * SPDX-License-Identifier: MIT
+ *
+ * See the LICENSE file in the project root for full license terms.
+ */
+
 // AdminDashboard.jsx — YojanaSetu Admin Panel (Advanced)
 // Enhanced with: Analytics tab, donut charts, user detail drawer,
 // sorting, pagination, filtered CSV export, refresh, more metrics,

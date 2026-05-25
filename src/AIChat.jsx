@@ -1,3 +1,11 @@
+/**
+ * YojanaSetu — AIChat.jsx
+ * Copyright (c) 2026 Sahnawaz Ahmed Laskar
+ * SPDX-License-Identifier: MIT
+ *
+ * See the LICENSE file in the project root for full license terms.
+ */
+
 // AIChat.jsx — YojanaSetu AI Assistant Chat Screen
 // UPDATED: unified "Reading Time" cooldown gates both input + chips together
 // FIXED (5 bugs): anti-pattern in updater, memory leaks, dead state, stale closure

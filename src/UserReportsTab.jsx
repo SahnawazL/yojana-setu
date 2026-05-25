@@ -1,3 +1,11 @@
+/**
+ * YojanaSetu — UserReportsTab.jsx
+ * Copyright (c) 2026 Sahnawaz Ahmed Laskar
+ * SPDX-License-Identifier: MIT
+ *
+ * See the LICENSE file in the project root for full license terms.
+ */
+
 // UserReportsTab.jsx — YojanaSetu
 // User-facing "My Reports" tab shown inside their profile screen.
 // Reads from Firestore: collection("reports") where uid == currentUser.uid
