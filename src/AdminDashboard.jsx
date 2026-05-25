@@ -1796,6 +1796,345 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
   );
 }
 
+// ─── EXPORT MODAL ─────────────────────────────────────────────────────────────
+function ExportModal({ steps, currentStep, done, totalUsers, totalReports }) {
+  const progress = done ? 100 : currentStep < 0 ? 2
+    : Math.round(((currentStep + 1) / steps.length) * 100);
+
+  // Blinking cursor tick
+  const [tick, setTick] = React.useState(true);
+  React.useEffect(() => {
+    if (done) return;
+    const id = setInterval(() => setTick(t => !t), 520);
+    return () => clearInterval(id);
+  }, [done]);
+
+  // Fake PDF skeleton lines
+  const LINE_WIDTHS = [88, 62, 80, 44, 74, 56, 84, 40, 70, 64, 50, 80, 36, 90, 60];
+  const visibleLines = done
+    ? LINE_WIDTHS.length
+    : Math.floor((progress / 100) * LINE_WIDTHS.length);
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  return (
+    <>
+      {/* ── Keyframes ── */}
+      <style>{`
+        @keyframes ys-in    { from{opacity:0;transform:scale(.9) translateY(14px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        @keyframes ys-spin  { to{transform:rotate(360deg)} }
+        @keyframes ys-shim  { 0%{transform:translateX(-120%)} 100%{transform:translateX(120%)} }
+        @keyframes ys-ring  { 0%{box-shadow:0 0 0 0 rgba(255,153,51,.45)} 70%{box-shadow:0 0 0 11px rgba(255,153,51,0)} 100%{box-shadow:0 0 0 0 rgba(255,153,51,0)} }
+        @keyframes ys-check { 0%{transform:scale(0);opacity:0} 60%{transform:scale(1.3)} 100%{transform:scale(1);opacity:1} }
+        @keyframes ys-linein{ from{opacity:0;transform:scaleX(0)} to{opacity:1;transform:scaleX(1)} }
+        @keyframes ys-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes ys-done  { 0%{transform:scale(0) rotate(-18deg);opacity:0} 60%{transform:scale(1.18) rotate(4deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
+        @keyframes ys-glow  { 0%,100%{box-shadow:0 0 14px rgba(19,136,8,.5)} 50%{box-shadow:0 0 30px rgba(19,136,8,.9)} }
+        @keyframes ys-fslide{ from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes ys-dots  { 0%,80%,100%{transform:scale(0);opacity:.3} 40%{transform:scale(1);opacity:1} }
+        .ys-card  { animation:ys-in .38s cubic-bezier(.34,1.56,.64,1) forwards }
+        .ys-spin  { animation:ys-spin 1.3s linear infinite; display:inline-block }
+        .ys-check { animation:ys-check .38s cubic-bezier(.34,1.56,.64,1) forwards }
+        .ys-done  { animation:ys-done .5s cubic-bezier(.34,1.56,.64,1) forwards }
+        .ys-glow  { animation:ys-glow 1.5s ease-in-out infinite }
+        .ys-fslide{ animation:ys-fslide .4s ease forwards }
+        .ys-line  { animation:ys-linein .28s ease forwards; transform-origin:left }
+        .ys-dot1  { animation:ys-dots 1.2s .0s infinite ease-in-out }
+        .ys-dot2  { animation:ys-dots 1.2s .2s infinite ease-in-out }
+        .ys-dot3  { animation:ys-dots 1.2s .4s infinite ease-in-out }
+      `}</style>
+
+      {/* Backdrop */}
+      <div style={{
+        position:"fixed", inset:0, zIndex:99998,
+        background:"rgba(0,0,0,0.74)",
+        backdropFilter:"blur(10px)",
+        WebkitBackdropFilter:"blur(10px)",
+      }} />
+
+      {/* Card */}
+      <div style={{
+        position:"fixed", inset:0, zIndex:99999,
+        display:"flex", alignItems:"center", justifyContent:"center",
+        padding:20,
+      }}>
+        <div className="ys-card" style={{
+          width:"100%", maxWidth:448,
+          background:"linear-gradient(155deg,#0d1117 0%,#131920 55%,#0d1117 100%)",
+          border:"1px solid rgba(255,255,255,0.07)",
+          borderRadius:24,
+          overflow:"hidden",
+          boxShadow:"0 48px 120px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,153,51,0.1), inset 0 1px 0 rgba(255,255,255,0.06)",
+        }}>
+
+          {/* Rainbow top strip */}
+          <div style={{
+            height:3,
+            background:`linear-gradient(90deg,${NAVY} 0%,${SAFFRON} 45%,${IND_GREEN} 100%)`,
+          }} />
+
+          {/* ── Header ── */}
+          <div style={{ padding:"20px 24px 14px", display:"flex", alignItems:"center", gap:14 }}>
+            <div style={{
+              width:48, height:48, borderRadius:14, flexShrink:0,
+              background:"linear-gradient(135deg,#192240,#0d1830)",
+              border:"1.5px solid rgba(255,153,51,0.2)",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              animation: done ? "none" : "ys-ring 2s ease-in-out infinite",
+            }}>
+              {done
+                ? <span className="ys-done" style={{ fontSize:24 }}>✅</span>
+                : <span className="ys-spin" style={{ fontSize:22 }}>⚙️</span>
+              }
+            </div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ color:"#f0f0f0", fontSize:15, fontWeight:800, letterSpacing:-0.3 }}>
+                {done ? "Report Ready!" : "Generating Full Report"}
+              </div>
+              <div style={{ color:"rgba(255,255,255,0.38)", fontSize:11, marginTop:2 }}>
+                {done
+                  ? "Opening PDF in a new window…"
+                  : `${totalUsers} users · ${totalReports} reports · all sections`}
+              </div>
+            </div>
+            {/* Animated dots (when processing) */}
+            {!done && (
+              <div style={{ display:"flex", gap:4, flexShrink:0 }}>
+                {["ys-dot1","ys-dot2","ys-dot3"].map(cls => (
+                  <div key={cls} className={cls} style={{
+                    width:6, height:6, borderRadius:"50%",
+                    background:SAFFRON,
+                  }} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── Progress bar ── */}
+          <div style={{ padding:"0 24px 14px" }}>
+            <div style={{
+              height:7, borderRadius:10,
+              background:"rgba(255,255,255,0.06)",
+              overflow:"hidden", position:"relative",
+            }}>
+              <div style={{
+                height:"100%", borderRadius:10,
+                width:`${progress}%`,
+                background:`linear-gradient(90deg,${NAVY},${SAFFRON}${done ? "" : ","+IND_GREEN})`,
+                transition:"width 0.55s cubic-bezier(.22,1,.36,1)",
+                position:"relative", overflow:"hidden",
+              }}>
+                {!done && (
+                  <div style={{
+                    position:"absolute", inset:0,
+                    background:"linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.28) 50%,transparent 100%)",
+                    animation:"ys-shim 1.6s ease-in-out infinite",
+                  }} />
+                )}
+              </div>
+            </div>
+            <div style={{ display:"flex", justifyContent:"space-between", marginTop:5 }}>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,0.25)", fontWeight:600 }}>
+                {done ? "✓ All sections complete" : `${steps.length - Math.max(0, currentStep + 1)} steps remaining`}
+              </div>
+              <div style={{
+                fontSize:10, fontWeight:800,
+                color: done ? IND_GREEN : SAFFRON,
+                transition:"color 0.4s",
+              }}>
+                {progress}%
+              </div>
+            </div>
+          </div>
+
+          {/* ── Body: Steps + PDF preview ── */}
+          <div style={{ padding:"0 24px 16px", display:"flex", gap:14 }}>
+
+            {/* Steps pipeline */}
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{
+                fontSize:8, fontWeight:800, letterSpacing:1.2,
+                color:"rgba(255,255,255,0.22)", textTransform:"uppercase", marginBottom:8,
+              }}>Export Pipeline</div>
+              <div style={{ display:"flex", flexDirection:"column", gap:3 }}>
+                {steps.map((step, i) => {
+                  const isComplete = i <= currentStep;
+                  const isActive   = i === currentStep + 1 && !done;
+                  return (
+                    <div key={i} style={{
+                      display:"flex", alignItems:"center", gap:8,
+                      padding:"5px 8px", borderRadius:8,
+                      background: done
+                        ? "rgba(19,136,8,0.06)"
+                        : isActive
+                          ? "rgba(255,153,51,0.09)"
+                          : isComplete
+                            ? "rgba(19,136,8,0.05)"
+                            : "transparent",
+                      border: done
+                        ? "1px solid rgba(19,136,8,0.12)"
+                        : isActive
+                          ? "1px solid rgba(255,153,51,0.22)"
+                          : "1px solid transparent",
+                      transition:"all 0.35s ease",
+                    }}>
+                      {/* Status dot / check */}
+                      <div style={{ width:16, height:16, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                        {(isComplete || done) ? (
+                          <span className="ys-check" style={{ fontSize:11, color:IND_GREEN, fontWeight:900 }}>✓</span>
+                        ) : isActive ? (
+                          <div style={{
+                            width:7, height:7, borderRadius:"50%",
+                            background:SAFFRON,
+                            animation:"ys-ring 1.3s ease-in-out infinite",
+                          }} />
+                        ) : (
+                          <div style={{
+                            width:5, height:5, borderRadius:"50%",
+                            background:"rgba(255,255,255,0.1)",
+                          }} />
+                        )}
+                      </div>
+                      <div style={{
+                        fontSize:10, fontWeight:(isActive && !done) ? 700 : 500,
+                        color: done
+                          ? IND_GREEN
+                          : isComplete
+                            ? "rgba(19,136,8,0.85)"
+                            : isActive
+                              ? SAFFRON
+                              : "rgba(255,255,255,0.25)",
+                        flex:1, overflow:"hidden",
+                        textOverflow:"ellipsis", whiteSpace:"nowrap",
+                        transition:"color 0.35s",
+                      }}>
+                        {step.label}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Fake PDF preview */}
+            <div style={{ width:108, flexShrink:0 }}>
+              <div style={{
+                fontSize:8, fontWeight:800, letterSpacing:1.2,
+                color:"rgba(255,255,255,0.22)", textTransform:"uppercase", marginBottom:8,
+              }}>Preview</div>
+              <div style={{
+                background:"#ffffff",
+                borderRadius:7,
+                padding:"9px 9px 9px",
+                boxShadow:"0 6px 24px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.3)",
+                minHeight:158,
+                position:"relative", overflow:"hidden",
+              }}>
+                {/* Fake PDF header */}
+                <div style={{ display:"flex", alignItems:"center", gap:3, marginBottom:7 }}>
+                  <div style={{ width:22, height:5, borderRadius:2, background:NAVY }} />
+                  <div style={{ width:11, height:5, borderRadius:2, background:SAFFRON }} />
+                </div>
+                {/* Skeleton lines */}
+                {LINE_WIDTHS.slice(0, visibleLines).map((w, i) => (
+                  <div
+                    key={i}
+                    className="ys-line"
+                    style={{
+                      height: i % 5 === 0 ? 5 : 3,
+                      width:`${w}%`,
+                      borderRadius:2,
+                      background: i % 5 === 0 ? "#c8d4e8" : "#eaecf2",
+                      marginBottom: i % 5 === 0 ? 5 : 3,
+                      animationDelay:`${i * 28}ms`,
+                    }}
+                  />
+                ))}
+                {/* Tiny PDF watermark */}
+                <div style={{
+                  position:"absolute", bottom:5, right:6,
+                  fontSize:7, fontWeight:800,
+                  color:"rgba(0,53,128,0.18)",
+                }}>PDF</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Terminal log ── */}
+          <div style={{
+            margin:"0 24px 16px",
+            background:"rgba(0,0,0,0.45)",
+            border:"1px solid rgba(255,255,255,0.05)",
+            borderRadius:10, padding:"10px 14px",
+            fontFamily:"'SF Mono','Fira Code','Courier New',monospace",
+          }}>
+            <div style={{
+              fontSize:8, fontWeight:700, letterSpacing:1,
+              color:"rgba(255,255,255,0.18)", marginBottom:6, textTransform:"uppercase",
+            }}>
+              ● Terminal
+            </div>
+            {done ? (
+              <div className="ys-fslide" style={{ fontSize:10, color:IND_GREEN, fontWeight:700 }}>
+                ✓ &nbsp;yojanasetu_full_report_{today}.pdf &nbsp;— &nbsp;Ready to open
+              </div>
+            ) : (
+              <div style={{
+                fontSize:10, color:SAFFRON,
+                display:"flex", alignItems:"center", gap:4,
+                overflow:"hidden",
+              }}>
+                <span style={{ color:"rgba(255,255,255,0.22)", flexShrink:0 }}>$&nbsp;</span>
+                <span style={{
+                  flex:1, overflow:"hidden",
+                  textOverflow:"ellipsis", whiteSpace:"nowrap",
+                }}>
+                  {currentStep >= 0 ? steps[currentStep]?.label : "Initializing…"}
+                </span>
+                <span style={{
+                  flexShrink:0,
+                  animation:"ys-blink 1s step-end infinite",
+                  color:SAFFRON,
+                }}>█</span>
+              </div>
+            )}
+          </div>
+
+          {/* ── Footer ── */}
+          <div style={{
+            borderTop:"1px solid rgba(255,255,255,0.05)",
+            padding:"12px 24px",
+            display:"flex", alignItems:"center", justifyContent:"space-between",
+          }}>
+            <div style={{ fontSize:8.5, color:"rgba(255,255,255,0.18)", lineHeight:1.6, fontWeight:500 }}>
+              YojanaSetu Admin &nbsp;·&nbsp; Confidential<br />
+              {today}
+            </div>
+            {done ? (
+              <div className="ys-glow" style={{
+                fontSize:11, fontWeight:800, color:"#fff",
+                background:`linear-gradient(135deg,${IND_GREEN},#16a34a)`,
+                padding:"8px 18px", borderRadius:10,
+                boxShadow:`0 4px 16px rgba(19,136,8,0.4)`,
+              }}>
+                Opening PDF…
+              </div>
+            ) : (
+              <div style={{
+                display:"flex", alignItems:"center", gap:6,
+                fontSize:10, color:"rgba(255,255,255,0.22)", fontWeight:600,
+              }}>
+                <div className="ys-spin" style={{ fontSize:12 }}>⚙️</div>
+                Building document
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const PAGE_SIZE = 20;
 
@@ -1818,6 +2157,9 @@ export default function AdminDashboard({ onClose, dark = false }) {
   const [page,          setPage]          = useState(1);
   const [activeSection, setActiveSection] = useState("overview");
   const [selectedUser,  setSelectedUser]  = useState(null);
+  const [exportModal,   setExportModal]   = useState(false);
+  const [exportStep,    setExportStep]    = useState(-1);
+  const [exportDone,    setExportDone]    = useState(false);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   const fetchUsers = useCallback(async (isRefresh = false) => {
@@ -2312,6 +2654,42 @@ export default function AdminDashboard({ onClose, dark = false }) {
     setTimeout(() => URL.revokeObjectURL(url), 10000);
   }, [users, reports]);
 
+  // ── Export steps definition ────────────────────────────────────────────────
+  const EXPORT_STEPS = useMemo(() => [
+    { label: "Initializing export engine",               dur: 340 },
+    { label: `Collecting ${users.length} user profiles`, dur: 520 },
+    { label: "Building analytics breakdowns",            dur: 640 },
+    { label: "Processing occupation & income data",      dur: 520 },
+    { label: "Rendering full users table",               dur: 720 },
+    { label: "Compiling activity feed",                  dur: 440 },
+    { label: "Processing schemes coverage",              dur: 480 },
+    { label: `Formatting ${reports.length} report${reports.length !== 1 ? "s" : ""}`, dur: 500 },
+    { label: "Generating PDF structure & layout",        dur: 820 },
+    { label: "Finalizing & compressing document",        dur: 580 },
+  ], [users.length, reports.length]);
+
+  // ── Animated export handler ────────────────────────────────────────────────
+  const handleExportAll = useCallback(async () => {
+    setExportModal(true);
+    setExportStep(-1);
+    setExportDone(false);
+
+    for (let i = 0; i < EXPORT_STEPS.length; i++) {
+      await new Promise(r => setTimeout(r, EXPORT_STEPS[i].dur));
+      setExportStep(i);
+    }
+
+    await new Promise(r => setTimeout(r, 380));
+    setExportDone(true);
+    await new Promise(r => setTimeout(r, 1100));
+    setExportModal(false);
+    await new Promise(r => setTimeout(r, 80));
+    exportAllPDF();
+
+    // Reset state after a short delay
+    setTimeout(() => { setExportStep(-1); setExportDone(false); }, 600);
+  }, [EXPORT_STEPS, exportAllPDF]);
+
   // ─────────────────────────────────────────────────────────────────────────
   const TABS = [
     ["overview",  "📊 Overview"],
@@ -2365,11 +2743,14 @@ export default function AdminDashboard({ onClose, dark = false }) {
           </div>
           {/* Export All — single button for full dashboard PDF */}
           {!loading && (users.length > 0 || reports.length > 0) && (
-            <div onClick={exportAllPDF} style={{
+            <div onClick={handleExportAll} style={{
               background:"rgba(255,255,255,0.18)", border:"1px solid rgba(255,255,255,0.3)",
               borderRadius:10, padding:"7px 12px",
               color:"#fff", fontSize:11, fontWeight:700, cursor:"pointer",
               display:"flex", alignItems:"center", gap:5,
+              opacity: exportModal ? 0.5 : 1,
+              pointerEvents: exportModal ? "none" : "auto",
+              transition:"opacity 0.2s",
             }}>
               📄 Export All
             </div>
@@ -2926,6 +3307,17 @@ export default function AdminDashboard({ onClose, dark = false }) {
       {/* User Detail Drawer */}
       {selectedUser && (
         <UserDrawer user={selectedUser} dark={dark} onClose={() => setSelectedUser(null)} />
+      )}
+
+      {/* Export Progress Modal */}
+      {exportModal && (
+        <ExportModal
+          steps={EXPORT_STEPS}
+          currentStep={exportStep}
+          done={exportDone}
+          totalUsers={users.length}
+          totalReports={reports.length}
+        />
       )}
 
       <div style={{ height:32, flexShrink:0 }} />
