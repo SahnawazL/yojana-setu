@@ -1198,6 +1198,9 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
   const openCount     = reports.filter(r => r.status === "open").length;
   const progressCount = reports.filter(r => r.status === "in_progress").length;
   const resolvedCount = reports.filter(r => r.status === "resolved").length;
+  const reopenedCount = reports.filter(r =>
+    r.replyHistory?.some(h => h.isReopen)
+  ).length;
 
   if (loading) {
     return (
@@ -1212,22 +1215,49 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
     <div style={{ padding:"16px 14px", display:"flex", flexDirection:"column", gap:14 }}>
 
       {/* Summary stats */}
-      <div style={{ display:"flex", gap:8 }}>
-        {[
-          { label:"Total",       value:reports.length,  color:NAVY      },
-          { label:"Open",        value:openCount,       color:"#DC2626" },
-          { label:"In Progress", value:progressCount,   color:"#D97706" },
-          { label:"Resolved",    value:resolvedCount,   color:IND_GREEN },
-        ].map(({ label, value, color }) => (
-          <div key={label} style={{
-            flex:1, background:th.card, border:`1.5px solid ${th.border}`,
-            borderRadius:12, padding:"10px 10px 8px",
-            borderTop:`3px solid ${color}`,
-          }}>
-            <div style={{ fontSize:20, fontWeight:800, color:th.text }}>{value}</div>
-            <div style={{ fontSize:9, color:th.textSub, marginTop:2, fontWeight:500 }}>{label}</div>
+      <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+        {/* Row 1: Total, Open, In Progress, Resolved */}
+        <div style={{ display:"flex", gap:8 }}>
+          {[
+            { label:"Total",       value:reports.length,  color:NAVY      },
+            { label:"Open",        value:openCount,       color:"#DC2626" },
+            { label:"In Progress", value:progressCount,   color:"#D97706" },
+            { label:"Resolved",    value:resolvedCount,   color:IND_GREEN },
+          ].map(({ label, value, color }) => (
+            <div key={label} style={{
+              flex:1, background:th.card, border:`1.5px solid ${th.border}`,
+              borderRadius:12, padding:"10px 10px 8px",
+              borderTop:`3px solid ${color}`,
+            }}>
+              <div style={{ fontSize:20, fontWeight:800, color:th.text }}>{value}</div>
+              <div style={{ fontSize:9, color:th.textSub, marginTop:2, fontWeight:500 }}>{label}</div>
+            </div>
+          ))}
+        </div>
+        {/* Row 2: Reopened full-width card */}
+        <div style={{
+          background:th.card, border:`1.5px solid ${"#A855F7"}33`,
+          borderRadius:12, padding:"10px 14px",
+          borderTop:`3px solid #A855F7`,
+          display:"flex", alignItems:"center", justifyContent:"space-between",
+        }}>
+          <div>
+            <div style={{ fontSize:20, fontWeight:800, color:th.text }}>{reopenedCount}</div>
+            <div style={{ fontSize:9, color:th.textSub, marginTop:2, fontWeight:500 }}>🔄 Reopened</div>
           </div>
-        ))}
+          <div style={{
+            fontSize:10, fontWeight:700, color:"#A855F7",
+            background: dark ? "rgba(168,85,247,0.15)" : "#F5F3FF",
+            border:"1px solid rgba(168,85,247,0.35)",
+            borderRadius:8, padding:"4px 10px",
+          }}>
+            {reopenedCount === 0
+              ? "None yet"
+              : reopenedCount === 1
+                ? "1 report reopened by user"
+                : `${reopenedCount} reports reopened by users`}
+          </div>
+        </div>
       </div>
 
       {/* Refresh button */}
