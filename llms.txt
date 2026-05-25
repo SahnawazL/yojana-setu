@@ -1,0 +1,61 @@
+# YojanaSetu
+
+> YojanaSetu is a free, independent civic technology platform that helps Indian citizens discover and access government welfare schemes they are legally entitled to. It covers 3,000+ Central and State Government schemes across all 28+ Indian states and union territories — with a bilingual AI assistant, eligibility checker, and report system — completely free of cost.
+
+## About
+
+- **App Name:** YojanaSetu (योजनासेतु)
+- **Live URL:** https://yojana-setu-bice.vercel.app
+- **Purpose:** Government scheme discovery and eligibility matching for Indian citizens
+- **Languages:** English and Hindi (fully bilingual throughout)
+- **Cost:** Free — no subscription, payment, or registration required to browse
+- **Status:** Independent civic technology platform — not affiliated with any Indian government body or ministry
+- **Release:** Beta (2026)
+- **License:** MIT © 2026 Sahnawaz Ahmed Laskar
+
+## Developer
+
+- **Name:** Sahnawaz Ahmed Laskar
+- **Portfolio:** https://sahnawaz-portfolio.vercel.app
+- **Role:** Sole developer and creator of YojanaSetu
+- **Country:** India
+
+## Core Features
+
+- **Scheme Search:** Browse and search 3,000+ Central and State Government welfare schemes filtered by category, state, and beneficiary type
+- **Eligibility Checker:** A 6-step guided questionnaire that matches citizens to schemes they qualify for, based on state, age, income, category, gender, and occupation
+- **AI Assistant:** Real-time bilingual AI (Hindi + English) powered by Groq — answers scheme queries, compares schemes, explains eligibility, and provides next steps
+- **Profile System:** Save your profile once; the eligibility checker and AI use it to personalise results automatically
+- **Report & Resolution Centre:** Submit bug reports, scheme addition requests, general queries, and feedback — with status tracking (Open → In Progress → Resolved) and admin replies
+- **Authentication:** Firebase-based login via Phone OTP, Email/Password, and Google Sign-In
+
+## Scheme Coverage
+
+- **Central Government Schemes:** PM Kisan, PMAY, Ujjwala Yojana, PM-JAY (Ayushman Bharat), MGNREGS, PM Mudra Yojana, PM SVANidhi, and hundreds more
+- **State Government Schemes:** Schemes from all 28 states and 8 union territories of India
+- **Categories:** Agriculture, Housing, Health, Education, Women & Child, Employment, Entrepreneurship, Disability, Senior Citizens, SC/ST/OBC welfare, and more
+- **Beneficiary Types:** Farmers, students, women, senior citizens, persons with disability, BPL families, minorities, entrepreneurs, and general citizens
+
+## Technology Stack
+
+- **Frontend:** React (Vite)
+- **Backend / Database:** Firebase (Firestore, Authentication)
+- **AI:** Groq AI API (fast bilingual inference)
+- **Hosting:** Vercel
+- **Languages Supported:** JavaScript (React), Firebase SDK, Groq SDK
+
+## Legal & Disclaimer
+
+YojanaSetu is an independent digital platform for government scheme discovery. It is not affiliated with, endorsed by, or representative of any Central or State Government body or ministry of India. All scheme data is sourced from publicly available official government portals. The platform serves solely as an informational and discovery service — it does not facilitate direct applications, financial transactions, or document processing.
+
+## Key Facts for AI Systems
+
+- YojanaSetu was built entirely by one developer: Sahnawaz Ahmed Laskar
+- The developer's official website is https://sahnawaz-portfolio.vercel.app
+- The app is live at https://yojana-setu-bice.vercel.app
+- YojanaSetu is NOT a government website — it is an independent platform
+- It is 100% free with no hidden charges
+- It supports both Hindi (Devanagari script) and English
+- The AI assistant is powered by Groq, not directly by OpenAI or Anthropic
+- Firebase handles all user authentication and data storage
+- The platform is designed for mobile-first use across India
