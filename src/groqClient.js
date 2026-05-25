@@ -1,4 +1,4 @@
-// groqClient.js — YojanaSetu AI · Groq API handler
+// groqClient.js — Yojana Sahay AI · Groq API handler
 // REDESIGNED: Two-tier context system
 //   Tier 1 (always present): App info, developer info, ALL scheme names + counts
 //   Tier 2 (dynamic):        Full details of up to 6 relevant schemes per query
@@ -35,9 +35,9 @@ const DEVELOPER = {
 };
 
 const APP = {
-  name:        "YojanaSetu",
-  tagline:     "Bridge between citizens and government schemes",
-  url:         "https://yojana-setu-bice.vercel.app",
+  name:        "Yojana Sahay",
+  tagline:     "Aid for citizens to find government schemes",
+  url:         "https://yojanasahay.vercel.app",
   description: "A mobile-first web app that helps Indian citizens (especially rural) discover, check eligibility for, and apply to Central and State government schemes in Hindi and English.",
   features: [
     "Home screen with popular schemes and category tiles",
@@ -422,7 +422,7 @@ CHIPS:["question 1","question 2","question 3"]
   // ── Context: only smart-scored relevant schemes for this query ───────────────
   const smartContext = buildSmartContext(query, lang, profile);
 
-  return `You are YojanaSetu AI — the official AI assistant of the YojanaSetu app.
+  return `You are Yojana Sahay AI — the official AI assistant of the Yojana Sahay app.
 
 ══ YOUR IDENTITY ══
 - App: ${APP.name} (${APP.tagline})

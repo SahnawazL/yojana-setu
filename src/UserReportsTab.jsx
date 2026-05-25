@@ -1,12 +1,12 @@
 /**
- * YojanaSetu — UserReportsTab.jsx
+ * Yojana Sahay — UserReportsTab.jsx
  * Copyright (c) 2026 Sahnawaz Ahmed Laskar
  * SPDX-License-Identifier: MIT
  *
  * See the LICENSE file in the project root for full license terms.
  */
 
-// UserReportsTab.jsx — YojanaSetu
+// UserReportsTab.jsx — Yojana Sahay
 // User-facing "My Reports" tab shown inside their profile screen.
 // Reads from Firestore: collection("reports") where uid == currentUser.uid
 // Shows: full conversation thread, status, admin replies, timestamps.
@@ -70,7 +70,7 @@ const STRINGS = {
     },
     thread:        "Conversation",
     you:           "You",
-    admin:         "YojanaSetu Team",
+    admin:         "Yojana Sahay Team",
     noReply:       "Waiting for admin response…",
     submitted:     "Submitted",
     replied:       "Replied",
@@ -108,7 +108,7 @@ const STRINGS = {
     },
     thread:        "बातचीत",
     you:           "आप",
-    admin:         "YojanaSetu टीम",
+    admin:         "Yojana Sahay टीम",
     noReply:       "एडमिन के जवाब का इंतज़ार है…",
     submitted:     "भेजी गई",
     replied:       "जवाब मिला",
@@ -536,7 +536,7 @@ function ChatBubble({ who, text, time, statusTag, isReopen, dark, lang }) {
           }}>
             {isMe
               ? (lang === "hi" ? "आप" : "You")
-              : (lang === "hi" ? "YojanaSetu टीम" : "YojanaSetu Team")}
+              : (lang === "hi" ? "Yojana Sahay टीम" : "Yojana Sahay Team")}
           </span>
           {smeta && (
             <span style={{

@@ -1,12 +1,12 @@
 /**
- * YojanaSetu — AdminDashboard.jsx
+ * Yojana Sahay — AdminDashboard.jsx
  * Copyright (c) 2026 Sahnawaz Ahmed Laskar
  * SPDX-License-Identifier: MIT
  *
  * See the LICENSE file in the project root for full license terms.
  */
 
-// AdminDashboard.jsx — YojanaSetu Admin Panel (Advanced)
+// AdminDashboard.jsx — Yojana Sahay Admin Panel (Advanced)
 // Enhanced with: Analytics tab, donut charts, user detail drawer,
 // sorting, pagination, filtered CSV export, refresh, more metrics,
 // and Cleanup tab for purging old resolved reports.
@@ -1052,7 +1052,7 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
           "Write a warm, professional message that:\n" +
           "1. Acknowledges we received their report and are reviewing it.\n" +
           "2. Explains that we need more specific details to help them properly.\n" +
-          "3. Clearly instructs them: Your report is being kept open — please open the YojanaSetu app, go to My Reports, open this report, and use the Add Information section to share the specific details we need.\n" +
+          "3. Clearly instructs them: Your report is being kept open — please open the Yojana Sahay app, go to My Reports, open this report, and use the Add Information section to share the specific details we need.\n" +
           "4. Asks one or two specific clarifying questions based on their report content.\n" +
           "Do NOT promise a resolution. Keep the tone warm, helpful, and encouraging.",
         in_progress:
@@ -1075,7 +1075,7 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
         : "";
 
       const systemPrompt =
-        `You are a warm, professional support agent for YojanaSetu — a government scheme ` +
+        `You are a warm, professional support agent for Yojana Sahay — a government scheme ` +
         `discovery app for Indian citizens.\n` +
         `Reply in plain text only. No markdown, no bullet points, no headers.\n\n` +
         `Current admin action: ${effectiveStatus.replace("_", " ").toUpperCase()}\n` +
@@ -1088,7 +1088,7 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
         `Original message: ${report.message}` +
         `${historyContext}\n\n` +
         `Write a concise admin reply (2–4 sentences) matching the admin action above. ` +
-        `End with a polite closing from the YojanaSetu Team.`;
+        `End with a polite closing from the Yojana Sahay Team.`;
 
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -2115,7 +2115,7 @@ function ExportModal({ steps, currentStep, done, totalUsers, totalReports }) {
             display:"flex", alignItems:"center", justifyContent:"space-between",
           }}>
             <div style={{ fontSize:8.5, color:"rgba(255,255,255,0.18)", lineHeight:1.6, fontWeight:500 }}>
-              YojanaSetu Admin &nbsp;·&nbsp; Confidential<br />
+              Yojana Sahay Admin &nbsp;·&nbsp; Confidential<br />
               {today}
             </div>
             {done ? (
@@ -2591,7 +2591,7 @@ export default function AdminDashboard({ onClose, dark = false }) {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>YojanaSetu — Full Admin Report</title>
+  <title>Yojana Sahay — Full Admin Report</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family: Arial, sans-serif; font-size: 9px; color: #111; padding: 16px; }
@@ -2643,7 +2643,7 @@ export default function AdminDashboard({ onClose, dark = false }) {
   ${reportsHTML}
 
   <div class="footer">
-    YojanaSetu Admin Dashboard &nbsp;·&nbsp; ${date} &nbsp;·&nbsp;
+    Yojana Sahay Admin Dashboard &nbsp;·&nbsp; ${date} &nbsp;·&nbsp;
     Sections: Overview · Analytics · Users · Activity · Schemes · Reports
   </div>
   <script>window.onload = function() { window.print(); }<\/script>
@@ -2737,7 +2737,7 @@ export default function AdminDashboard({ onClose, dark = false }) {
               🛡️ Admin Dashboard
             </div>
             <div style={{ color:"rgba(255,255,255,0.7)", fontSize:11, marginTop:2 }}>
-              YojanaSetu · {loading ? "Loading…" : `${users.length} users`}
+              Yojana Sahay · {loading ? "Loading…" : `${users.length} users`}
             </div>
           </div>
           {/* Refresh */}

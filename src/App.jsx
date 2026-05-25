@@ -1,10 +1,10 @@
 /**
- * YojanaSetu — Official Government Scheme Finder
+ * Yojana Sahay — Official Government Scheme Finder
  *
  * Copyright (c) 2026 Sahnawaz Ahmed Laskar
  * SPDX-License-Identifier: MIT
  *
- * This file is part of YojanaSetu — an independent civic technology
+ * This file is part of Yojana Sahay — an independent civic technology
  * platform built to help citizens of India discover and access
  * government welfare schemes they are legally entitled to.
  *
@@ -120,7 +120,7 @@ function AshokaChakra({size=18,color=ASHOKA_BLUE,spinning=false}){
 // ─── TRANSLATIONS ──────────────────────────────────────────────────────────────
 const T = {
   en: {
-    appName:"YojanaSetu", appSub:"Official Scheme Finder",
+    appName:"Yojana Sahay", appSub:"Official Scheme Finder",
     greeting:(n)=> n ? `Namaste, ${n} 🙏` : "Namaste, Citizen 🙏",
     headline:"Find Your Schemes", subheadline:"Discover benefits you truly deserve",
     searchPlaceholder:"Search schemes...", searchBtn:"Search",
@@ -189,7 +189,7 @@ const T = {
     ]
   },
   hi: {
-    appName:"योजना सेतु", appSub:"सरकारी योजना खोजक",
+    appName:"योजना सहाय", appSub:"सरकारी योजना खोजक",
     greeting:(n)=> n ? `नमस्ते, ${n} 🙏` : "नमस्ते, नागरिक 🙏",
     headline:"आपकी योजनाएं खोजें", subheadline:"जानें आप किन लाभों के हकदार हैं",
     searchPlaceholder:"योजना खोजें...", searchBtn:"खोजें",
@@ -351,7 +351,7 @@ const PT = {
     schemesMatched:"Schemes",stateLabel2:"State",catLabel2:"Category",
     settingsTitle:"Settings",langLabel:"Language",
     editProfile:"Edit Profile",signOut:"Sign Out",
-    signOutConfirm:"Sign out of YojanaSetu?",
+    signOutConfirm:"Sign out of Yojana Sahay?",
     googleBtn:"Continue with Google",
     emailLabel:"Email Address",emailPh:"Enter your email",
     passwordLabel:"Password",passwordPh:"Min. 6 characters",
@@ -462,7 +462,7 @@ const PT = {
     schemesMatched:"योजनाएं",stateLabel2:"राज्य",catLabel2:"श्रेणी",
     settingsTitle:"सेटिंग्स",langLabel:"भाषा",
     editProfile:"प्रोफाइल बदलें",signOut:"साइन आउट",
-    signOutConfirm:"YojanaSetu से साइन आउट करें?",
+    signOutConfirm:"Yojana Sahay से साइन आउट करें?",
     googleBtn:"Google से जारी रखें",
     emailLabel:"ईमेल पता",emailPh:"अपना ईमेल दर्ज करें",
     passwordLabel:"पासवर्ड",passwordPh:"कम से कम 6 अक्षर",
@@ -2295,7 +2295,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           </div>
           <div>
             <div style={{color:"#fff",fontSize:21,fontWeight:800,fontFamily:bf,lineHeight:1.1}}>{pt.signInTitle}</div>
-            <div style={{color:"rgba(255,255,255,0.75)",fontSize:11.5,marginTop:3}}>🇮🇳 YojanaSetu</div>
+            <div style={{color:"rgba(255,255,255,0.75)",fontSize:11.5,marginTop:3}}>🇮🇳 Yojana Sahay</div>
           </div>
         </div>
         <div style={{color:"rgba(255,255,255,0.88)",fontSize:13,lineHeight:1.6,fontFamily:bf}}>{pt.signInSub}</div>
@@ -2485,7 +2485,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
         </div>
       </div>
 
-      {/* About YojanaSetu — accessible without login */}
+      {/* About Yojana Sahay — accessible without login */}
       <div onClick={()=>{haptic();setShowAbout(true);}}
         style={{
           display:"flex",alignItems:"center",justifyContent:"center",gap:8,
@@ -2493,7 +2493,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
         }}>
         <span style={{fontSize:15}}>ℹ️</span>
         <span style={{fontSize:13,fontWeight:600,color:dark?"#555":"#bbb",fontFamily:bf}}>
-          {isHindi?"ऐप के बारे में जानें":"About YojanaSetu"}
+          {isHindi?"ऐप के बारे में जानें":"About Yojana Sahay"}
         </span>
         <span style={{color:dark?"#444":"#ccc",fontSize:16}}>›</span>
       </div>
@@ -3324,7 +3324,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
             </div>
           )}
 
-          {/* About YojanaSetu — visible to all */}
+          {/* About Yojana Sahay — visible to all */}
           <div onClick={()=>{haptic();setShowAbout(true);}}
             style={{padding:"13px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -3334,7 +3334,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                 display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>ℹ️</div>
               <div>
                 <div style={{fontSize:14,fontWeight:600,color:th.text,fontFamily:bf}}>
-                  {isHindi?"ऐप के बारे में":"About YojanaSetu"}
+                  {isHindi?"ऐप के बारे में":"About Yojana Sahay"}
                 </div>
                 <div style={{fontSize:11,color:th.textSub,marginTop:1}}>
                   {isHindi?"मिशन, AI, टीम और अधिक":"Mission, AI, team & more"}
@@ -3933,7 +3933,7 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark, uid }) {
 }
 
 // ─── MAIN APP ──────────────────────────────────────────────────────────────────
-export default function YojanaSetu(){
+export default function YojanaSahay(){
   const [lang,setLang]=useState(()=>localStorage.getItem("yojana_lang")||"en");
   const [dark,setDark]=useState(()=>localStorage.getItem("yojana_dark")==="true");
   const [activeTab,setActiveTab]=useState("home");

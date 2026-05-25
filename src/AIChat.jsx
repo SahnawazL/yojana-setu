@@ -1,12 +1,12 @@
 /**
- * YojanaSetu — AIChat.jsx
+ * Yojana Sahay — AIChat.jsx
  * Copyright (c) 2026 Sahnawaz Ahmed Laskar
  * SPDX-License-Identifier: MIT
  *
  * See the LICENSE file in the project root for full license terms.
  */
 
-// AIChat.jsx — YojanaSetu AI Assistant Chat Screen
+// AIChat.jsx — Yojana Sahay AI Assistant Chat Screen
 // UPDATED: unified "Reading Time" cooldown gates both input + chips together
 // FIXED (5 bugs): anti-pattern in updater, memory leaks, dead state, stale closure
 
@@ -888,7 +888,7 @@ function ChatBubble({ msg, lang, dark, isNew }) {
                 color: dark ? "rgba(255,153,51,0.9)" : "#FF8000",
                 fontFamily:"'Noto Sans',sans-serif",
               }}>
-                YojanaSetu AI
+                Yojana Sahay AI
               </span>
               {/* Verified checkmark badge */}
               <div style={{
@@ -944,7 +944,7 @@ function ChatBubble({ msg, lang, dark, isNew }) {
               <span style={{
                 fontSize:9.5, color:th.textSub, fontWeight:500, letterSpacing:0.2,
               }}>
-                YojanaSetu AI
+                Yojana Sahay AI
               </span>
             </div>
           )}
@@ -1020,8 +1020,8 @@ function WelcomeScreen({ lang, dark, onSuggest, profile }) {
         ? `नमस्ते ${titledName}! 🙏\nमैं आपकी प्रोफाइल देख सकता हूं — ${occLabel}, ${profile.state}।\nआपके लिए एकदम सटीक योजनाएं बताऊंगा, हिंदी या English में।`
         : `Namaste ${titledName}! 🙏\nI can see your profile — ${occLabel} from ${profile.state}.\nI'll give you tailored scheme recommendations. Ask anything!`)
     : (isHindi
-        ? "नमस्ते! 🙏 मैं YojanaSetu का AI सहायक हूं।\nआपको सरकारी योजनाएं खोजने और समझने में मदद करूंगा।\nहिंदी या English — जो भी आसान हो, पूछें!"
-        : "Namaste! 🙏 I'm YojanaSetu's AI Assistant.\nI'll help you find and understand government schemes.\nAsk me anything in Hindi or English!");
+        ? "नमस्ते! 🙏 मैं Yojana Sahay का AI सहायक हूं।\nआपको सरकारी योजनाएं खोजने और समझने में मदद करूंगा।\nहिंदी या English — जो भी आसान हो, पूछें!"
+        : "Namaste! 🙏 I'm Yojana Sahay's AI Assistant.\nI'll help you find and understand government schemes.\nAsk me anything in Hindi or English!");
 
   return (
     <div style={{ animation:"fade-in 0.3s ease-out", paddingBottom:8 }}>
