@@ -1,11 +1,11 @@
 <div align="center">
 
-# 🇮🇳 YojanaSetu
+# 🇮🇳 Yojana Sahay
 ### Official Government Scheme Finder
 
 **Bridging every Indian citizen to the welfare benefits they rightfully deserve**
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-yojana--setu--bice.vercel.app-blue?style=for-the-badge&logo=vercel)](https://yojana-setu-bice.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-yojanasahay.vercel.app-blue?style=for-the-badge&logo=vercel)](https://yojanasahay.vercel.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![Made in India](https://img.shields.io/badge/Made%20in-India%20🇮🇳-orange?style=for-the-badge)](#)
 [![React](https://img.shields.io/badge/React-Vite-61DAFB?style=for-the-badge&logo=react)](https://vitejs.dev)
@@ -16,11 +16,11 @@
 
 ## 📖 About
 
-**YojanaSetu** (योजना सेतु — *"Scheme Bridge"*) is an independent civic technology platform built to help citizens of India discover and access the government welfare schemes they are legally entitled to.
+**Yojana Sahay** (योजना सहाय — *"Scheme Aid"*) is an independent civic technology platform built to help citizens of India discover and access the government welfare schemes they are legally entitled to.
 
 The platform eliminates the information gap between citizens and the government welfare ecosystem — regardless of location, language, or literacy level — through smart search, an AI-powered assistant, and a personalized eligibility checker.
 
-> ⚠️ YojanaSetu is an independent platform and is **not affiliated with, endorsed by, or representative of** any Central or State Government body or ministry.
+> ⚠️ Yojana Sahay is an independent platform and is **not affiliated with, endorsed by, or representative of** any Central or State Government body or ministry.
 
 ---
 
@@ -36,7 +36,7 @@ A 6-step guided questionnaire that analyses your profile and instantly matches t
 A real-time AI-powered assistant for scheme queries in **Hindi and English**. Provides personalised guidance, scheme comparisons, eligibility clarification, and actionable next steps — powered by **Groq AI**.
 
 ### 📬 Report & Resolution Centre
-An in-app support system for submitting bug reports, scheme addition requests, general queries, and feedback. Every submission is reviewed by the YojanaSetu team with real-time status tracking (Open → In Progress → Resolved) and email responses.
+An in-app support system for submitting bug reports, scheme addition requests, general queries, and feedback. Every submission is reviewed by the Yojana Sahay team with real-time status tracking (Open → In Progress → Resolved) and email responses.
 
 ### 🛡️ Admin Dashboard
 A comprehensive admin panel with user analytics, donut charts, bar charts, cross-tab breakdowns, scheme coverage metrics, paginated user management, and filtered CSV export.
@@ -73,7 +73,7 @@ Full dark/light theme toggle and seamless Hindi ↔ English language switching t
 ## 📁 Project Structure
 
 ```
-yojana-setu/
+yojana-sahay/
 ├── api/                    # Vercel serverless functions (Groq API proxy)
 ├── src/
 │   ├── App.jsx             # Main app — home, search, schemes, profile tabs
@@ -108,8 +108,8 @@ yojana-setu/
 
 ```bash
 # Clone the repository
-git clone https://github.com/SahnawazL/yojana-setu.git
-cd yojana-setu
+git clone https://github.com/SahnawazL/yojana-sahay.git
+cd yojana-sahay
 
 # Install dependencies
 npm install
@@ -129,7 +129,7 @@ cp .env.example .env
 Key variables you need to set:
 
 ```env
-# Groq API keys — YojanaSetu rotates across 5 keys to stay within free-tier limits
+# Groq API keys — Yojana Sahay rotates across 5 keys to stay within free-tier limits
 # Get yours from: https://console.groq.com
 GROQ_API_KEY_1=your_groq_api_key_1
 GROQ_API_KEY_2=your_groq_api_key_2
@@ -157,7 +157,7 @@ npm run build
 
 ## 🔐 Authentication
 
-YojanaSetu supports three sign-in methods:
+Yojana Sahay supports three sign-in methods:
 
 - 📱 **Phone OTP** — via Firebase Phone Auth
 - 🔵 **Google Sign-In** — via Firebase Google Provider
@@ -196,10 +196,10 @@ Logged-in users receive **automatic email confirmation** on submission and are *
 
 ## ⚖️ Legal & Disclaimer
 
-- YojanaSetu is an **independent** digital platform and is not affiliated with any government body.
+- Yojana Sahay is an **independent** digital platform and is not affiliated with any government body.
 - All scheme data is sourced from publicly available official government portals.
 - Users are advised to **verify scheme details directly from official government sources** before applying.
-- YojanaSetu does not facilitate direct applications, financial transactions, or document processing. It is solely an informational and discovery service.
+- Yojana Sahay does not facilitate direct applications, financial transactions, or document processing. It is solely an informational and discovery service.
 
 ---
 
@@ -215,6 +215,6 @@ This project is licensed under the [MIT License](LICENSE).
 
 **Made with ❤️ in India 🇮🇳**
 
-[Live App](https://yojana-setu-bice.vercel.app) · [Report an Issue](https://yojana-setu-bice.vercel.app) · [Request a Scheme](https://yojana-setu-bice.vercel.app)
+[Live App](https://yojanasahay.vercel.app) · [Report an Issue](https://yojanasahay.vercel.app) · [Request a Scheme](https://yojanasahay.vercel.app)
 
 </div>

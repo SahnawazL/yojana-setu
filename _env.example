@@ -1,0 +1,53 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Yojana Sahay — Environment Variables Template
+# Copy this file to .env and fill in your real values.
+# NEVER commit your real .env file — it is already listed in .gitignore.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+# ── GROQ API KEYS (Vercel server-side only — never expose in frontend) ────────
+# Yojana Sahay rotates across 5 keys to stay within Groq free-tier rate limits.
+# Get your keys from: https://console.groq.com
+GROQ_API_KEY_1=your_groq_api_key_1
+GROQ_API_KEY_2=your_groq_api_key_2
+GROQ_API_KEY_3=your_groq_api_key_3
+GROQ_API_KEY_4=your_groq_api_key_4
+GROQ_API_KEY_5=your_groq_api_key_5
+
+
+# ── VERCEL KV / REDIS (auto-populated when you add Vercel KV storage) ─────────
+# These are created automatically by Vercel when you connect a KV database.
+# In Vercel dashboard: Storage → Create KV Database → it adds these for you.
+KV_URL=your_kv_url
+KV_REST_API_URL=your_kv_rest_api_url
+KV_REST_API_TOKEN=your_kv_rest_api_token
+KV_REST_API_READ_ONLY_TOKEN=your_kv_rest_api_read_only_token
+REDIS_URL=your_redis_url
+
+
+# ── FIREBASE (currently hardcoded in firebase.js) ─────────────────────────────
+# Firebase web config is intentionally public — these are not secret keys.
+# However, best practice is to move them to VITE_ env vars so each developer
+# can point to their own Firebase project.
+# Get these from: Firebase Console → Project Settings → Your Apps → Web App
+#
+# VITE_FIREBASE_API_KEY=your_firebase_api_key
+# VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+# VITE_FIREBASE_PROJECT_ID=your_project_id
+# VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+# VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+# VITE_FIREBASE_APP_ID=your_app_id
+# VITE_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
+#
+# NOTE: After uncommenting above, update firebase.js to read from import.meta.env
+# instead of using hardcoded values.
+
+
+# ── EMAILJS (currently hardcoded in AdminDashboard.jsx) ───────────────────────
+# EmailJS public keys are safe to expose in frontend code.
+# Provided here for reference if you wish to use your own EmailJS account.
+# Get these from: https://dashboard.emailjs.com
+#
+# VITE_EMAILJS_SERVICE_ID=your_service_id
+# VITE_EMAILJS_TEMPLATE_ID=your_template_id
+# VITE_EMAILJS_PUBLIC_KEY=your_public_key
