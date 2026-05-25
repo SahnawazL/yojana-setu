@@ -1038,10 +1038,13 @@ function ReportsSection({ reports, loading, dark, onRefresh, onStatusChange }) {
       // Status-specific instructions for the AI
       const statusGuide = {
         open:
-          "The admin is keeping this report OPEN — more investigation is needed.\n" +
-          "Acknowledge the report warmly, confirm we received it, and let the user know " +
-          "we are reviewing it. Do NOT promise a resolution yet. If helpful, ask a " +
-          "clarifying follow-up question.",
+          "The admin is keeping this report OPEN to request more specific information from the user.\n" +
+          "Write a warm, professional message that:\n" +
+          "1. Acknowledges we received their report and are reviewing it.\n" +
+          "2. Explains that we need more specific details to help them properly.\n" +
+          "3. Clearly instructs them: Your report is being kept open — please open the YojanaSetu app, go to My Reports, open this report, and use the Add Information section to share the specific details we need.\n" +
+          "4. Asks one or two specific clarifying questions based on their report content.\n" +
+          "Do NOT promise a resolution. Keep the tone warm, helpful, and encouraging.",
         in_progress:
           "The admin has marked this IN PROGRESS — they are actively working on it.\n" +
           "Reassure the user that we are investigating their concern. Give them an " +

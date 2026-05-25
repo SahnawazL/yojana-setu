@@ -74,6 +74,16 @@ const STRINGS = {
     awaitingTip:   "We'll notify you by email once the team responds.",
     resolvedTip:   "This report has been resolved. Tap below to submit a new one if needed.",
     inProgTip:     "Our team is actively working on this.",
+    addInfoTitle:    "Add More Information",
+    addInfoSub:      "The team needs specific details — please add them below.",
+    addInfoPh:       "Add the specific details requested by the team… (required)",
+    addInfoBtn:      "Submit Information →",
+    addInfoSending:  "Submitting…",
+    addInfoDone:     "Information Submitted ✓",
+    addInfoDoneSub:  "Our team will review your details and update the report.",
+    addInfoLocked:   "Information Already Submitted",
+    addInfoLockedSub:"You've already added information to this report.",
+    addInfoMinChars: (n) => `Minimum ${n} characters required`,
   },
   hi: {
     title:         "मेरी रिपोर्ट",
@@ -102,6 +112,16 @@ const STRINGS = {
     awaitingTip:   "जवाब मिलने पर आपको ईमेल से सूचित किया जाएगा।",
     resolvedTip:   "यह रिपोर्ट हल हो गई है। ज़रूरत हो तो नई रिपोर्ट भेजें।",
     inProgTip:     "हमारी टीम इस पर काम कर रही है।",
+    addInfoTitle:    "अतिरिक्त जानकारी जोड़ें",
+    addInfoSub:      "टीम को कुछ विशेष जानकारी चाहिए — नीचे लिखें।",
+    addInfoPh:       "टीम द्वारा मांगी गई विशेष जानकारी यहाँ लिखें… (अनिवार्य)",
+    addInfoBtn:      "जानकारी भेजें →",
+    addInfoSending:  "भेजा जा रहा है…",
+    addInfoDone:     "जानकारी भेजी गई ✓",
+    addInfoDoneSub:  "हमारी टीम जल्द ही आपकी रिपोर्ट अपडेट करेगी।",
+    addInfoLocked:   "जानकारी पहले ही भेजी जा चुकी है",
+    addInfoLockedSub:"आपने इस रिपोर्ट में पहले ही जानकारी जोड़ी है।",
+    addInfoMinChars: (n) => `कम से कम ${n} अक्षर अनिवार्य`,
   },
 };
 
@@ -653,6 +673,54 @@ function ReportCard({ report, dark, lang, isExpanded, onToggle, onReopen }) {
   const [reopenError, setReopenError] = useState("");
   const MIN_CHARS = 20;
 
+  // ── Add-info state (open reports where admin requested more details) ──
+  const [infoText,    setInfoText]    = useState("");
+  const [infoSending, setInfoSending] = useState(false);
+  const [infoDone,    setInfoDone]    = useState(false);
+  const [infoError,   setInfoError]   = useState("");
+  const INFO_MIN = 20;
+
+  // Admin replied with open status (requesting more info)?
+  const adminRequestedMoreInfo = report.replyHistory?.some(
+    r => r.status === "open" && !r.isReopen
+  ) ?? false;
+  // User already submitted additional info once?
+  const userAlreadyAddedInfo = report.replyHistory?.some(
+    r => r.who === "user" && r.isInfoRequest === true
+  ) ?? false;
+  // Show the add-info section when open + admin replied + not yet done
+  const canAddInfo = report.status === "open" && adminRequestedMoreInfo;
+
+  async function handleAddInfo() {
+    if (infoText.trim().length < INFO_MIN) {
+      setInfoError(s.addInfoMinChars(INFO_MIN));
+      return;
+    }
+    setInfoError("");
+    setInfoSending(true);
+    try {
+      await updateDoc(doc(db, "reports", report.id), {
+        replyHistory: arrayUnion({
+          who:           "user",
+          userName:      auth.currentUser?.displayName || "User",
+          text:          infoText.trim(),
+          sentAt:        new Date().toISOString(),
+          isInfoRequest: true,
+        }),
+      });
+      setInfoDone(true);
+      setInfoText("");
+      setTimeout(() => { onReopen?.(); }, 1600);
+    } catch (err) {
+      console.error("Add info failed:", err);
+      setInfoError(lang === "hi"
+        ? "कुछ गलत हुआ। दोबारा कोशिश करें।"
+        : "Something went wrong. Please try again.");
+    } finally {
+      setInfoSending(false);
+    }
+  }
+
   async function handleReopen() {
     if (reopenMsg.trim().length < MIN_CHARS) {
       setReopenError(lang === "hi"
@@ -1021,6 +1089,166 @@ function ReportCard({ report, dark, lang, isExpanded, onToggle, onReopen }) {
 
           {/* Full conversation thread */}
           <ConversationThread report={report} dark={dark} lang={lang} />
+
+          {/* ── ADD MORE INFO SECTION (open + admin replied with open status) ── */}
+          {canAddInfo && (
+            <div style={{
+              borderRadius:16,
+              border:`1.5px solid ${userAlreadyAddedInfo ? th.border : NAVY + "55"}`,
+              background: userAlreadyAddedInfo
+                ? (dark ? "rgba(255,255,255,0.03)" : th.card2)
+                : (dark ? "rgba(0,53,128,0.12)" : "#EFF6FF"),
+              overflow:"hidden",
+            }}>
+              {/* Header */}
+              <div style={{
+                padding:"12px 16px 10px",
+                borderBottom:`1px solid ${userAlreadyAddedInfo ? th.border : NAVY + "22"}`,
+                display:"flex", alignItems:"center", gap:10,
+              }}>
+                <div style={{
+                  width:32, height:32, borderRadius:10, flexShrink:0,
+                  background: userAlreadyAddedInfo
+                    ? (dark ? "rgba(255,255,255,0.07)" : "#e5e7eb")
+                    : `linear-gradient(135deg,${NAVY},#1a56db)`,
+                  display:"flex", alignItems:"center", justifyContent:"center", fontSize:15,
+                  boxShadow: userAlreadyAddedInfo ? "none" : `0 3px 10px ${NAVY}44`,
+                }}>
+                  {userAlreadyAddedInfo ? "🔒" : "📎"}
+                </div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{
+                    fontSize:13, fontWeight:800,
+                    color: userAlreadyAddedInfo
+                      ? (dark ? "rgba(255,255,255,0.35)" : "#888")
+                      : (dark ? "#93c5fd" : NAVY),
+                  }}>
+                    {userAlreadyAddedInfo ? s.addInfoLocked : s.addInfoTitle}
+                  </div>
+                  <div style={{
+                    fontSize:10, marginTop:2,
+                    color: userAlreadyAddedInfo
+                      ? (dark ? "rgba(255,255,255,0.22)" : "#aaa")
+                      : (dark ? "rgba(147,197,253,0.7)" : "#3b82f6"),
+                  }}>
+                    {userAlreadyAddedInfo ? s.addInfoLockedSub : s.addInfoSub}
+                  </div>
+                </div>
+              </div>
+
+              {/* Body — form or locked */}
+              {!userAlreadyAddedInfo && (
+                <div style={{ padding:"12px 16px 14px", display:"flex", flexDirection:"column", gap:10 }}>
+                  {infoDone ? (
+                    /* Success flash */
+                    <div style={{
+                      display:"flex", alignItems:"center", gap:10,
+                      padding:"12px 14px", borderRadius:12,
+                      background: dark ? "rgba(5,150,105,0.15)" : "#f0fdf4",
+                      border:"1.5px solid rgba(5,150,105,0.3)",
+                    }}>
+                      <span style={{ fontSize:22 }}>✅</span>
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:800, color:"#059669" }}>
+                          {s.addInfoDone}
+                        </div>
+                        <div style={{ fontSize:11, color: dark ? "rgba(255,255,255,0.5)" : "#555", marginTop:2 }}>
+                          {s.addInfoDoneSub}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Textarea */}
+                      <div style={{ position:"relative" }}>
+                        <textarea
+                          value={infoText}
+                          onChange={e => { setInfoText(e.target.value); setInfoError(""); }}
+                          placeholder={s.addInfoPh}
+                          rows={4}
+                          maxLength={600}
+                          style={{
+                            width:"100%", boxSizing:"border-box",
+                            padding:"12px 14px", borderRadius:12,
+                            border:`1.5px solid ${infoError
+                              ? "#DC2626"
+                              : infoText.length >= INFO_MIN
+                                ? NAVY + "66"
+                                : th.border}`,
+                            background: dark ? "rgba(255,255,255,0.05)" : "#fff",
+                            color: dark ? "#f0f0f0" : "#1a1a1a",
+                            fontSize:13, lineHeight:1.65, resize:"none",
+                            outline:"none", fontFamily:"inherit",
+                            transition:"border-color 0.18s",
+                          }}
+                          onFocus={e => (e.target.style.borderColor = NAVY)}
+                          onBlur={e  => (e.target.style.borderColor = infoError ? "#DC2626" : infoText.length >= INFO_MIN ? NAVY+"66" : th.border)}
+                        />
+                        <div style={{
+                          position:"absolute", bottom:10, right:12,
+                          fontSize:10, fontWeight:600,
+                          color: infoText.length < INFO_MIN ? "#D97706" : infoText.length > 550 ? "#DC2626" : "#059669",
+                        }}>
+                          {infoText.length}/600
+                        </div>
+                      </div>
+
+                      {/* Min-char progress bar */}
+                      <div style={{ height:3, borderRadius:99, background: dark ? "rgba(255,255,255,0.08)" : "#e5e7eb", overflow:"hidden" }}>
+                        <div style={{
+                          height:"100%", borderRadius:99,
+                          width:`${Math.min((infoText.trim().length / INFO_MIN) * 100, 100)}%`,
+                          background: infoText.trim().length >= INFO_MIN
+                            ? `linear-gradient(90deg,${NAVY},#3b82f6)`
+                            : "linear-gradient(90deg,#D97706,#FBBF24)",
+                          transition:"width 0.2s, background 0.3s",
+                        }} />
+                      </div>
+
+                      {/* Error */}
+                      {infoError && (
+                        <div style={{ fontSize:11, color:"#DC2626", fontWeight:600, display:"flex", alignItems:"center", gap:5 }}>
+                          ⚠️ {infoError}
+                        </div>
+                      )}
+
+                      {/* Submit button */}
+                      <div
+                        onClick={!infoSending ? handleAddInfo : undefined}
+                        style={{
+                          padding:"12px 16px", borderRadius:12, textAlign:"center",
+                          fontSize:13, fontWeight:800,
+                          cursor: infoSending ? "not-allowed" : "pointer",
+                          background: infoText.trim().length >= INFO_MIN && !infoSending
+                            ? `linear-gradient(135deg,${NAVY},rgba(0,53,128,0.85))`
+                            : dark ? "rgba(255,255,255,0.08)" : "#e5e7eb",
+                          color: infoText.trim().length >= INFO_MIN && !infoSending
+                            ? "#fff"
+                            : dark ? "rgba(255,255,255,0.3)" : "#aaa",
+                          boxShadow: infoText.trim().length >= INFO_MIN && !infoSending
+                            ? `0 4px 16px ${NAVY}44` : "none",
+                          transition:"all 0.2s",
+                          display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+                        }}
+                      >
+                        {infoSending ? (
+                          <>
+                            <div style={{
+                              width:12, height:12, borderRadius:"50%",
+                              border:"2px solid rgba(255,255,255,0.4)",
+                              borderTopColor:"#fff",
+                              animation:"sp-spin 0.8s linear infinite",
+                            }} />
+                            {s.addInfoSending}
+                          </>
+                        ) : s.addInfoBtn}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Meta: submission details */}
           <div style={{
