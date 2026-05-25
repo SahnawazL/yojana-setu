@@ -1818,6 +1818,7 @@ export default function AdminDashboard({ onClose, dark = false }) {
   const [page,          setPage]          = useState(1);
   const [activeSection, setActiveSection] = useState("overview");
   const [selectedUser,  setSelectedUser]  = useState(null);
+  const [lang,          setLang]          = useState("en");       // "en" | "hi"
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   const fetchUsers = useCallback(async (isRefresh = false) => {
@@ -2098,6 +2099,15 @@ export default function AdminDashboard({ onClose, dark = false }) {
             <div style={{ color:"rgba(255,255,255,0.7)", fontSize:11, marginTop:2 }}>
               YojanaSetu · {loading ? "Loading…" : `${users.length} users`}
             </div>
+          </div>
+          {/* Lang toggle */}
+          <div onClick={() => setLang(l => l === "en" ? "hi" : "en")} style={{
+            background:"rgba(255,255,255,0.12)", border:"1px solid rgba(255,255,255,0.25)",
+            borderRadius:10, padding:"7px 10px",
+            color:"#fff", fontSize:11, fontWeight:700, cursor:"pointer",
+            letterSpacing:0.3,
+          }}>
+            {lang === "en" ? "हि" : "EN"}
           </div>
           {/* Refresh */}
           <div onClick={() => fetchUsers(true)} style={{
@@ -2666,6 +2676,7 @@ export default function AdminDashboard({ onClose, dark = false }) {
       {activeSection === "cleanup" && (
         <ResolvedReportsCleaner
           dark={dark}
+          lang={lang}
           onDeleteDone={fetchReports}
         />
       )}

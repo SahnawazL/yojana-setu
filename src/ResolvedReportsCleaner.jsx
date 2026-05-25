@@ -15,6 +15,19 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase.js";
 
+// ─── CLEANUP PASSWORD ─────────────────────────────────────────────────────────
+// SHA-256 hash of your cleanup password.
+// To generate: open browser console and run:
+//   crypto.subtle.digest('SHA-256', new TextEncoder().encode('YourPassword'))
+//     .then(b => console.log([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')))
+// Then paste the output here ↓
+const CLEANUP_PWD_HASH = "051f67acb3b4d3ed6e7ef098a9afc184b90e8337742097030960b89a7f2ce190";
+
+async function hashStr(str) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(x => x.toString(16).padStart(2, "0")).join("");
+}
+
 // ─── THEME (matches AdminDashboard) ──────────────────────────────────────────
 const THEME = {
   light: {
@@ -403,6 +416,150 @@ function FilterCard({ filter, selected, count, loading, dark, lang, onClick }) {
   );
 }
 
+// ─── LOCK SCREEN ──────────────────────────────────────────────────────────────
+function CleanupLockScreen({ dark, lang, onUnlock }) {
+  const th = THEME[dark ? "dark" : "light"];
+  const isHi = lang === "hi";
+  const [pwd,      setPwd]      = useState("");
+  const [error,    setError]    = useState("");
+  const [checking, setChecking] = useState(false);
+  const [shake,    setShake]    = useState(false);
+
+  async function handleUnlock() {
+    if (!pwd.trim()) return;
+    setChecking(true);
+    setError("");
+    try {
+      const h = await hashStr(pwd);
+      if (h === CLEANUP_PWD_HASH) {
+        onUnlock();
+      } else {
+        setError(isHi ? "गलत पासवर्ड। दोबारा कोशिश करें।" : "Incorrect password. Try again.");
+        setShake(true);
+        setTimeout(() => setShake(false), 600);
+        setPwd("");
+      }
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  return (
+    <>
+      <style>{`
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes shake  { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
+      `}</style>
+      <div style={{
+        minHeight: "100%", background: th.bg,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "32px 20px", animation: "fadeIn 0.3s ease",
+        fontFamily: "'Noto Sans', sans-serif",
+      }}>
+        <div style={{
+          width: "100%", maxWidth: 340,
+          background: th.card, borderRadius: 24,
+          border: `1.5px solid ${th.border}`,
+          overflow: "hidden",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+        }}>
+          {/* Header stripe */}
+          <div style={{
+            background: `linear-gradient(135deg, ${DANGER}22, ${DANGER}08)`,
+            borderBottom: `1px solid ${DANGER}30`,
+            padding: "28px 24px 22px",
+            textAlign: "center",
+          }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: 20, margin: "0 auto 14px",
+              background: `linear-gradient(135deg, ${DANGER}, #9b1c1c)`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 30,
+              boxShadow: `0 8px 24px ${DANGER}44`,
+            }}>🔒</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: th.text }}>
+              {isHi ? "सफाई पासवर्ड" : "Cleanup Access"}
+            </div>
+            <div style={{ fontSize: 12, color: th.textSub, marginTop: 6, lineHeight: 1.5 }}>
+              {isHi
+                ? "यह क्षेत्र केवल अधिकृत लोगों के लिए है।\nपासवर्ड डालें।"
+                : "This area is restricted to authorised users only.\nEnter the cleanup password to continue."}
+            </div>
+          </div>
+
+          {/* Input area */}
+          <div style={{ padding: "22px 24px 28px" }}>
+            <div style={{
+              animation: shake ? "shake 0.5s ease" : "none",
+            }}>
+              <input
+                type="password"
+                value={pwd}
+                onChange={e => { setPwd(e.target.value); setError(""); }}
+                onKeyDown={e => e.key === "Enter" && handleUnlock()}
+                placeholder={isHi ? "पासवर्ड डालें…" : "Enter cleanup password…"}
+                autoFocus
+                style={{
+                  width: "100%", padding: "14px 16px",
+                  borderRadius: 13, fontSize: 14,
+                  border: `2px solid ${error ? DANGER : th.border}`,
+                  background: th.inputBg, color: th.text,
+                  outline: "none", boxSizing: "border-box",
+                  fontFamily: "'Noto Sans', sans-serif",
+                  transition: "border-color 0.2s",
+                }}
+              />
+              {error && (
+                <div style={{
+                  marginTop: 8, fontSize: 12, color: DANGER,
+                  fontWeight: 600, display: "flex", alignItems: "center", gap: 5,
+                }}>
+                  ⚠️ {error}
+                </div>
+              )}
+            </div>
+
+            <div
+              onClick={checking ? undefined : handleUnlock}
+              style={{
+                marginTop: 14,
+                background: checking
+                  ? th.border
+                  : `linear-gradient(135deg, ${NAVY}, #002060)`,
+                borderRadius: 13, padding: "14px",
+                color: checking ? th.textSub : "#fff",
+                fontSize: 14, fontWeight: 800,
+                cursor: checking ? "default" : "pointer",
+                textAlign: "center",
+                boxShadow: checking ? "none" : `0 8px 24px ${NAVY}44`,
+                transition: "all 0.2s",
+                letterSpacing: 0.3,
+              }}
+            >
+              {checking
+                ? (isHi ? "जाँच हो रही है…" : "Verifying…")
+                : (isHi ? "🔓 अनलॉक करें" : "🔓 Unlock")}
+            </div>
+
+            {/* Security note */}
+            <div style={{
+              marginTop: 16, padding: "10px 12px",
+              background: th.card2, border: `1px solid ${th.border}`,
+              borderRadius: 10, fontSize: 10,
+              color: th.textSub, lineHeight: 1.6,
+              textAlign: "center",
+            }}>
+              🛡️ {isHi
+                ? "पासवर्ड SHA-256 से सुरक्षित है। यह session के बाद reset हो जाएगा।"
+                : "Password is SHA-256 protected. Unlocks for this session only."}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function ResolvedReportsCleaner({ dark = false, lang = "en", onDeleteDone }) {
   const th = THEME[dark ? "dark" : "light"];
@@ -416,6 +573,7 @@ export default function ResolvedReportsCleaner({ dark = false, lang = "en", onDe
   const [progress,    setProgress]    = useState({ done: 0, total: 0 });
   const [result,      setResult]      = useState(null);          // { type, title, sub }
   const [lastDeleted, setLastDeleted] = useState(null);          // timestamp of last cleanup
+  const [locked,      setLocked]      = useState(true);          // password gate
 
   // ── Fetch counts for all filters ──────────────────────────────────────────
   const fetchCounts = useCallback(async () => {
@@ -536,6 +694,17 @@ export default function ResolvedReportsCleaner({ dark = false, lang = "en", onDe
         }
       `}</style>
 
+      {/* ── LOCK SCREEN ── */}
+      {locked && (
+        <CleanupLockScreen
+          dark={dark}
+          lang={lang}
+          onUnlock={() => setLocked(false)}
+        />
+      )}
+
+      {/* ── MAIN CLEANER (only shown when unlocked) ── */}
+      {!locked && (
       <div style={{
         background: th.bg,
         minHeight: "100%",
@@ -569,6 +738,20 @@ export default function ResolvedReportsCleaner({ dark = false, lang = "en", onDe
                   : "Only resolved reports will be deleted"}
               </div>
             </div>
+
+            {/* Re-lock button */}
+            <div
+              onClick={() => { setLocked(true); setSelected(null); setShowConfirm(false); }}
+              title="Lock cleanup"
+              style={{
+                padding: "7px 10px", borderRadius: 10,
+                fontSize: 16, cursor: "pointer",
+                background: `${DANGER}15`,
+                border: `1.5px solid ${DANGER}40`,
+                color: DANGER,
+                display: "flex", alignItems: "center",
+              }}
+            >🔒</div>
 
             {/* Refresh counts */}
             <div
@@ -794,6 +977,8 @@ export default function ResolvedReportsCleaner({ dark = false, lang = "en", onDe
       )}
 
       <style>{`@keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }`}</style>
+    </div>
+    )} {/* end !locked */}
     </>
   );
 }
