@@ -3470,7 +3470,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
 }
 
 // ─── BENEFIT CALCULATOR CARD ───────────────────────────────────────────────────
-function BenefitCalculatorCard({ allMatchedSchemes, lang, dark }) {
+function BenefitCalculatorCard({ allMatchedSchemes, lang, dark, onSchemeOpen }) {
   const th = THEME[dark ? "dark" : "light"];
   const isHindi = lang === "hi";
   const bf = fontFamily(lang);
@@ -3571,26 +3571,45 @@ function BenefitCalculatorCard({ allMatchedSchemes, lang, dark }) {
       <div style={{ height:1, background:"linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)", marginBottom:12 }}/>
 
       {/* Scheme breakdown list */}
-      <div style={{ fontSize:9.5, color:"rgba(255,255,255,0.35)", marginBottom:7, fontFamily:bf, letterSpacing:0.3 }}>
-        {isHindi ? "👇 योजना पर टैप करें और आवेदन करें" : "👇 Tap a scheme below to apply"}
+      <div style={{ fontSize:9.5, color:"rgba(255,255,255,0.4)", marginBottom:8, fontFamily:bf, letterSpacing:0.3, display:"flex", alignItems:"center", gap:4 }}>
+        <span>👇</span>
+        <span>{isHindi ? "किसी योजना पर टैप करें — आवेदन करें" : "Tap any scheme to view & apply"}</span>
       </div>
-      <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+      <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
         {visibleSchemes.map((s, i) => (
-          <div key={s.id} style={{
-            display:"flex", alignItems:"center", gap:10,
-            animation: `calc-slide-in 0.38s cubic-bezier(0.22,1,0.36,1) ${0.05 + i * 0.06}s both`,
-          }}>
-            <div style={{ width:28, height:28, background:s.color+"22", border:`1px solid ${s.color}40`, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, flexShrink:0 }}>
+          <div key={s.id}
+            onClick={() => { haptic(); onSchemeOpen && onSchemeOpen(s.id); }}
+            style={{
+              display:"flex", alignItems:"center", gap:10,
+              background:"rgba(255,255,255,0.06)",
+              border:`1px solid ${s.color}30`,
+              borderRadius:14,
+              padding:"10px 12px",
+              cursor:"pointer",
+              animation: `calc-slide-in 0.38s cubic-bezier(0.22,1,0.36,1) ${0.05 + i * 0.06}s both`,
+              transition:"background 0.18s, transform 0.15s",
+              WebkitTapHighlightColor:"transparent",
+            }}
+            onTouchStart={e => e.currentTarget.style.background="rgba(255,255,255,0.11)"}
+            onTouchEnd={e => e.currentTarget.style.background="rgba(255,255,255,0.06)"}
+          >
+            <div style={{ width:32, height:32, background:s.color+"22", border:`1.5px solid ${s.color}50`, borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, flexShrink:0 }}>
               {s.icon}
             </div>
             <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.82)", fontFamily:bf, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+              <div style={{ fontSize:11.5, fontWeight:700, color:"rgba(255,255,255,0.9)", fontFamily:bf, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
                 {s.name[lang]}
+              </div>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", marginTop:2, fontFamily:bf }}>
+                {isHindi ? "टैप करें — आवेदन देखें" : "Tap to view & apply"}
               </div>
             </div>
             {/* Amount pill */}
-            <div style={{ fontSize:11.5, fontWeight:800, color:s.color, flexShrink:0, background:s.color+"1a", borderRadius:8, padding:"3px 9px", border:`1px solid ${s.color}30` }}>
-              {formatINR(s.annual)}{isHindi ? "/वर्ष" : "/yr"}
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:3, flexShrink:0 }}>
+              <div style={{ fontSize:12, fontWeight:800, color:s.color, background:s.color+"1a", borderRadius:8, padding:"3px 9px", border:`1px solid ${s.color}30` }}>
+                {formatINR(s.annual)}{isHindi ? "/वर्ष" : "/yr"}
+              </div>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,0.35)", paddingRight:2 }}>→</div>
             </div>
           </div>
         ))}
@@ -4138,7 +4157,7 @@ export default function YojanaSahay(){
 
             {/* Benefit Calculator — shown when profile has matched schemes with annual benefits */}
             {profile&&allMatchedSchemes.length>0&&(
-              <BenefitCalculatorCard allMatchedSchemes={allMatchedSchemes} lang={lang} dark={dark}/>
+              <BenefitCalculatorCard allMatchedSchemes={allMatchedSchemes} lang={lang} dark={dark} onSchemeOpen={setSelectedScheme}/>
             )}
 
             {/* Document Vault — auto-generated checklist from matched schemes */}
