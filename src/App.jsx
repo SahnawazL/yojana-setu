@@ -19,7 +19,7 @@ import {
   getSchemesForCategory,
 } from "./schemesData.js";
 import { auth, db } from "./firebase.js";
-import { RecaptchaVerifier, signInWithPhoneNumber, signOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { RecaptchaVerifier, signInWithPhoneNumber, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp, collection, addDoc } from "firebase/firestore";
 import AIChat from "./AIChat.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
@@ -2171,15 +2171,14 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setStage("phone");
   };
 
-  const handleGoogleSignIn=async()=>{
-    setGoogleLoading(true);setAuthError("");
-    try{
-      const provider=new GoogleAuthProvider();
-      const result=await signInWithPopup(auth,provider);
+  // ── Handle Google redirect result on page load ──────────────────────────────
+  useEffect(()=>{
+    getRedirectResult(auth).then(async result=>{
+      if(!result) return;
       const user=result.user;
       setGoogleEmail(user.email||"");
       setGooglePhoto(user.photoURL||"");
-      // ── Returning user: load existing Firestore profile ──
+      setGoogleLoading(true);
       try{
         const snap=await getDoc(doc(db,"users",user.uid));
         if(snap.exists()){
@@ -2188,7 +2187,6 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           return;
         }
       }catch{}
-      // New user: pre-fill from Google + eligibility answers, go to setup
       if(user.displayName) setSetupName(user.displayName);
       if(savedAnswers){
         if(savedAnswers.state){setSetupState(savedAnswers.state);setStateSearch(savedAnswers.state);}
@@ -2199,11 +2197,23 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
         if(savedAnswers.house)  setSetupHouse(savedAnswers.house);
       }
       setStage("setup1");
-    }catch(err){
+    }).catch(err=>{
       if(err.code!=="auth/popup-closed-by-user"){
         setAuthError(err.message||"Google sign-in failed. Please try again.");
       }
-    }finally{setGoogleLoading(false);}
+    }).finally(()=>setGoogleLoading(false));
+  },[]);
+
+  // ── Trigger Google redirect (works on mobile & desktop) ─────────────────────
+  const handleGoogleSignIn=async()=>{
+    setGoogleLoading(true);setAuthError("");
+    try{
+      const provider=new GoogleAuthProvider();
+      await signInWithRedirect(auth,provider);
+    }catch(err){
+      setAuthError(err.message||"Google sign-in failed. Please try again.");
+      setGoogleLoading(false);
+    }
   };
 
   // ── Email validation helpers ────────────────────────────────────────────────
