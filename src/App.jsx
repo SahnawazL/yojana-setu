@@ -4377,9 +4377,21 @@ export default function YojanaSahay(){
             {/* Top nav bar */}
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"52px 20px 14px",position:"relative"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:40,height:40,background:"rgba(255,255,255,0.15)",borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,0.3)",backdropFilter:"blur(8px)"}}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.92)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="10" rx="1"/><path d="M3 11l9-8 9 8"/><line x1="8" y1="21" x2="8" y2="16"/><line x1="12" y1="21" x2="12" y2="16"/><line x1="16" y1="21" x2="16" y2="16"/>
+                <div style={{width:42,height:42,background:"rgba(255,255,255,0.15)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,0.35)",backdropFilter:"blur(8px)"}}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                    {/* Dome/circle top */}
+                    <path d="M12 3 C8 3 5 6 5 9 L19 9 C19 6 16 3 12 3 Z" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.95)" strokeWidth="1.4"/>
+                    {/* Main building body */}
+                    <rect x="2" y="9" width="20" height="2" rx="0.5"/>
+                    <rect x="3" y="19" width="18" height="2" rx="0.5"/>
+                    {/* Columns */}
+                    <line x1="6"  y1="11" x2="6"  y2="19"/>
+                    <line x1="9"  y1="11" x2="9"  y2="19"/>
+                    <line x1="12" y1="11" x2="12" y2="19"/>
+                    <line x1="15" y1="11" x2="15" y2="19"/>
+                    <line x1="18" y1="11" x2="18" y2="19"/>
+                    {/* Steps */}
+                    <rect x="1" y="21" width="22" height="1.5" rx="0.4"/>
                   </svg>
                 </div>
                 <div>
@@ -4455,26 +4467,29 @@ export default function YojanaSahay(){
             <div style={{position:"absolute",top:0,left:"10%",right:"10%",height:2,borderRadius:"0 0 2px 2px",
               background:"linear-gradient(90deg,#FF9933,#06038D,#138808)",opacity:0.6}}/>
             {[
-              {icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,color:"#FF9933",grad:"rgba(255,153,51,0.08)"},
-              {icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>,color:"#06038D",grad:"rgba(6,3,141,0.06)"},
-              {icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>,color:"#138808",grad:"rgba(19,136,8,0.07)"},
-            ].map((meta,i)=>(
+              {icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,color:"#FF9933",darkColor:"#FFA950",grad:dark?"rgba(255,169,80,0.20)":"rgba(255,153,51,0.08)"},
+              {icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>,color:"#06038D",darkColor:"#6B90FF",grad:dark?"rgba(107,144,255,0.18)":"rgba(6,3,141,0.06)"},
+              {icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>,color:"#138808",darkColor:"#34D058",grad:dark?"rgba(52,208,88,0.16)":"rgba(19,136,8,0.07)"},
+            ].map((meta,i)=>{
+              const ic=dark?meta.darkColor:meta.color;
+              return(
               <div key={i} style={{flex:1,textAlign:"center",padding:"0 6px",
                 borderRight:i<2?`1px solid ${th.border}`:'none'}}>
                 <div style={{width:30,height:30,borderRadius:9,background:meta.grad,
-                  border:`1px solid ${meta.color}22`,
+                  border:`1px solid ${ic}44`,
                   display:"flex",alignItems:"center",justifyContent:"center",
+                  color:ic,
                   fontSize:14,margin:"0 auto 6px"}}>
                   {meta.icon}
                 </div>
-                <div style={{fontSize:18,fontWeight:900,color:meta.color,fontVariantNumeric:"tabular-nums",lineHeight:1,fontFamily:"'Noto Sans',sans-serif"}}>
+                <div style={{fontSize:18,fontWeight:900,color:ic,fontVariantNumeric:"tabular-nums",lineHeight:1,fontFamily:"'Noto Sans',sans-serif"}}>
                   {animatedStats[i].number}
                 </div>
                 <div style={{fontSize:9.5,color:th.textSub,marginTop:3,fontWeight:600,fontFamily:bf,letterSpacing:0.2}}>
                   {animatedStats[i].label}
                 </div>
               </div>
-            ))}
+            );})}
           </div>
 
           <div style={{padding:"14px 16px 100px"}}>
@@ -4694,26 +4709,29 @@ export default function YojanaSahay(){
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                       {(isHindi?[
-                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,title:"मिलान योजनाएं सेव",sub:"पात्र योजनाएं अकाउंट में ऑटो-सेव",color:"#FF9933",bg:"rgba(255,153,51,0.08)"},
-                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.937 15.5A2 2 0 008.5 14.063l-6.135-1.582a.5.5 0 010-.962L8.5 9.936A2 2 0 009.937 8.5l1.582-6.135a.5.5 0 01.963 0L14.063 8.5A2 2 0 0015.5 9.937l6.135 1.581a.5.5 0 010 .964L15.5 14.063a2 2 0 00-1.437 1.437l-1.582 6.135a.5.5 0 01-.963 0z"/></svg>,title:"पर्सनल AI जवाब",sub:"AI प्रोफाइल देखकर सटीक जवाब देता है",color:"#06038D",bg:"rgba(6,3,141,0.07)"},
-                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>,title:"प्रगति कभी न खोएं",sub:"परिणाम और चैट इतिहास सेव",color:"#138808",bg:"rgba(19,136,8,0.07)"},
-                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>,title:"योजना अलर्ट",sub:"नई योजनाएं व डेडलाइन की सूचना",color:"#8B5CF6",bg:"rgba(139,92,246,0.07)"},
+                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,title:"मिलान योजनाएं सेव",sub:"पात्र योजनाएं अकाउंट में ऑटो-सेव",color:"#FF9933",darkColor:"#FFA950",bg:"rgba(255,153,51,0.08)",darkBg:"rgba(255,169,80,0.18)"},
+                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.937 15.5A2 2 0 008.5 14.063l-6.135-1.582a.5.5 0 010-.962L8.5 9.936A2 2 0 009.937 8.5l1.582-6.135a.5.5 0 01.963 0L14.063 8.5A2 2 0 0015.5 9.937l6.135 1.581a.5.5 0 010 .964L15.5 14.063a2 2 0 00-1.437 1.437l-1.582 6.135a.5.5 0 01-.963 0z"/></svg>,title:"पर्सनल AI जवाब",sub:"AI प्रोफाइल देखकर सटीक जवाब देता है",color:"#06038D",darkColor:"#6B90FF",bg:"rgba(6,3,141,0.07)",darkBg:"rgba(107,144,255,0.18)"},
+                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>,title:"प्रगति कभी न खोएं",sub:"परिणाम और चैट इतिहास सेव",color:"#138808",darkColor:"#34D058",bg:"rgba(19,136,8,0.07)",darkBg:"rgba(52,208,88,0.16)"},
+                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>,title:"योजना अलर्ट",sub:"नई योजनाएं व डेडलाइन की सूचना",color:"#8B5CF6",darkColor:"#A78BFA",bg:"rgba(139,92,246,0.07)",darkBg:"rgba(167,139,250,0.18)"},
                       ]:[
-                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,title:"Matched Schemes Saved",sub:"Qualifying schemes auto-saved to your account",color:"#FF9933",bg:"rgba(255,153,51,0.08)"},
-                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.937 15.5A2 2 0 008.5 14.063l-6.135-1.582a.5.5 0 010-.962L8.5 9.936A2 2 0 009.937 8.5l1.582-6.135a.5.5 0 01.963 0L14.063 8.5A2 2 0 0015.5 9.937l6.135 1.581a.5.5 0 010 .964L15.5 14.063a2 2 0 00-1.437 1.437l-1.582 6.135a.5.5 0 01-.963 0z"/></svg>,title:"Personalized AI",sub:"AI knows your profile, gives tailored replies",color:"#06038D",bg:"rgba(6,3,141,0.07)"},
-                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>,title:"Progress Saved",sub:"Eligibility results & chat history kept safe",color:"#138808",bg:"rgba(19,136,8,0.07)"},
-                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>,title:"Deadline Alerts",sub:"Get notified about new schemes & deadlines",color:"#8B5CF6",bg:"rgba(139,92,246,0.07)"},
-                      ]).map((f,i)=>(
+                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,title:"Matched Schemes Saved",sub:"Qualifying schemes auto-saved to your account",color:"#FF9933",darkColor:"#FFA950",bg:"rgba(255,153,51,0.08)",darkBg:"rgba(255,169,80,0.18)"},
+                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.937 15.5A2 2 0 008.5 14.063l-6.135-1.582a.5.5 0 010-.962L8.5 9.936A2 2 0 009.937 8.5l1.582-6.135a.5.5 0 01.963 0L14.063 8.5A2 2 0 0015.5 9.937l6.135 1.581a.5.5 0 010 .964L15.5 14.063a2 2 0 00-1.437 1.437l-1.582 6.135a.5.5 0 01-.963 0z"/></svg>,title:"Personalized AI",sub:"AI knows your profile, gives tailored replies",color:"#06038D",darkColor:"#6B90FF",bg:"rgba(6,3,141,0.07)",darkBg:"rgba(107,144,255,0.18)"},
+                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>,title:"Progress Saved",sub:"Eligibility results & chat history kept safe",color:"#138808",darkColor:"#34D058",bg:"rgba(19,136,8,0.07)",darkBg:"rgba(52,208,88,0.16)"},
+                        {icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>,title:"Deadline Alerts",sub:"Get notified about new schemes & deadlines",color:"#8B5CF6",darkColor:"#A78BFA",bg:"rgba(139,92,246,0.07)",darkBg:"rgba(167,139,250,0.18)"},
+                      ]).map((f,i)=>{
+                        const fc=dark?f.darkColor:f.color;
+                        const fbg=dark?f.darkBg:f.bg;
+                        return(
                         <div key={i} style={{background:th.card,borderRadius:14,padding:"13px 12px",
-                          border:`1.5px solid ${f.color}20`,boxShadow:dark?"0 2px 10px rgba(0,0,0,0.2)":"0 2px 10px rgba(0,0,0,0.05)"}}>
-                          <div style={{width:34,height:34,borderRadius:10,background:f.bg,border:`1px solid ${f.color}28`,
-                            display:"flex",alignItems:"center",justifyContent:"center",marginBottom:8,color:f.color}}>
+                          border:`1.5px solid ${fc}28`,boxShadow:dark?"0 2px 10px rgba(0,0,0,0.2)":"0 2px 10px rgba(0,0,0,0.05)"}}>
+                          <div style={{width:34,height:34,borderRadius:10,background:fbg,border:`1px solid ${fc}40`,
+                            display:"flex",alignItems:"center",justifyContent:"center",marginBottom:8,color:fc}}>
                             {f.icon}
                           </div>
                           <div style={{fontSize:11.5,fontWeight:800,color:th.text,fontFamily:bf,lineHeight:1.3,marginBottom:4}}>{f.title}</div>
                           <div style={{fontSize:10,color:th.textSub,lineHeight:1.45,fontFamily:bf}}>{f.sub}</div>
                         </div>
-                      ))}
+                      );})}
                     </div>
                   </div>
                 </div>
@@ -4809,9 +4827,9 @@ export default function YojanaSahay(){
           const active=activeTab===item.tab;
           return(
             <div key={item.tab} className="bn" onClick={()=>{haptic();setActiveTab(item.tab);}}
-              style={{position:"relative",background:active?"#EFF6FF":"transparent",borderRadius:12,padding:"6px 8px 7px"}}>
+              style={{position:"relative",background:active?(dark?"rgba(255,153,51,0.14)":"#EFF6FF"):"transparent",borderRadius:12,padding:"6px 8px 7px"}}>
               <div className={`bn-icon${active?" active":""}`} style={{fontSize:20,filter:active?"none":"grayscale(0.3)"}}>{item.icon}</div>
-              <div style={{fontSize:9,fontWeight:active?800:500,color:active?"#003580":th.textSub,fontFamily:bf,transition:"color 0.22s,font-weight 0.22s"}}>{item.label}</div>
+              <div style={{fontSize:9,fontWeight:active?800:500,color:active?(dark?"#FF9933":"#003580"):th.textSub,fontFamily:bf,transition:"color 0.22s,font-weight 0.22s"}}>{item.label}</div>
             </div>
           );
         })}
