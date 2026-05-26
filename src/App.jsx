@@ -3581,133 +3581,218 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       {/* ── Sign Out Confirmation Modal ── */}
       {showSignOutModal&&(
         <div
-          onClick={()=>setShowSignOutModal(false)}
+          onClick={()=>{if(!signOutLoading)setShowSignOutModal(false);}}
           style={{
             position:"fixed",inset:0,zIndex:1000,
-            background:"rgba(0,0,0,0.55)",
-            backdropFilter:"blur(4px)",WebkitBackdropFilter:"blur(4px)",
-            display:"flex",alignItems:"flex-end",justifyContent:"center",
-            animation:"soBackdropIn 0.28s ease",
+            background:dark?"rgba(0,0,0,0.72)":"rgba(15,23,42,0.55)",
+            backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            padding:"24px",
+            animation:"soBackdropIn 0.22s ease",
           }}>
           <style>{`
             @keyframes soBackdropIn{from{opacity:0}to{opacity:1}}
-            @keyframes soSheetUp{from{opacity:0;transform:translateY(80px)}to{opacity:1;transform:translateY(0)}}
-            @keyframes soPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+            @keyframes soDialogIn{from{opacity:0;transform:scale(0.88) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+            @keyframes soIconPulse{0%,100%{transform:scale(1);box-shadow:${dark?"0 0 0 0 rgba(220,38,38,0.5)":"0 0 0 0 rgba(220,38,38,0.3)"}}70%{transform:scale(1.05);box-shadow:${dark?"0 0 0 10px rgba(220,38,38,0)":"0 0 0 12px rgba(220,38,38,0)"}}}
+            @keyframes soShimmer{0%{background-position:200% center}100%{background-position:-200% center}}
           `}</style>
           <div
             onClick={e=>e.stopPropagation()}
             style={{
-              width:"100%",maxWidth:420,
-              background:th.card,
-              borderRadius:"24px 24px 0 0",
-              padding:"0 0 max(28px,env(safe-area-inset-bottom,28px)) 0",
-              animation:"soSheetUp 0.32s cubic-bezier(0.22,1,0.36,1)",
-              boxShadow:"0 -8px 40px rgba(0,0,0,0.28)",
-              border:`1.5px solid ${th.border}`,
-              borderBottom:"none",
+              width:"100%",maxWidth:360,
+              background:dark
+                ?"linear-gradient(160deg,#1e1e22 0%,#18181b 100%)"
+                :"linear-gradient(160deg,#ffffff 0%,#f8f7ff 100%)",
+              borderRadius:28,
               overflow:"hidden",
+              animation:"soDialogIn 0.32s cubic-bezier(0.34,1.56,0.64,1)",
+              boxShadow:dark
+                ?"0 32px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.07)"
+                :"0 32px 80px rgba(15,23,42,0.22),0 0 0 1px rgba(0,0,0,0.06)",
+              position:"relative",
             }}>
-            {/* Drag handle */}
-            <div style={{display:"flex",justifyContent:"center",paddingTop:12,paddingBottom:4}}>
-              <div style={{width:36,height:4,borderRadius:2,background:th.handle}}/>
-            </div>
 
-            {/* Icon + header */}
-            <div style={{textAlign:"center",padding:"20px 24px 4px"}}>
-              {/* Animated door icon */}
-              <div style={{
-                width:64,height:64,borderRadius:20,margin:"0 auto 16px",
-                background:dark?"rgba(220,38,38,0.14)":"#FEF2F2",
-                border:`2px solid ${dark?"rgba(220,38,38,0.30)":"#FECACA"}`,
-                display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,
-                animation:"soPulse 2.4s ease-in-out infinite",
-                boxShadow:dark?"0 0 24px rgba(220,38,38,0.18)":"0 4px 20px rgba(220,38,38,0.12)",
-              }}>🚪</div>
-              <div style={{fontSize:18,fontWeight:800,color:th.text,fontFamily:bf,marginBottom:6,letterSpacing:-0.3}}>
-                {isHindi?"साइन आउट करें?":"Sign Out?"}
-              </div>
-              <div style={{fontSize:13,color:th.textMid,fontFamily:bf,lineHeight:1.55,maxWidth:270,margin:"0 auto"}}>
-                {isHindi
-                  ?"आपकी प्रोफाइल और प्रगति सुरक्षित रहेगी। अगली बार वापस आएं — सब कुछ तैयार मिलेगा।"
-                  :"Your profile & progress stays safe. Everything will be right here when you come back."}
-              </div>
-            </div>
+            {/* Top accent bar — saffron→red gradient */}
+            <div style={{
+              height:3,
+              background:"linear-gradient(90deg,#FF9933 0%,#ef4444 50%,#B91C1C 100%)",
+            }}/>
 
-            {/* User info pill */}
-            {auth.currentUser&&(
-              <div style={{
-                margin:"18px 24px 4px",
-                padding:"10px 14px",
-                background:dark?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.03)",
-                border:`1px solid ${th.border}`,
-                borderRadius:12,
-                display:"flex",alignItems:"center",gap:10,
-              }}>
-                {auth.currentUser.photoURL
-                  ?<img src={auth.currentUser.photoURL} alt="" style={{width:34,height:34,borderRadius:"50%",objectFit:"cover",flexShrink:0,border:`2px solid ${th.border2}`}}/>
-                  :<div style={{width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,#FF9933,#FF8C00)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:14,fontWeight:800,color:"#fff"}}>
-                    {(profile?.name||auth.currentUser.displayName||auth.currentUser.email||"U").charAt(0).toUpperCase()}
-                  </div>
-                }
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:700,color:th.text,fontFamily:bf,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                    {profile?.name||auth.currentUser.displayName||(isHindi?"नागरिक":"Citizen")}
-                  </div>
-                  <div style={{fontSize:11,color:th.textSub,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                    {auth.currentUser.email||auth.currentUser.phoneNumber||""}
-                  </div>
-                </div>
-                <div style={{fontSize:10,fontWeight:700,color:"#138808",background:dark?"rgba(19,136,8,0.14)":"rgba(19,136,8,0.08)",border:"1px solid rgba(19,136,8,0.22)",borderRadius:20,padding:"2px 8px"}}>
-                  {isHindi?"सत्यापित":"Verified"}
-                </div>
-              </div>
-            )}
+            {/* Subtle corner glow */}
+            <div style={{
+              position:"absolute",top:0,right:0,width:160,height:160,
+              background:dark
+                ?"radial-gradient(circle at top right,rgba(220,38,38,0.10) 0%,transparent 70%)"
+                :"radial-gradient(circle at top right,rgba(220,38,38,0.07) 0%,transparent 70%)",
+              pointerEvents:"none",
+            }}/>
 
-            {/* Buttons */}
-            <div style={{padding:"20px 24px 0",display:"flex",flexDirection:"column",gap:10}}>
-              {/* Confirm sign out */}
+            {/* Body */}
+            <div style={{padding:"28px 28px 24px",position:"relative"}}>
+
+              {/* Close × button */}
               <div
-                onClick={async()=>{
-                  if(signOutLoading) return;
-                  haptic([50,60,50]);
-                  setSignOutLoading(true);
-                  await handleSignOut();
-                  setSignOutLoading(false);
-                  setShowSignOutModal(false);
-                }}
+                onClick={()=>{if(!signOutLoading){haptic(30);setShowSignOutModal(false);}}}
                 style={{
-                  background:signOutLoading?"rgba(220,38,38,0.7)":"linear-gradient(135deg,#DC2626,#B91C1C)",
-                  borderRadius:14,padding:"14px",
-                  display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                  cursor:signOutLoading?"default":"pointer",
-                  boxShadow:signOutLoading?"none":"0 4px 16px rgba(220,38,38,0.30)",
-                  transition:"all 0.2s",
-                  WebkitTapHighlightColor:"transparent",
-                }}>
-                {signOutLoading
-                  ?<div style={{width:18,height:18,borderRadius:"50%",border:"2.5px solid rgba(255,255,255,0.35)",borderTopColor:"#fff",animation:"chakra-spin 0.7s linear infinite"}}/>
-                  :<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-                  </svg>
-                }
-                <span style={{fontSize:14,fontWeight:800,color:"#fff",fontFamily:bf}}>
-                  {signOutLoading?(isHindi?"साइन आउट हो रहा है...":"Signing out…"):(isHindi?"हाँ, साइन आउट करें":"Yes, Sign Out")}
-                </span>
-              </div>
-              {/* Cancel */}
-              <div
-                onClick={()=>{haptic();setShowSignOutModal(false);}}
-                style={{
-                  background:dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.04)",
-                  border:`1.5px solid ${th.border2}`,
-                  borderRadius:14,padding:"13px",
+                  position:"absolute",top:20,right:20,
+                  width:30,height:30,borderRadius:"50%",
+                  background:dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.06)",
+                  border:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(0,0,0,0.08)"}`,
                   display:"flex",alignItems:"center",justifyContent:"center",
-                  cursor:"pointer",
+                  cursor:"pointer",color:th.textSub,fontSize:16,lineHeight:1,
                   WebkitTapHighlightColor:"transparent",
+                }}>✕</div>
+
+              {/* Icon */}
+              <div style={{
+                width:72,height:72,borderRadius:22,margin:"0 auto 20px",
+                background:dark
+                  ?"linear-gradient(145deg,#2d1515,#3b1a1a)"
+                  :"linear-gradient(145deg,#fff1f2,#ffe4e6)",
+                border:`1.5px solid ${dark?"rgba(220,38,38,0.35)":"rgba(220,38,38,0.18)"}`,
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,
+                animation:"soIconPulse 2.6s ease-in-out infinite",
+                boxShadow:dark
+                  ?"0 8px 24px rgba(220,38,38,0.20),inset 0 1px 0 rgba(255,255,255,0.06)"
+                  :"0 8px 24px rgba(220,38,38,0.14),inset 0 1px 0 rgba(255,255,255,0.8)",
+              }}>🚪</div>
+
+              {/* Heading */}
+              <div style={{textAlign:"center",marginBottom:8}}>
+                <div style={{
+                  fontSize:20,fontWeight:800,fontFamily:bf,letterSpacing:-0.4,
+                  color:th.text,lineHeight:1.2,marginBottom:6,
                 }}>
-                <span style={{fontSize:14,fontWeight:700,color:th.text,fontFamily:bf}}>
-                  {isHindi?"रद्द करें":"Cancel"}
-                </span>
+                  {isHindi?"साइन आउट करें?":"Sign Out?"}
+                </div>
+                <div style={{
+                  fontSize:13,color:th.textMid,fontFamily:bf,lineHeight:1.6,
+                  maxWidth:260,margin:"0 auto",
+                }}>
+                  {isHindi
+                    ?"आपकी प्रोफाइल और प्रगति सुरक्षित रहेगी।"
+                    :"Your profile & progress stays safe. We'll be right here when you return."}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div style={{height:1,background:dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)",margin:"18px 0"}}/>
+
+              {/* User info card */}
+              {auth.currentUser&&(
+                <div style={{
+                  padding:"12px 14px",
+                  background:dark
+                    ?"rgba(255,255,255,0.04)"
+                    :"rgba(0,53,128,0.03)",
+                  border:`1.5px solid ${dark?"rgba(255,255,255,0.08)":"rgba(0,53,128,0.10)"}`,
+                  borderRadius:16,
+                  display:"flex",alignItems:"center",gap:12,
+                  marginBottom:20,
+                }}>
+                  {/* Avatar */}
+                  {auth.currentUser.photoURL
+                    ?<img src={auth.currentUser.photoURL} alt=""
+                        style={{width:42,height:42,borderRadius:"50%",objectFit:"cover",flexShrink:0,
+                          border:`2px solid ${dark?"rgba(255,153,51,0.5)":"rgba(255,153,51,0.4)"}`,
+                          boxShadow:"0 2px 8px rgba(255,153,51,0.25)"}}/>
+                    :<div style={{
+                        width:42,height:42,borderRadius:"50%",flexShrink:0,
+                        background:"linear-gradient(135deg,#FF9933 0%,#FF6B00 100%)",
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        fontSize:17,fontWeight:800,color:"#fff",
+                        boxShadow:"0 3px 10px rgba(255,107,0,0.40)",
+                        border:`2px solid ${dark?"rgba(255,153,51,0.30)":"rgba(255,255,255,0.6)"}`,
+                      }}>
+                      {(profile?.name||auth.currentUser.displayName||auth.currentUser.email||"U").charAt(0).toUpperCase()}
+                    </div>
+                  }
+                  {/* Name & email */}
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:14,fontWeight:700,color:th.text,fontFamily:bf,
+                      overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",lineHeight:1.3}}>
+                      {profile?.name||auth.currentUser.displayName||(isHindi?"नागरिक":"Citizen")}
+                    </div>
+                    <div style={{fontSize:11.5,color:th.textSub,fontFamily:bf,
+                      overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:2}}>
+                      {auth.currentUser.email||auth.currentUser.phoneNumber||""}
+                    </div>
+                  </div>
+                  {/* Verified badge */}
+                  <div style={{
+                    display:"flex",alignItems:"center",gap:4,flexShrink:0,
+                    fontSize:10.5,fontWeight:700,color:"#16a34a",
+                    background:dark?"rgba(22,163,74,0.14)":"rgba(22,163,74,0.09)",
+                    border:"1.5px solid rgba(22,163,74,0.25)",
+                    borderRadius:20,padding:"3px 9px",
+                  }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    {isHindi?"सत्यापित":"Verified"}
+                  </div>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+
+                {/* Sign Out — primary destructive */}
+                <div
+                  onClick={async()=>{
+                    if(signOutLoading)return;
+                    haptic([50,60,50]);
+                    setSignOutLoading(true);
+                    await handleSignOut();
+                    setSignOutLoading(false);
+                    setShowSignOutModal(false);
+                  }}
+                  className={signOutLoading?"signin-loading":""}
+                  style={{
+                    background:signOutLoading
+                      ?"linear-gradient(270deg,#b91c1c,#dc2626,#991b1b,#dc2626)"
+                      :"linear-gradient(135deg,#dc2626 0%,#b91c1c 100%)",
+                    backgroundSize:signOutLoading?"200% auto":"100% 100%",
+                    borderRadius:16,padding:"15px 20px",
+                    display:"flex",alignItems:"center",justifyContent:"center",gap:9,
+                    cursor:signOutLoading?"default":"pointer",
+                    boxShadow:signOutLoading
+                      ?"0 4px 18px rgba(220,38,38,0.20)"
+                      :"0 4px 18px rgba(185,28,28,0.40),inset 0 1px 0 rgba(255,255,255,0.15)",
+                    transition:"box-shadow 0.2s,opacity 0.2s",
+                    WebkitTapHighlightColor:"transparent",
+                    userSelect:"none",
+                  }}>
+                  {signOutLoading
+                    ?<div className="btn-spinner"/>
+                    :<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                  }
+                  <span style={{fontSize:14.5,fontWeight:800,color:"#fff",fontFamily:bf,letterSpacing:0.1}}>
+                    {signOutLoading?(isHindi?"साइन आउट हो रहा है...":"Signing out…"):(isHindi?"हाँ, साइन आउट करें":"Yes, Sign Out")}
+                  </span>
+                </div>
+
+                {/* Cancel — secondary */}
+                <div
+                  onClick={()=>{if(!signOutLoading){haptic();setShowSignOutModal(false);}}}
+                  style={{
+                    background:"transparent",
+                    border:`1.5px solid ${dark?"rgba(255,255,255,0.12)":"rgba(0,0,0,0.10)"}`,
+                    borderRadius:16,padding:"14px 20px",
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    cursor:signOutLoading?"default":"pointer",
+                    transition:"background 0.18s",
+                    WebkitTapHighlightColor:"transparent",
+                    userSelect:"none",
+                    opacity:signOutLoading?0.45:1,
+                  }}>
+                  <span style={{fontSize:14,fontWeight:600,color:th.textMid,fontFamily:bf}}>
+                    {isHindi?"रद्द करें":"Cancel"}
+                  </span>
+                </div>
+
               </div>
             </div>
           </div>
