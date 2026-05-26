@@ -3355,12 +3355,15 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                 {icon:"🏠",label:isHindi?"मकान":"Housing",value:houseVal,color:SAFFRON},
               ].map((item,i)=>(
                 <div key={i} style={{
-                  background:dark?`${item.color}14`:`${item.color}09`,
-                  border:`1.5px solid ${item.color}28`,borderRadius:13,padding:"12px 13px",
+                  background:dark?th.card2:`${item.color}09`,
+                  border:dark?`1.5px solid ${th.border2}`:`1.5px solid ${item.color}28`,
+                  borderRadius:13,padding:"12px 13px",
                 }}>
                   <div style={{fontSize:17,marginBottom:5}}>{item.icon}</div>
                   <div style={{fontSize:9.5,color:th.textSub,fontFamily:bf,letterSpacing:0.5,textTransform:"uppercase",marginBottom:3,fontWeight:600}}>{item.label}</div>
-                  <div style={{fontSize:12.5,fontWeight:700,color:item.color,fontFamily:bf,lineHeight:1.3}}>{item.value||"—"}</div>
+                  <div style={{fontSize:12.5,fontWeight:700,
+                    color:dark&&item.color===ASHOKA_BLUE?"#6B90FF":dark&&item.color===IND_GREEN?"#34D058":item.color,
+                    fontFamily:bf,lineHeight:1.3}}>{item.value||"—"}</div>
                 </div>
               ))}
             </div>
@@ -3447,7 +3450,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           {/* Language */}
           <div style={{padding:"14px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <div style={{width:38,height:38,borderRadius:11,background:"#EFF6FF",border:"1.5px solid #BFDBFE",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🌐</div>
+              <div style={{width:38,height:38,borderRadius:11,background:dark?"rgba(59,130,246,0.14)":"#EFF6FF",border:`1.5px solid ${dark?"rgba(59,130,246,0.28)":"#BFDBFE"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🌐</div>
               <div>
                 <div style={{fontSize:14,fontWeight:600,color:th.text,fontFamily:bf}}>{pt.langLabel}</div>
                 <div style={{fontSize:11,color:th.textSub,marginTop:1}}>{lang==="en"?"English / अंग्रेज़ी":"हिंदी / Hindi"}</div>
@@ -3475,13 +3478,13 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           <div onClick={()=>{haptic();handleEdit();}}
             style={{padding:"14px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <div style={{width:38,height:38,borderRadius:11,background:"#FFF7ED",border:"1.5px solid #FED7AA",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>✏️</div>
+              <div style={{width:38,height:38,borderRadius:11,background:dark?"rgba(255,153,51,0.14)":"#FFF7ED",border:`1.5px solid ${dark?"rgba(255,153,51,0.28)":"#FED7AA"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>✏️</div>
               <div>
                 <div style={{fontSize:14,fontWeight:600,color:th.text,fontFamily:bf}}>{pt.editProfile}</div>
                 <div style={{fontSize:11,color:th.textSub,marginTop:1}}>{isHindi?"जानकारी अपडेट करें":"Update your information"}</div>
               </div>
             </div>
-            <div style={{width:28,height:28,borderRadius:8,background:dark?"rgba(255,153,51,0.14)":"rgba(255,153,51,0.08)",border:"1.5px solid rgba(255,153,51,0.22)",display:"flex",alignItems:"center",justifyContent:"center",color:"#FF8C00",fontSize:15,fontWeight:700}}>›</div>
+            <div style={{width:28,height:28,borderRadius:8,background:dark?"rgba(255,255,255,0.06)":"rgba(0,0,0,0.04)",border:`1.5px solid ${th.border2}`,display:"flex",alignItems:"center",justifyContent:"center",color:th.textMid,fontSize:15,fontWeight:700}}>›</div>
           </div>
 
           {/* Report / Query — visible to all logged-in users */}
@@ -3498,7 +3501,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                   <div style={{fontSize:11,color:th.textSub,marginTop:1}}>{pt.reportSub}</div>
                 </div>
               </div>
-              <div style={{width:28,height:28,borderRadius:8,background:dark?"rgba(0,0,0,0.18)":"rgba(0,0,0,0.05)",border:`1.5px solid ${th.border3}`,display:"flex",alignItems:"center",justifyContent:"center",color:th.textSub,fontSize:15,fontWeight:700}}>›</div>
+              <div style={{width:28,height:28,borderRadius:8,background:dark?"rgba(255,255,255,0.06)":"rgba(0,0,0,0.04)",border:`1.5px solid ${th.border2}`,display:"flex",alignItems:"center",justifyContent:"center",color:th.textMid,fontSize:15,fontWeight:700}}>›</div>
             </div>
           )}
 
@@ -3516,7 +3519,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                   <div style={{fontSize:11,color:th.textSub,marginTop:1}}>View users, stats & export data</div>
                 </div>
               </div>
-              <div style={{width:28,height:28,borderRadius:8,background:"rgba(0,32,96,0.08)",border:"1.5px solid rgba(0,32,96,0.18)",display:"flex",alignItems:"center",justifyContent:"center",color:ASHOKA_BLUE,fontSize:15,fontWeight:700}}>›</div>
+              <div style={{width:28,height:28,borderRadius:8,background:dark?"rgba(255,255,255,0.06)":"rgba(0,0,0,0.04)",border:`1.5px solid ${th.border2}`,display:"flex",alignItems:"center",justifyContent:"center",color:th.textMid,fontSize:15,fontWeight:700}}>›</div>
             </div>
           )}
 
@@ -3537,20 +3540,20 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                 </div>
               </div>
             </div>
-            <div style={{width:28,height:28,borderRadius:8,background:dark?"rgba(0,53,128,0.16)":"rgba(0,53,128,0.06)",border:`1.5px solid ${dark?"rgba(0,53,128,0.28)":"rgba(0,53,128,0.14)"}`,display:"flex",alignItems:"center",justifyContent:"center",color:dark?"#7ba7f0":ASHOKA_BLUE,fontSize:15,fontWeight:700}}>›</div>
+            <div style={{width:28,height:28,borderRadius:8,background:dark?"rgba(255,255,255,0.06)":"rgba(0,0,0,0.04)",border:`1.5px solid ${th.border2}`,display:"flex",alignItems:"center",justifyContent:"center",color:th.textMid,fontSize:15,fontWeight:700}}>›</div>
           </div>
 
           {/* Sign Out */}
           <div onClick={()=>{haptic([50,60,50]);handleSignOut();}}
             style={{padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <div style={{width:38,height:38,borderRadius:11,background:"#FEF2F2",border:"1.5px solid #FECACA",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🚪</div>
+              <div style={{width:38,height:38,borderRadius:11,background:dark?"rgba(220,38,38,0.14)":"#FEF2F2",border:`1.5px solid ${dark?"rgba(220,38,38,0.28)":"#FECACA"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🚪</div>
               <div>
                 <div style={{fontSize:14,fontWeight:600,color:"#DC2626",fontFamily:bf}}>{pt.signOut}</div>
-                <div style={{fontSize:11,color:"#f87171",marginTop:1}}>{isHindi?"सुरक्षित साइन आउट":"Sign out securely"}</div>
+                <div style={{fontSize:11,color:dark?"#f87171":"#ef4444",marginTop:1}}>{isHindi?"सुरक्षित साइन आउट":"Sign out securely"}</div>
               </div>
             </div>
-            <div style={{width:28,height:28,borderRadius:8,background:"rgba(220,38,38,0.08)",border:"1.5px solid rgba(220,38,38,0.18)",display:"flex",alignItems:"center",justifyContent:"center",color:"#DC2626",fontSize:15,fontWeight:700}}>›</div>
+            <div style={{width:28,height:28,borderRadius:8,background:dark?"rgba(255,255,255,0.06)":"rgba(0,0,0,0.04)",border:`1.5px solid ${th.border2}`,display:"flex",alignItems:"center",justifyContent:"center",color:th.textMid,fontSize:15,fontWeight:700}}>›</div>
           </div>
         </div>
       </div>
