@@ -2001,6 +2001,8 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   const [showReport,setShowReport]=useState(false);
   const [reportTab,setReportTab]=useState("my"); // "my" | "new"
   const [showAbout,setShowAbout]=useState(false);
+  const [showSignOutModal,setShowSignOutModal]=useState(false);
+  const [signOutLoading,setSignOutLoading]=useState(false);
   const otpRefs=useRef([]);
   const verifierRef=useRef(null);
   const confirmationRef=useRef(null);
@@ -3544,7 +3546,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           </div>
 
           {/* Sign Out */}
-          <div onClick={()=>{haptic([50,60,50]);handleSignOut();}}
+          <div onClick={()=>{haptic([50,60,50]);setShowSignOutModal(true);}}
             style={{padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:38,height:38,borderRadius:11,background:dark?"rgba(220,38,38,0.14)":"#FEF2F2",border:`1.5px solid ${dark?"rgba(220,38,38,0.28)":"#FECACA"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🚪</div>
@@ -3557,6 +3559,142 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           </div>
         </div>
       </div>
+
+      {/* ── Sign Out Confirmation Modal ── */}
+      {showSignOutModal&&(
+        <div
+          onClick={()=>setShowSignOutModal(false)}
+          style={{
+            position:"fixed",inset:0,zIndex:1000,
+            background:"rgba(0,0,0,0.55)",
+            backdropFilter:"blur(4px)",WebkitBackdropFilter:"blur(4px)",
+            display:"flex",alignItems:"flex-end",justifyContent:"center",
+            animation:"soBackdropIn 0.28s ease",
+          }}>
+          <style>{`
+            @keyframes soBackdropIn{from{opacity:0}to{opacity:1}}
+            @keyframes soSheetUp{from{opacity:0;transform:translateY(80px)}to{opacity:1;transform:translateY(0)}}
+            @keyframes soPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+          `}</style>
+          <div
+            onClick={e=>e.stopPropagation()}
+            style={{
+              width:"100%",maxWidth:420,
+              background:th.card,
+              borderRadius:"24px 24px 0 0",
+              padding:"0 0 max(28px,env(safe-area-inset-bottom,28px)) 0",
+              animation:"soSheetUp 0.32s cubic-bezier(0.22,1,0.36,1)",
+              boxShadow:"0 -8px 40px rgba(0,0,0,0.28)",
+              border:`1.5px solid ${th.border}`,
+              borderBottom:"none",
+              overflow:"hidden",
+            }}>
+            {/* Drag handle */}
+            <div style={{display:"flex",justifyContent:"center",paddingTop:12,paddingBottom:4}}>
+              <div style={{width:36,height:4,borderRadius:2,background:th.handle}}/>
+            </div>
+
+            {/* Icon + header */}
+            <div style={{textAlign:"center",padding:"20px 24px 4px"}}>
+              {/* Animated door icon */}
+              <div style={{
+                width:64,height:64,borderRadius:20,margin:"0 auto 16px",
+                background:dark?"rgba(220,38,38,0.14)":"#FEF2F2",
+                border:`2px solid ${dark?"rgba(220,38,38,0.30)":"#FECACA"}`,
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,
+                animation:"soPulse 2.4s ease-in-out infinite",
+                boxShadow:dark?"0 0 24px rgba(220,38,38,0.18)":"0 4px 20px rgba(220,38,38,0.12)",
+              }}>🚪</div>
+              <div style={{fontSize:18,fontWeight:800,color:th.text,fontFamily:bf,marginBottom:6,letterSpacing:-0.3}}>
+                {isHindi?"साइन आउट करें?":"Sign Out?"}
+              </div>
+              <div style={{fontSize:13,color:th.textMid,fontFamily:bf,lineHeight:1.55,maxWidth:270,margin:"0 auto"}}>
+                {isHindi
+                  ?"आपकी प्रोफाइल और प्रगति सुरक्षित रहेगी। अगली बार वापस आएं — सब कुछ तैयार मिलेगा।"
+                  :"Your profile & progress stays safe. Everything will be right here when you come back."}
+              </div>
+            </div>
+
+            {/* User info pill */}
+            {auth.currentUser&&(
+              <div style={{
+                margin:"18px 24px 4px",
+                padding:"10px 14px",
+                background:dark?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.03)",
+                border:`1px solid ${th.border}`,
+                borderRadius:12,
+                display:"flex",alignItems:"center",gap:10,
+              }}>
+                {auth.currentUser.photoURL
+                  ?<img src={auth.currentUser.photoURL} alt="" style={{width:34,height:34,borderRadius:"50%",objectFit:"cover",flexShrink:0,border:`2px solid ${th.border2}`}}/>
+                  :<div style={{width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,#FF9933,#FF8C00)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:14,fontWeight:800,color:"#fff"}}>
+                    {(auth.currentUser.displayName||auth.currentUser.email||"U").charAt(0).toUpperCase()}
+                  </div>
+                }
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:700,color:th.text,fontFamily:bf,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                    {auth.currentUser.displayName||isHindi?"नागरिक":"Citizen"}
+                  </div>
+                  <div style={{fontSize:11,color:th.textSub,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                    {auth.currentUser.email||auth.currentUser.phoneNumber||""}
+                  </div>
+                </div>
+                <div style={{fontSize:10,fontWeight:700,color:"#138808",background:dark?"rgba(19,136,8,0.14)":"rgba(19,136,8,0.08)",border:"1px solid rgba(19,136,8,0.22)",borderRadius:20,padding:"2px 8px"}}>
+                  {isHindi?"सत्यापित":"Verified"}
+                </div>
+              </div>
+            )}
+
+            {/* Buttons */}
+            <div style={{padding:"20px 24px 0",display:"flex",flexDirection:"column",gap:10}}>
+              {/* Confirm sign out */}
+              <div
+                onClick={async()=>{
+                  if(signOutLoading) return;
+                  haptic([50,60,50]);
+                  setSignOutLoading(true);
+                  await handleSignOut();
+                  setSignOutLoading(false);
+                  setShowSignOutModal(false);
+                }}
+                style={{
+                  background:signOutLoading?"rgba(220,38,38,0.7)":"linear-gradient(135deg,#DC2626,#B91C1C)",
+                  borderRadius:14,padding:"14px",
+                  display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                  cursor:signOutLoading?"default":"pointer",
+                  boxShadow:signOutLoading?"none":"0 4px 16px rgba(220,38,38,0.30)",
+                  transition:"all 0.2s",
+                  WebkitTapHighlightColor:"transparent",
+                }}>
+                {signOutLoading
+                  ?<div style={{width:18,height:18,borderRadius:"50%",border:"2.5px solid rgba(255,255,255,0.35)",borderTopColor:"#fff",animation:"chakra-spin 0.7s linear infinite"}}/>
+                  :<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                }
+                <span style={{fontSize:14,fontWeight:800,color:"#fff",fontFamily:bf}}>
+                  {signOutLoading?(isHindi?"साइन आउट हो रहा है...":"Signing out…"):(isHindi?"हाँ, साइन आउट करें":"Yes, Sign Out")}
+                </span>
+              </div>
+              {/* Cancel */}
+              <div
+                onClick={()=>{haptic();setShowSignOutModal(false);}}
+                style={{
+                  background:dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.04)",
+                  border:`1.5px solid ${th.border2}`,
+                  borderRadius:14,padding:"13px",
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  cursor:"pointer",
+                  WebkitTapHighlightColor:"transparent",
+                }}>
+                <span style={{fontSize:14,fontWeight:700,color:th.text,fontFamily:bf}}>
+                  {isHindi?"रद्द करें":"Cancel"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── About Screen Overlay ── */}
       {showAbout&&(
