@@ -26,6 +26,7 @@ import AdminDashboard from "./AdminDashboard.jsx";
 import ReportIssueSheet from "./ReportIssueSheet.jsx";
 import UserReportsTab from "./UserReportsTab.jsx";
 import AboutTab from "./AboutTab.jsx";
+import appLogo from "./logo.webp";
 
 // ─── ADMIN UID ─────────────────────────────────────────────────────────────────
 // Replace with your Firebase UID. Find it: Firebase Console → Auth → Users → copy UID
@@ -4707,22 +4708,10 @@ export default function YojanaSahay(){
             {/* Top nav bar */}
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"52px 20px 14px",position:"relative"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:42,height:42,background:"rgba(255,255,255,0.15)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,0.35)",backdropFilter:"blur(8px)"}}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                    {/* Dome/circle top */}
-                    <path d="M12 3 C8 3 5 6 5 9 L19 9 C19 6 16 3 12 3 Z" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.95)" strokeWidth="1.4"/>
-                    {/* Main building body */}
-                    <rect x="2" y="9" width="20" height="2" rx="0.5"/>
-                    <rect x="3" y="19" width="18" height="2" rx="0.5"/>
-                    {/* Columns */}
-                    <line x1="6"  y1="11" x2="6"  y2="19"/>
-                    <line x1="9"  y1="11" x2="9"  y2="19"/>
-                    <line x1="12" y1="11" x2="12" y2="19"/>
-                    <line x1="15" y1="11" x2="15" y2="19"/>
-                    <line x1="18" y1="11" x2="18" y2="19"/>
-                    {/* Steps */}
-                    <rect x="1" y="21" width="22" height="1.5" rx="0.4"/>
-                  </svg>
+                <div style={{width:44,height:44,borderRadius:12,overflow:"hidden",flexShrink:0,
+                  boxShadow:"0 2px 12px rgba(0,0,0,0.22), 0 0 0 1.5px rgba(255,255,255,0.30)"}}>
+                  <img src={appLogo} alt="Yojana Sahay"
+                    style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
                 </div>
                 <div>
                   <div style={{color:"#fff",fontSize:17,fontWeight:900,fontFamily:bf,letterSpacing:-0.3}}>{t.appName}</div>
