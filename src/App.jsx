@@ -3628,12 +3628,12 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                 {auth.currentUser.photoURL
                   ?<img src={auth.currentUser.photoURL} alt="" style={{width:34,height:34,borderRadius:"50%",objectFit:"cover",flexShrink:0,border:`2px solid ${th.border2}`}}/>
                   :<div style={{width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,#FF9933,#FF8C00)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:14,fontWeight:800,color:"#fff"}}>
-                    {(auth.currentUser.displayName||auth.currentUser.email||"U").charAt(0).toUpperCase()}
+                    {(profile?.name||auth.currentUser.displayName||auth.currentUser.email||"U").charAt(0).toUpperCase()}
                   </div>
                 }
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:13,fontWeight:700,color:th.text,fontFamily:bf,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                    {auth.currentUser.displayName||(isHindi?"नागरिक":"Citizen")}
+                    {profile?.name||auth.currentUser.displayName||(isHindi?"नागरिक":"Citizen")}
                   </div>
                   <div style={{fontSize:11,color:th.textSub,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                     {auth.currentUser.email||auth.currentUser.phoneNumber||""}
