@@ -3633,7 +3633,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                 }
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:13,fontWeight:700,color:th.text,fontFamily:bf,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                    {auth.currentUser.displayName||isHindi?"नागरिक":"Citizen"}
+                    {auth.currentUser.displayName||(isHindi?"नागरिक":"Citizen")}
                   </div>
                   <div style={{fontSize:11,color:th.textSub,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                     {auth.currentUser.email||auth.currentUser.phoneNumber||""}
