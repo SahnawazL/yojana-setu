@@ -2172,11 +2172,11 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   };
 
   // ── On mount: if user is already authenticated but has no profile yet
-  //    (e.g. returning from Google redirect on low-memory phone),
-  //    pre-fill from Google account data and jump straight to setup. ────────────
+  //    (returning from Google redirect, or auth restored from cache),
+  //    pre-fill from Google account and jump straight to setup. ─────────────────
   useEffect(()=>{
     const user=auth.currentUser;
-    if(!user||profile) return; // already have profile or not logged in — nothing to do
+    if(!user||profile) return;
     setGoogleEmail(user.email||"");
     setGooglePhoto(user.photoURL||"");
     if(user.displayName) setSetupName(user.displayName);
@@ -2191,16 +2191,44 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setStage("setup1");
   },[]);
 
-  // ── Trigger Google redirect (works on mobile & desktop) ─────────────────────
-  const handleGoogleSignIn=async()=>{
+  // ── Google sign-in: popup first (instant, no page reload).
+  //    If popup is blocked by the browser, fall back to redirect. ───────────────
+  const handleGoogleSignIn=()=>{
+    // ⚠️ signInWithPopup MUST be called synchronously here — before any
+    // setState call — so the browser recognises it as a direct user gesture.
+    const provider=new GoogleAuthProvider();
+    const popupPromise=signInWithPopup(auth,provider);
     setGoogleLoading(true);setAuthError("");
-    try{
-      const provider=new GoogleAuthProvider();
-      await signInWithRedirect(auth,provider);
-    }catch(err){
-      setAuthError(err.message||"Google sign-in failed. Please try again.");
-      setGoogleLoading(false);
-    }
+    popupPromise.then(async result=>{
+      const user=result.user;
+      setGoogleEmail(user.email||"");
+      setGooglePhoto(user.photoURL||"");
+      try{
+        const snap=await getDoc(doc(db,"users",user.uid));
+        if(snap.exists()){setProfile(snap.data());setStage("dashboard");return;}
+      }catch{}
+      if(user.displayName) setSetupName(user.displayName);
+      if(savedAnswers){
+        if(savedAnswers.state){setSetupState(savedAnswers.state);setStateSearch(savedAnswers.state);}
+        if(savedAnswers.who)    setSetupCat(savedAnswers.who);
+        if(savedAnswers.income) setSetupIncome(savedAnswers.income);
+        if(savedAnswers.age)    setSetupAge(savedAnswers.age);
+        if(savedAnswers.area)   setSetupArea(savedAnswers.area);
+        if(savedAnswers.house)  setSetupHouse(savedAnswers.house);
+      }
+      setStage("setup1");
+    }).catch(err=>{
+      if(err.code==="auth/popup-blocked"||err.code==="auth/popup-closed-by-user"){
+        // Popup blocked — fall back to full-page redirect
+        signInWithRedirect(auth,provider).catch(e=>{
+          setAuthError(e.message||"Google sign-in failed. Please try again.");
+          setGoogleLoading(false);
+        });
+      } else if(err.code!=="auth/cancelled-popup-request"){
+        setAuthError(err.message||"Google sign-in failed. Please try again.");
+        setGoogleLoading(false);
+      }
+    });
   };
 
   // ── Email validation helpers ────────────────────────────────────────────────
@@ -4217,6 +4245,22 @@ export default function YojanaSahay(){
       try{ await updateDoc(doc(db,"users",user.uid),{lastSeen:serverTimestamp()}); }catch{}
     });
     return()=>unsub();
+  },[]);
+
+  // Handle Google redirect result at the TOP LEVEL — runs on every page load
+  // regardless of which tab is active. Catches the result even on low-memory
+  // phones where the browser killed the tab mid-redirect. ──────────────────────
+  useEffect(()=>{
+    getRedirectResult(auth).then(async result=>{
+      if(!result||!result.user) return;
+      const user=result.user;
+      try{
+        const snap=await getDoc(doc(db,"users",user.uid));
+        if(snap.exists()){setProfile(snap.data());return;}
+      }catch{}
+      // New user — profile tab will handle setup via its own mount useEffect
+      setActiveTab("profile");
+    }).catch(()=>{});
   },[]);
 
   const th=THEME[dark?"dark":"light"];
