@@ -2171,37 +2171,24 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     setStage("phone");
   };
 
-  // ── Handle Google redirect result on page load ──────────────────────────────
+  // ── On mount: if user is already authenticated but has no profile yet
+  //    (e.g. returning from Google redirect on low-memory phone),
+  //    pre-fill from Google account data and jump straight to setup. ────────────
   useEffect(()=>{
-    getRedirectResult(auth).then(async result=>{
-      if(!result) return;
-      const user=result.user;
-      setGoogleEmail(user.email||"");
-      setGooglePhoto(user.photoURL||"");
-      setGoogleLoading(true);
-      try{
-        const snap=await getDoc(doc(db,"users",user.uid));
-        if(snap.exists()){
-          setProfile(snap.data());
-          setStage("dashboard");
-          return;
-        }
-      }catch{}
-      if(user.displayName) setSetupName(user.displayName);
-      if(savedAnswers){
-        if(savedAnswers.state){setSetupState(savedAnswers.state);setStateSearch(savedAnswers.state);}
-        if(savedAnswers.who)    setSetupCat(savedAnswers.who);
-        if(savedAnswers.income) setSetupIncome(savedAnswers.income);
-        if(savedAnswers.age)    setSetupAge(savedAnswers.age);
-        if(savedAnswers.area)   setSetupArea(savedAnswers.area);
-        if(savedAnswers.house)  setSetupHouse(savedAnswers.house);
-      }
-      setStage("setup1");
-    }).catch(err=>{
-      if(err.code!=="auth/popup-closed-by-user"){
-        setAuthError(err.message||"Google sign-in failed. Please try again.");
-      }
-    }).finally(()=>setGoogleLoading(false));
+    const user=auth.currentUser;
+    if(!user||profile) return; // already have profile or not logged in — nothing to do
+    setGoogleEmail(user.email||"");
+    setGooglePhoto(user.photoURL||"");
+    if(user.displayName) setSetupName(user.displayName);
+    if(savedAnswers){
+      if(savedAnswers.state){setSetupState(savedAnswers.state);setStateSearch(savedAnswers.state);}
+      if(savedAnswers.who)    setSetupCat(savedAnswers.who);
+      if(savedAnswers.income) setSetupIncome(savedAnswers.income);
+      if(savedAnswers.age)    setSetupAge(savedAnswers.age);
+      if(savedAnswers.area)   setSetupArea(savedAnswers.area);
+      if(savedAnswers.house)  setSetupHouse(savedAnswers.house);
+    }
+    setStage("setup1");
   },[]);
 
   // ── Trigger Google redirect (works on mobile & desktop) ─────────────────────
@@ -4215,10 +4202,16 @@ export default function YojanaSahay(){
   useEffect(()=>{
     const unsub=onAuthStateChanged(auth,async(user)=>{
       if(!user){ setProfile(null); return; }
-      // Restore profile from Firestore (handles page refresh & tab restore)
+      // Restore profile from Firestore (handles page refresh, tab restore & Google redirect)
       try{
         const snap=await getDoc(doc(db,"users",user.uid));
-        if(snap.exists()) setProfile(snap.data());
+        if(snap.exists()){
+          setProfile(snap.data());
+        } else {
+          // New Google user — no Firestore profile yet.
+          // Navigate to profile tab so ProfileTab mounts and runs setup flow.
+          setActiveTab("profile");
+        }
       }catch{}
       // Update lastSeen silently
       try{ await updateDoc(doc(db,"users",user.uid),{lastSeen:serverTimestamp()}); }catch{}
