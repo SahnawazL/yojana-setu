@@ -2354,15 +2354,22 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       <Card dark={dark}>
         {/* ── Google Sign-In button (ACTIVE) ── */}
         <div onClick={!googleLoading?()=>{haptic();handleGoogleSignIn();}:undefined}
-          style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:"#fff",border:`1.5px solid ${dark?"#3a3a3c":"#e0e0e0"}`,borderRadius:14,padding:"14px 16px",cursor:googleLoading?"default":"pointer",boxShadow:"0 2px 12px rgba(0,0,0,0.08)",transition:"all 0.2s",userSelect:"none"}}>
-          {/* Official Google G logo */}
-          <svg width="20" height="20" viewBox="0 0 24 24" style={{flexShrink:0}}>
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          <span style={{fontSize:15,fontWeight:700,color:"#3c3c3c",fontFamily:bf}}>
+          style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+            background:googleLoading?(dark?"#2c2c2e":"#f9f9f9"):"#fff",
+            border:`1.5px solid ${googleLoading?"#4285F4":(dark?"#3a3a3c":"#e0e0e0")}`,
+            borderRadius:14,padding:"14px 16px",cursor:googleLoading?"default":"pointer",
+            boxShadow:googleLoading?"0 0 0 3px rgba(66,133,244,0.12)":"0 2px 12px rgba(0,0,0,0.08)",
+            transition:"all 0.25s",userSelect:"none",opacity:googleLoading?0.85:1}}>
+          {googleLoading
+            ?<div className="google-spinner"/>
+            :<svg width="20" height="20" viewBox="0 0 24 24" style={{flexShrink:0}}>
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+          }
+          <span style={{fontSize:15,fontWeight:700,color:googleLoading?"#4285F4":"#3c3c3c",fontFamily:bf,transition:"color 0.2s"}}>
             {googleLoading?(isHindi?"साइन इन हो रहे हैं...":"Signing in…"):pt.googleBtn}
           </span>
         </div>
@@ -2469,16 +2476,27 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
             haptic();
             emailTab==="signin"?handleEmailSignIn():handleEmailSignUp();
           }}
+          className={emailLoading?"signin-loading":""}
           style={{
-            background:emailLoading?"#ddd":"linear-gradient(135deg,#003580,#1a56db)",
-            borderRadius:14,padding:15,textAlign:"center",fontSize:15,fontWeight:700,
+            background:emailLoading
+              ?"linear-gradient(270deg,#1a3a8f,#1a56db,#003580,#1a56db)"
+              :"linear-gradient(135deg,#003580,#1a56db)",
+            backgroundSize:emailLoading?"200% auto":"100% 100%",
+            borderRadius:14,padding:15,
+            display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+            fontSize:15,fontWeight:700,
             color:"#fff",cursor:emailLoading?"default":"pointer",fontFamily:bf,
-            boxShadow:emailLoading?"none":"0 6px 22px rgba(0,53,128,0.35)",
-            transition:"all 0.22s",
+            boxShadow:emailLoading?"0 6px 22px rgba(0,53,128,0.20)":"0 6px 22px rgba(0,53,128,0.35)",
+            transition:"box-shadow 0.22s,opacity 0.22s",
+            opacity:emailLoading?0.92:1,
+            userSelect:"none",
           }}>
-          {emailLoading
-            ?(isHindi?"कृपया प्रतीक्षा करें...":"Please wait…")
-            :(emailTab==="signin"?pt.signInBtn:pt.createAcctBtn)}
+          {emailLoading&&<div className="btn-spinner"/>}
+          <span>
+            {emailLoading
+              ?(isHindi?"कृपया प्रतीक्षा करें...":"Please wait…")
+              :(emailTab==="signin"?pt.signInBtn:pt.createAcctBtn)}
+          </span>
         </div>
       </div>
 
@@ -4489,6 +4507,12 @@ export default function YojanaSahay(){
         .tab-enter{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;animation:tabEnter 0.28s cubic-bezier(0.22,1,0.36,1);}
         .bn-icon{transition:transform 0.2s cubic-bezier(0.22,1,0.36,1);}
         .bn-icon.active{animation:iconPop 0.35s cubic-bezier(0.22,1,0.36,1);}
+        @keyframes btn-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes btn-shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+        @keyframes btn-pulse-scale{0%,100%{transform:scale(1)}50%{transform:scale(1.012)}}
+        .signin-loading{background-size:200% auto!important;animation:btn-shimmer 1.4s linear infinite,btn-pulse-scale 1.4s ease-in-out infinite!important;}
+        .btn-spinner{width:17px;height:17px;border-radius:50%;border:2.5px solid rgba(255,255,255,0.35);border-top-color:#fff;animation:btn-spin 0.75s linear infinite;flex-shrink:0;}
+        .google-spinner{width:17px;height:17px;border-radius:50%;border:2.5px solid rgba(66,133,244,0.25);border-top-color:#4285F4;animation:btn-spin 0.75s linear infinite;flex-shrink:0;}
       `}</style>
 
       {/* ── TAB CONTENT — animated wrapper triggers fade+slide on every switch ── */}
