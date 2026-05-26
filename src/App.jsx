@@ -3583,11 +3583,10 @@ function BenefitCalculatorCard({ allMatchedSchemes, lang, dark, onSchemeOpen }) 
               display:"flex", alignItems:"center", gap:10,
               background:"rgba(255,255,255,0.06)",
               border:`1px solid ${s.color}30`,
-              borderRadius:14,
-              padding:"10px 12px",
+              borderRadius:14, padding:"10px 12px",
               cursor:"pointer",
-              animation: `calc-slide-in 0.38s cubic-bezier(0.22,1,0.36,1) ${0.05 + i * 0.06}s both`,
-              transition:"background 0.18s, transform 0.15s",
+              animation:`calc-slide-in 0.38s cubic-bezier(0.22,1,0.36,1) ${0.05 + i * 0.06}s both`,
+              transition:"background 0.18s",
               WebkitTapHighlightColor:"transparent",
             }}
             onTouchStart={e => e.currentTarget.style.background="rgba(255,255,255,0.11)"}
@@ -3604,7 +3603,6 @@ function BenefitCalculatorCard({ allMatchedSchemes, lang, dark, onSchemeOpen }) 
                 {isHindi ? "टैप करें — आवेदन देखें" : "Tap to view & apply"}
               </div>
             </div>
-            {/* Amount pill */}
             <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:3, flexShrink:0 }}>
               <div style={{ fontSize:12, fontWeight:800, color:s.color, background:s.color+"1a", borderRadius:8, padding:"3px 9px", border:`1px solid ${s.color}30` }}>
                 {formatINR(s.annual)}{isHindi ? "/वर्ष" : "/yr"}
@@ -3779,8 +3777,8 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark, uid }) {
             </div>
             <div style={{ fontSize:10, color:th.textSub, marginTop:2 }}>
               {isHindi
-                ? `${total} ज़रूरी दस्तावेज़ · ${allMatchedSchemes.length} योजनाओं के लिए`
-                : `${total} unique docs across your ${allMatchedSchemes.length} matched schemes`}
+                ? `आवेदन से पहले ये ${total} दस्तावेज़ तैयार रखें`
+                : `Collect these ${total} documents before applying`}
             </div>
           </div>
           {/* Progress pill */}
@@ -3796,7 +3794,7 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark, uid }) {
                 {checkedCount}<span style={{ fontWeight:500, color:th.textSub }}>/{total}</span>
               </div>
               <div style={{ fontSize:9, color:th.textSub, fontWeight:600 }}>
-                {isHindi ? "तैयार" : "Ready"}
+                {isHindi ? "मिले" : "Collected"}
               </div>
             </div>
           </div>
@@ -3836,6 +3834,21 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark, uid }) {
         </div>
       )}
 
+      {/* Tap instruction */}
+      <div style={{
+        display:"flex", alignItems:"center", gap:7,
+        padding:"9px 16px 6px",
+        borderBottom:`1px solid ${th.divider}`,
+        background: dark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
+      }}>
+        <span style={{ fontSize:13 }}>👆</span>
+        <span style={{ fontSize:11, color:th.textSub, fontFamily:bf, lineHeight:1.4 }}>
+          {isHindi
+            ? "जो दस्तावेज़ आपके पास है, उसे टैप करके ✓ करें"
+            : "Tap a document to mark it as collected ✓"}
+        </span>
+      </div>
+
       {/* Doc list */}
       <div style={{ padding:"8px 0 4px" }}>
         {visibleDocs.map((doc, i) => {
@@ -3849,8 +3862,16 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark, uid }) {
               borderBottom: i < visibleDocs.length - 1 ? `1px solid ${th.divider}` : "none",
               cursor:"pointer",
               background: isChecked ? (dark ? "rgba(19,136,8,0.08)" : "rgba(19,136,8,0.04)") : "transparent",
-              transition:"background 0.2s",
-            }}>
+              transition:"background 0.25s, transform 0.15s",
+              WebkitTapHighlightColor:"transparent",
+            }}
+            onTouchStart={e => e.currentTarget.style.background = isChecked
+              ? (dark ? "rgba(19,136,8,0.14)" : "rgba(19,136,8,0.08)")
+              : (dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)")}
+            onTouchEnd={e => e.currentTarget.style.background = isChecked
+              ? (dark ? "rgba(19,136,8,0.08)" : "rgba(19,136,8,0.04)")
+              : "transparent"}
+            >
               {/* Checkbox */}
               <div style={{
                 width:22, height:22, borderRadius:7, flexShrink:0, marginTop:1,
@@ -3879,17 +3900,25 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark, uid }) {
                   }}>
                     {docName}
                   </div>
-                  {/* Impact badge: how many schemes need this doc */}
+                  {/* Priority badge */}
                   <div style={{
                     flexShrink:0, fontSize:9, fontWeight:700, borderRadius:10, padding:"2px 7px", whiteSpace:"nowrap",
-                    background: impact >= 5 ? `${IND_GREEN}18` : `${ASHOKA_BLUE}12`,
-                    color:       impact >= 5 ? IND_GREEN          : ASHOKA_BLUE,
+                    background: impact >= 5 ? `${IND_GREEN}18` : impact >= 3 ? `${SAFFRON}18` : `${ASHOKA_BLUE}12`,
+                    color:       impact >= 5 ? IND_GREEN        : impact >= 3 ? SAFFRON        : ASHOKA_BLUE,
+                    transition:"all 0.3s",
                   }}>
-                    {impact} {isHindi ? "योजना" : impact === 1 ? "scheme" : "schemes"}
+                    {impact >= 5
+                      ? (isHindi ? "⚡ सबसे ज़रूरी" : "⚡ Most needed")
+                      : impact >= 3
+                        ? (isHindi ? "🔶 ज़रूरी" : "🔶 Important")
+                        : (isHindi ? `${impact} योजना` : `${impact} scheme${impact===1?"":"s"}`)}
                   </div>
                 </div>
-                {/* Top 2 scheme pills + overflow count */}
-                <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                {/* Needed for label + scheme pills */}
+                <div style={{ display:"flex", flexWrap:"wrap", gap:4, alignItems:"center" }}>
+                  <span style={{ fontSize:9, color:th.textSub, fontWeight:600, marginRight:2 }}>
+                    {isHindi ? "चाहिए:" : "Needed for:"}
+                  </span>
                   {doc.schemes.slice(0,2).map(s => (
                     <div key={s.id} style={{
                       display:"inline-flex", alignItems:"center", gap:3,
@@ -3936,20 +3965,34 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark, uid }) {
         <div onClick={() => { haptic(); window.open("https://www.digilocker.gov.in","_blank"); }}
           style={{
             background:"linear-gradient(135deg,#003580,#1a56db)",
-            borderRadius:12, padding:"10px 14px",
+            borderRadius:12, padding:"12px 14px",
             display:"flex", alignItems:"center", gap:10,
             cursor:"pointer", boxShadow:"0 4px 14px rgba(0,53,128,0.22)",
-          }}>
-          <span style={{ fontSize:18 }}>🔒</span>
+            transition:"transform 0.15s, box-shadow 0.15s",
+            WebkitTapHighlightColor:"transparent",
+          }}
+          onTouchStart={e => { e.currentTarget.style.transform="scale(0.98)"; e.currentTarget.style.boxShadow="0 2px 8px rgba(0,53,128,0.18)"; }}
+          onTouchEnd={e => { e.currentTarget.style.transform="scale(1)"; e.currentTarget.style.boxShadow="0 4px 14px rgba(0,53,128,0.22)"; }}
+        >
+          <div style={{ width:36, height:36, background:"rgba(255,255,255,0.15)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0, border:"1px solid rgba(255,255,255,0.2)" }}>
+            🔒
+          </div>
           <div style={{ flex:1 }}>
-            <div style={{ color:"#fff", fontSize:12, fontWeight:700, fontFamily:bf }}>
-              {isHindi ? "DigiLocker पर अपलोड करें" : "Upload to DigiLocker"}
+            <div style={{ color:"#fff", fontSize:12, fontWeight:800, fontFamily:bf }}>
+              {isHindi ? "DigiLocker में सेव करें" : "Store docs in DigiLocker"}
             </div>
-            <div style={{ color:"rgba(255,255,255,0.65)", fontSize:10, marginTop:1 }}>
-              {isHindi ? "सरकारी ऐप · सुरक्षित डिजिटल तिजोरी" : "Govt. app · Secure digital document locker"}
+            <div style={{ color:"rgba(255,255,255,0.7)", fontSize:10, marginTop:2, lineHeight:1.4 }}>
+              {isHindi
+                ? "सरकारी ऐप · आधार, PAN, सभी दस्तावेज़ एक जगह रखें"
+                : "Free govt. app — keep Aadhaar, PAN & all docs in one safe place"}
             </div>
           </div>
-          <span style={{ color:"rgba(255,255,255,0.7)", fontSize:16 }}>↗</span>
+          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:2, flexShrink:0 }}>
+            <span style={{ color:"rgba(255,255,255,0.8)", fontSize:16 }}>↗</span>
+            <span style={{ color:"rgba(255,255,255,0.45)", fontSize:8, fontWeight:700 }}>
+              {isHindi ? "खोलें" : "Open"}
+            </span>
+          </div>
         </div>
       </div>
     </div>
