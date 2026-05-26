@@ -3149,56 +3149,200 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       :profile?.email
         ?profile.email
         :null;  // nothing to show if no phone and no email
+
+  // Profile completeness score
+  const profileFields=[profile?.name,profile?.gender,profile?.state,profile?.occupation,profile?.income,profile?.age,profile?.area,profile?.house,profile?.ration,profile?.marital];
+  const completeness=Math.round((profileFields.filter(Boolean).length/profileFields.length)*100);
+  const incomeLabel=T[lang].fields.incomes.find(i=>i.v===profile?.income)?.l||profile?.income||"—";
+  const ageLabel=T[lang].fields.ages.find(a=>a.v===profile?.age)?.l||profile?.age||"—";
+  const areaLabel=T[lang].fields.areas.find(a=>a.v===profile?.area)?.l||profile?.area||"—";
+  const houseVal=profile?.house==="yes"?(isHindi?"पक्का मकान":"Pucca House"):profile?.house==="no"?(isHindi?"मकान नहीं":"No House"):(isHindi?"कच्चा":"Kutcha");
+
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",background:th.appBg,overflowY:"auto"}}>
-      {/* Dashboard header */}
-      <div style={{background:"linear-gradient(160deg,#003580 0%,#1a56db 100%)",padding:"52px 20px 28px",position:"relative",overflow:"hidden",flexShrink:0}}>
-        <div style={{position:"absolute",right:-40,top:-40,width:190,height:190,borderRadius:"50%",border:"2px solid rgba(255,255,255,0.07)",pointerEvents:"none"}}>
-          <div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",opacity:0.08,fontSize:80}}>☸</div>
+
+      {/* ── OFFICIAL PROFILE HEADER ── */}
+      <div style={{
+        background:"linear-gradient(160deg,#002060 0%,#003580 50%,#06038D 100%)",
+        padding:"44px 20px 0",position:"relative",overflow:"hidden",flexShrink:0,
+      }}>
+        {/* Tricolor accent bar at top */}
+        <div style={{position:"absolute",top:0,left:0,right:0,height:4,display:"flex",zIndex:2}}>
+          <div style={{flex:1,background:"#FF9933"}}/>
+          <div style={{flex:1,background:"#fff"}}/>
+          <div style={{flex:1,background:"#138808"}}/>
+        </div>
+        {/* Ashoka Chakra watermarks */}
+        <div style={{position:"absolute",right:-35,top:5,opacity:0.06,pointerEvents:"none"}}>
+          <AshokaChakra size={190} color="#ffffff"/>
+        </div>
+        <div style={{position:"absolute",left:-55,bottom:-15,opacity:0.04,pointerEvents:"none"}}>
+          <AshokaChakra size={160} color="#ffffff"/>
         </div>
 
-        {/* Avatar row */}
-        <div style={{display:"flex",alignItems:"center",gap:15,marginBottom:18}}>
-          <div style={{width:62,height:62,borderRadius:"50%",overflow:"hidden",background:"linear-gradient(135deg,#FF9933,#FF8C00)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:800,color:"#fff",border:"3px solid rgba(255,255,255,0.38)",boxShadow:"0 4px 18px rgba(0,0,0,0.22)",flexShrink:0,letterSpacing:-1}}>
-            {profile?.photo
-              ?<img src={profile.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-              :initials}
+        {/* Verified Citizen badge */}
+        <div style={{
+          display:"inline-flex",alignItems:"center",gap:7,
+          background:"rgba(255,255,255,0.12)",border:"1px solid rgba(255,255,255,0.22)",
+          borderRadius:20,padding:"4px 12px 4px 8px",marginBottom:18,backdropFilter:"blur(8px)",
+        }}>
+          <AshokaChakra size={13} color="#FF9933"/>
+          <span style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.9)",letterSpacing:0.9,textTransform:"uppercase"}}>
+            {isHindi?"सत्यापित नागरिक":"Verified Citizen"}
+          </span>
+          <span style={{fontSize:11,color:"#4ade80",fontWeight:800}}>✓</span>
+        </div>
+
+        {/* Avatar + Identity row */}
+        <div style={{display:"flex",alignItems:"flex-start",gap:16,marginBottom:20}}>
+          {/* Avatar with completeness ring */}
+          <div style={{position:"relative",flexShrink:0}}>
+            <div style={{
+              width:74,height:74,borderRadius:"50%",overflow:"hidden",
+              background:"linear-gradient(135deg,#FF9933 0%,#FF8C00 100%)",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:26,fontWeight:800,color:"#fff",letterSpacing:-1,
+              border:"3px solid rgba(255,255,255,0.45)",
+              boxShadow:"0 0 0 4px rgba(255,153,51,0.28), 0 8px 24px rgba(0,0,0,0.32)",
+            }}>
+              {profile?.photo
+                ?<img src={profile.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                :initials}
+            </div>
+            {/* SVG completeness ring */}
+            <svg style={{position:"absolute",inset:-5,pointerEvents:"none"}} width={84} height={84} viewBox="0 0 84 84">
+              <circle cx={42} cy={42} r={38} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={3}/>
+              <circle cx={42} cy={42} r={38} fill="none" stroke="#FF9933" strokeWidth={3}
+                strokeDasharray={`${2*Math.PI*38*completeness/100} ${2*Math.PI*38*(1-completeness/100)}`}
+                strokeDashoffset={2*Math.PI*38*0.25} strokeLinecap="round"/>
+            </svg>
           </div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{color:"#fff",fontSize:18,fontWeight:800,fontFamily:bf,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile?.name}</div>
-            {maskedPhone&&<div style={{color:"rgba(255,255,255,0.68)",fontSize:12,marginTop:4,letterSpacing:0.4,fontFamily:"monospace"}}>{maskedPhone}</div>}
+
+          <div style={{flex:1,minWidth:0,paddingTop:4}}>
+            <div style={{
+              color:"#fff",fontSize:20,fontWeight:800,fontFamily:bf,lineHeight:1.2,
+              overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",letterSpacing:-0.3,
+            }}>{profile?.name}</div>
+            {maskedPhone&&(
+              <div style={{color:"rgba(255,255,255,0.65)",fontSize:12,marginTop:5,fontFamily:"monospace",letterSpacing:0.5,display:"flex",alignItems:"center",gap:5}}>
+                <span style={{fontSize:10}}>📱</span>{maskedPhone}
+              </div>
+            )}
+            {/* Completeness bar */}
+            <div style={{marginTop:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+                <span style={{fontSize:9.5,color:"rgba(255,255,255,0.58)",fontWeight:600,letterSpacing:0.6,textTransform:"uppercase"}}>
+                  {isHindi?"प्रोफाइल":"Profile Completeness"}
+                </span>
+                <span style={{fontSize:10.5,fontWeight:800,color:completeness>=80?"#4ade80":"#FF9933"}}>{completeness}%</span>
+              </div>
+              <div style={{height:4,background:"rgba(255,255,255,0.15)",borderRadius:4,overflow:"hidden"}}>
+                <div style={{
+                  height:"100%",width:`${completeness}%`,borderRadius:4,
+                  background:completeness>=80?"linear-gradient(90deg,#4ade80,#22c55e)":"linear-gradient(90deg,#FF9933,#FF8C00)",
+                  boxShadow:completeness>=80?"0 0 8px rgba(74,222,128,0.5)":"0 0 8px rgba(255,153,51,0.5)",
+                }}/>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Stats row */}
-        <div style={{display:"flex",gap:8}}>
-          <div style={{flex:1,background:"rgba(255,255,255,0.14)",borderRadius:13,padding:"11px 8px",textAlign:"center",border:"1px solid rgba(255,255,255,0.18)"}}>
-            <div style={{fontSize:22,fontWeight:800,color:"#fff",lineHeight:1}}>{matchedCount}</div>
-            <div style={{fontSize:9.5,color:"rgba(255,255,255,0.7)",marginTop:3,fontFamily:bf}}>{pt.schemesMatched}</div>
-          </div>
-          <div style={{flex:1.6,background:"rgba(255,255,255,0.14)",borderRadius:13,padding:"11px 8px",textAlign:"center",border:"1px solid rgba(255,255,255,0.18)"}}>
-            <div style={{fontSize:11.5,fontWeight:700,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>📍 {profile?.state}</div>
-            <div style={{fontSize:9.5,color:"rgba(255,255,255,0.7)",marginTop:3,fontFamily:bf}}>{pt.stateLabel2}</div>
-          </div>
-          <div style={{flex:1.6,background:"rgba(255,255,255,0.14)",borderRadius:13,padding:"11px 8px",textAlign:"center",border:"1px solid rgba(255,255,255,0.18)"}}>
-            <div style={{fontSize:11.5,fontWeight:700,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{catIcon(profile?.occupation)} {catDisplayLabel(profile?.occupation).split(" ")[0]}</div>
-            <div style={{fontSize:9.5,color:"rgba(255,255,255,0.7)",marginTop:3,fontFamily:bf}}>{pt.catLabel2}</div>
-          </div>
+        {/* Stats row — tabs merged with header bottom */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1.6fr 1.6fr",gap:8}}>
+          {[
+            {value:matchedCount,label:isHindi?"योजनाएं":"Schemes",isNum:true,icon:"🎯"},
+            {value:profile?.state||"—",label:isHindi?"राज्य":"State",isNum:false,icon:"📍"},
+            {value:(catDisplayLabel(profile?.occupation)||"").split(" ")[0]||"—",label:isHindi?"श्रेणी":"Category",isNum:false,icon:catIcon(profile?.occupation)},
+          ].map((stat,i)=>(
+            <div key={i} style={{
+              background:"rgba(255,255,255,0.09)",borderRadius:"13px 13px 0 0",
+              padding:"12px 10px 16px",textAlign:"center",
+              border:"1px solid rgba(255,255,255,0.14)",borderBottom:"none",
+              backdropFilter:"blur(8px)",
+            }}>
+              <div style={{
+                fontSize:stat.isNum?24:11,fontWeight:800,color:"#fff",
+                lineHeight:1.1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                fontFamily:bf,marginBottom:3,
+              }}>
+                {stat.isNum?stat.value:`${stat.icon} ${stat.value}`}
+              </div>
+              <div style={{fontSize:9,color:"rgba(255,255,255,0.58)",letterSpacing:0.7,fontWeight:600,textTransform:"uppercase",fontFamily:bf}}>
+                {stat.label}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div style={{padding:"16px 16px 48px"}}>
-        {/* View Matched Schemes CTA */}
+      <div style={{padding:"16px 16px 56px"}}>
+
+        {/* ── View Matched Schemes CTA ── */}
         <div onClick={()=>{haptic();onViewChecker();}}
-          style={{background:"linear-gradient(135deg,#138808,#16a34a)",borderRadius:18,padding:"17px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",boxShadow:"0 6px 22px rgba(19,136,8,0.32)",marginBottom:16}}>
-          <div>
-            <div style={{color:"#fff",fontSize:14,fontWeight:700,fontFamily:bf}}>{pt.viewSchemes}</div>
-            <div style={{color:"rgba(255,255,255,0.78)",fontSize:11.5,marginTop:3,fontFamily:bf}}>{matchedCount} {isHindi?"योजनाएं":"schemes"} · {isHindi?"तुरंत देखें":"See instantly"}</div>
+          style={{
+            background:"linear-gradient(135deg,#138808 0%,#16a34a 55%,#0a4d1a 100%)",
+            borderRadius:18,padding:"18px 20px",
+            display:"flex",alignItems:"center",justifyContent:"space-between",
+            cursor:"pointer",marginBottom:14,position:"relative",overflow:"hidden",
+            boxShadow:"0 8px 28px rgba(19,136,8,0.36), inset 0 1px 0 rgba(255,255,255,0.14)",
+            border:"1px solid rgba(255,255,255,0.07)",
+          }}>
+          <div style={{position:"absolute",right:58,top:"50%",transform:"translateY(-50%)",opacity:0.1,pointerEvents:"none"}}>
+            <AshokaChakra size={68} color="#ffffff"/>
           </div>
-          <div style={{width:38,height:38,background:"rgba(255,255,255,0.2)",borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,color:"#fff",border:"1.5px solid rgba(255,255,255,0.28)",flexShrink:0}}>→</div>
+          <div style={{position:"relative",zIndex:1}}>
+            <div style={{color:"#fff",fontSize:15,fontWeight:800,fontFamily:bf,letterSpacing:-0.2}}>{pt.viewSchemes}</div>
+            <div style={{color:"rgba(255,255,255,0.8)",fontSize:11.5,marginTop:4,fontFamily:bf,display:"flex",alignItems:"center",gap:5}}>
+              <span style={{background:"rgba(255,255,255,0.2)",borderRadius:20,padding:"1px 8px",fontSize:10.5,fontWeight:700,color:"#fff"}}>{matchedCount}</span>
+              <span>{isHindi?"योजनाएं मिलान हुईं":"schemes matched for you"}</span>
+            </div>
+          </div>
+          <div style={{
+            width:42,height:42,background:"rgba(255,255,255,0.18)",borderRadius:13,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:20,color:"#fff",fontWeight:700,
+            border:"1.5px solid rgba(255,255,255,0.28)",flexShrink:0,position:"relative",zIndex:1,
+          }}>→</div>
         </div>
 
-        {/* ── Welfare Profile Summary card ── */}
+        {/* ── Citizen Profile Details Card ── */}
+        <div style={{
+          background:th.card,borderRadius:18,overflow:"hidden",marginBottom:14,
+          border:`1.5px solid ${th.border}`,
+          boxShadow:dark?"0 2px 16px rgba(0,0,0,0.3)":"0 2px 18px rgba(0,0,0,0.07)",
+        }}>
+          <div style={{
+            background:dark?"rgba(0,53,128,0.22)":"rgba(0,53,128,0.05)",
+            borderBottom:`1.5px solid ${dark?"rgba(0,53,128,0.28)":"rgba(0,53,128,0.10)"}`,
+            padding:"11px 16px",display:"flex",alignItems:"center",gap:8,
+          }}>
+            <AshokaChakra size={14} color={ASHOKA_BLUE}/>
+            <div style={{fontSize:10.5,fontWeight:700,color:dark?"#7ba7f0":ASHOKA_BLUE,letterSpacing:0.9,textTransform:"uppercase",fontFamily:bf}}>
+              {isHindi?"नागरिक प्रोफाइल विवरण":"Citizen Profile Details"}
+            </div>
+          </div>
+          <div style={{padding:"14px 16px"}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              {[
+                {icon:"💰",label:isHindi?"आय वर्ग":"Income",value:incomeLabel,color:"#D97706"},
+                {icon:"🎂",label:isHindi?"आयु वर्ग":"Age Group",value:ageLabel,color:ASHOKA_BLUE},
+                {icon:"🏘️",label:isHindi?"क्षेत्र":"Area",value:areaLabel,color:IND_GREEN},
+                {icon:"🏠",label:isHindi?"मकान":"Housing",value:houseVal,color:SAFFRON},
+              ].map((item,i)=>(
+                <div key={i} style={{
+                  background:dark?`${item.color}14`:`${item.color}09`,
+                  border:`1.5px solid ${item.color}28`,borderRadius:13,padding:"12px 13px",
+                }}>
+                  <div style={{fontSize:17,marginBottom:5}}>{item.icon}</div>
+                  <div style={{fontSize:9.5,color:th.textSub,fontFamily:bf,letterSpacing:0.5,textTransform:"uppercase",marginBottom:3,fontWeight:600}}>{item.label}</div>
+                  <div style={{fontSize:12.5,fontWeight:700,color:item.color,fontFamily:bf,lineHeight:1.3}}>{item.value||"—"}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Welfare Profile Summary ── */}
         {(profile?.ration||profile?.marital||profile?.disability)&&(()=>{
           const rationLabel=pt.rations.find(r=>r.v===profile.ration)?.l||null;
           const maritalLabel=pt.maritals.find(m=>m.v===profile.marital)?.l||null;
@@ -3209,36 +3353,50 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           const maritalColor=profile.marital==="widowed"?"#DC2626":profile.marital==="married"?"#FF9933":"#003580";
           const disabilityColor=profile.disability==="none"?"#138808":"#7C3AED";
           return(
-            <div style={{background:th.card,borderRadius:18,border:`1.5px solid ${th.border}`,padding:"13px 16px 14px",marginBottom:16,boxShadow:dark?"0 2px 14px rgba(0,0,0,0.25)":"0 2px 14px rgba(0,0,0,0.05)"}}>
-              <div style={{fontSize:10.5,fontWeight:700,color:th.textSub,letterSpacing:0.9,textTransform:"uppercase",fontFamily:bf,marginBottom:12}}>
-                {isHindi?"कल्याण प्रोफाइल":"Welfare Profile"}
+            <div style={{
+              background:th.card,borderRadius:18,overflow:"hidden",marginBottom:14,
+              border:`1.5px solid ${th.border}`,
+              boxShadow:dark?"0 2px 16px rgba(0,0,0,0.3)":"0 2px 18px rgba(0,0,0,0.07)",
+            }}>
+              <div style={{
+                background:dark?"rgba(124,58,237,0.14)":"rgba(124,58,237,0.04)",
+                borderBottom:`1.5px solid ${dark?"rgba(124,58,237,0.28)":"rgba(124,58,237,0.10)"}`,
+                padding:"11px 16px",display:"flex",alignItems:"center",gap:8,
+              }}>
+                <span style={{fontSize:15}}>🛡️</span>
+                <div style={{fontSize:10.5,fontWeight:700,color:dark?"#c084fc":"#7C3AED",letterSpacing:0.9,textTransform:"uppercase",fontFamily:bf}}>
+                  {isHindi?"कल्याण और सामाजिक प्रोफाइल":"Welfare & Social Profile"}
+                </div>
               </div>
-              <div style={{display:"flex",flexDirection:"column",gap:9}}>
+              <div style={{padding:"8px 16px"}}>
                 {rationLabel&&(
-                  <div style={{display:"flex",alignItems:"center",gap:10}}>
-                    <div style={{width:34,height:34,borderRadius:10,background:`${rationColor}15`,border:`1.5px solid ${rationColor}35`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>🪪</div>
+                  <div style={{display:"flex",alignItems:"center",gap:12,padding:"11px 0",borderBottom:`1px solid ${th.divider}`}}>
+                    <div style={{width:38,height:38,borderRadius:11,background:`${rationColor}15`,border:`1.5px solid ${rationColor}28`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>🪪</div>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:10.5,color:th.textSub,fontFamily:bf}}>{pt.rationLabel}</div>
-                      <div style={{fontSize:13,fontWeight:700,color:rationColor,fontFamily:bf,marginTop:1}}>{rationLabel}</div>
+                      <div style={{fontSize:9.5,color:th.textSub,fontFamily:bf,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600}}>{pt.rationLabel}</div>
+                      <div style={{fontSize:13.5,fontWeight:700,color:rationColor,fontFamily:bf,marginTop:2}}>{rationLabel}</div>
                     </div>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:rationColor,boxShadow:`0 0 8px ${rationColor}70`,flexShrink:0}}/>
                   </div>
                 )}
                 {maritalLabel&&(
-                  <div style={{display:"flex",alignItems:"center",gap:10}}>
-                    <div style={{width:34,height:34,borderRadius:10,background:`${maritalColor}15`,border:`1.5px solid ${maritalColor}35`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>💍</div>
+                  <div style={{display:"flex",alignItems:"center",gap:12,padding:"11px 0",borderBottom:`1px solid ${th.divider}`}}>
+                    <div style={{width:38,height:38,borderRadius:11,background:`${maritalColor}15`,border:`1.5px solid ${maritalColor}28`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>💍</div>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:10.5,color:th.textSub,fontFamily:bf}}>{pt.maritalLabel}</div>
-                      <div style={{fontSize:13,fontWeight:700,color:maritalColor,fontFamily:bf,marginTop:1}}>{maritalLabel}</div>
+                      <div style={{fontSize:9.5,color:th.textSub,fontFamily:bf,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600}}>{pt.maritalLabel}</div>
+                      <div style={{fontSize:13.5,fontWeight:700,color:maritalColor,fontFamily:bf,marginTop:2}}>{maritalLabel}</div>
                     </div>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:maritalColor,boxShadow:`0 0 8px ${maritalColor}70`,flexShrink:0}}/>
                   </div>
                 )}
                 {profile.disability!==undefined&&(
-                  <div style={{display:"flex",alignItems:"center",gap:10}}>
-                    <div style={{width:34,height:34,borderRadius:10,background:`${disabilityColor}15`,border:`1.5px solid ${disabilityColor}35`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>♿</div>
+                  <div style={{display:"flex",alignItems:"center",gap:12,padding:"11px 0"}}>
+                    <div style={{width:38,height:38,borderRadius:11,background:`${disabilityColor}15`,border:`1.5px solid ${disabilityColor}28`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>♿</div>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:10.5,color:th.textSub,fontFamily:bf}}>{pt.disabilityLabel}</div>
-                      <div style={{fontSize:13,fontWeight:700,color:disabilityColor,fontFamily:bf,marginTop:1}}>{disabilityLabel}</div>
+                      <div style={{fontSize:9.5,color:th.textSub,fontFamily:bf,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600}}>{pt.disabilityLabel}</div>
+                      <div style={{fontSize:13.5,fontWeight:700,color:disabilityColor,fontFamily:bf,marginTop:2}}>{disabilityLabel}</div>
                     </div>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:disabilityColor,boxShadow:`0 0 8px ${disabilityColor}70`,flexShrink:0}}/>
                   </div>
                 )}
               </div>
@@ -3246,91 +3404,104 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           );
         })()}
 
-        {/* Settings card */}
-        <div style={{background:th.card,borderRadius:18,overflow:"hidden",border:`1.5px solid ${th.border}`,boxShadow:dark?"0 2px 14px rgba(0,0,0,0.25)":"0 2px 14px rgba(0,0,0,0.05)"}}>
-          <div style={{padding:"13px 18px 11px",borderBottom:`1px solid ${th.divider}`}}>
+        {/* ── Settings Card ── */}
+        <div style={{
+          background:th.card,borderRadius:18,overflow:"hidden",
+          border:`1.5px solid ${th.border}`,
+          boxShadow:dark?"0 2px 16px rgba(0,0,0,0.3)":"0 2px 18px rgba(0,0,0,0.07)",
+        }}>
+          <div style={{
+            padding:"12px 18px 11px",borderBottom:`1px solid ${th.divider}`,
+            display:"flex",alignItems:"center",gap:8,
+            background:dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.015)",
+          }}>
+            <span style={{fontSize:14}}>⚙️</span>
             <div style={{fontSize:10.5,fontWeight:700,color:th.textSub,letterSpacing:0.9,textTransform:"uppercase",fontFamily:bf}}>{pt.settingsTitle}</div>
           </div>
 
           {/* Language */}
-          <div style={{padding:"13px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <div style={{width:36,height:36,borderRadius:10,background:"#EFF6FF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🌐</div>
+          <div style={{padding:"14px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:38,height:38,borderRadius:11,background:"#EFF6FF",border:"1.5px solid #BFDBFE",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🌐</div>
               <div>
                 <div style={{fontSize:14,fontWeight:600,color:th.text,fontFamily:bf}}>{pt.langLabel}</div>
-                <div style={{fontSize:11,color:th.textSub,marginTop:1}}>{lang==="en"?"English":"हिंदी"}</div>
+                <div style={{fontSize:11,color:th.textSub,marginTop:1}}>{lang==="en"?"English / अंग्रेज़ी":"हिंदी / Hindi"}</div>
               </div>
             </div>
             <LangToggle lang={lang} onToggle={toggleLang} dark={dark}/>
           </div>
 
           {/* Dark Mode */}
-          <div style={{padding:"13px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <div style={{width:36,height:36,borderRadius:10,background:dark?"#1c1c3e":"#F0F0FF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🌙</div>
+          <div style={{padding:"14px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:38,height:38,borderRadius:11,background:dark?"#1c1c2e":"#F5F3FF",border:`1.5px solid ${dark?"#4c3a8a":"#DDD6FE"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>{dark?"🌙":"☀️"}</div>
               <div>
                 <div style={{fontSize:14,fontWeight:600,color:th.text,fontFamily:bf}}>{pt.darkLabel}</div>
                 <div style={{fontSize:11,color:th.textSub,marginTop:1}}>{pt.darkSub(dark)}</div>
               </div>
             </div>
-            <div onClick={()=>{haptic();toggleDark();}} style={{width:48,height:28,borderRadius:14,background:dark?"#003580":"#ddd",position:"relative",cursor:"pointer",transition:"background 0.25s",flexShrink:0}}>
-              <div style={{position:"absolute",top:4,left:dark?"24px":"4px",width:20,height:20,borderRadius:"50%",background:"#fff",boxShadow:"0 1px 4px rgba(0,0,0,0.3)",transition:"left 0.25s"}}/>
+            <div onClick={()=>{haptic();toggleDark();}}
+              style={{width:48,height:27,borderRadius:14,background:dark?"#003580":"#e0e0e0",position:"relative",cursor:"pointer",transition:"background 0.25s",flexShrink:0,border:`1.5px solid ${dark?"#1a56db":"#ccc"}`,boxShadow:dark?"0 0 12px rgba(0,53,128,0.35)":"none"}}>
+              <div style={{position:"absolute",top:2,left:dark?22:2,width:21,height:21,borderRadius:"50%",background:"#fff",boxShadow:"0 2px 5px rgba(0,0,0,0.2)",transition:"left 0.25s"}}/>
             </div>
           </div>
 
           {/* Edit Profile */}
           <div onClick={()=>{haptic();handleEdit();}}
-            style={{padding:"13px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <div style={{width:36,height:36,borderRadius:10,background:"#FFF7ED",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>✏️</div>
-              <div style={{fontSize:14,fontWeight:600,color:th.text,fontFamily:bf}}>{pt.editProfile}</div>
+            style={{padding:"14px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:38,height:38,borderRadius:11,background:"#FFF7ED",border:"1.5px solid #FED7AA",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>✏️</div>
+              <div>
+                <div style={{fontSize:14,fontWeight:600,color:th.text,fontFamily:bf}}>{pt.editProfile}</div>
+                <div style={{fontSize:11,color:th.textSub,marginTop:1}}>{isHindi?"जानकारी अपडेट करें":"Update your information"}</div>
+              </div>
             </div>
-            <div style={{color:"#ccc",fontSize:18}}>›</div>
+            <div style={{width:28,height:28,borderRadius:8,background:dark?"rgba(255,153,51,0.14)":"rgba(255,153,51,0.08)",border:"1.5px solid rgba(255,153,51,0.22)",display:"flex",alignItems:"center",justifyContent:"center",color:"#FF8C00",fontSize:15,fontWeight:700}}>›</div>
           </div>
 
           {/* Report / Query — visible to all logged-in users */}
           {auth.currentUser&&(
             <div onClick={()=>{haptic();setReportTab("my");setShowReport(true);}}
-              style={{padding:"13px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:36,height:36,borderRadius:10,
-                  background:"linear-gradient(135deg,rgba(255,153,51,0.15),rgba(0,53,128,0.12))",
-                  border:"1.5px solid rgba(255,153,51,0.3)",
+              style={{padding:"14px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <div style={{width:38,height:38,borderRadius:11,
+                  background:"linear-gradient(135deg,rgba(255,153,51,0.14),rgba(0,53,128,0.10))",
+                  border:"1.5px solid rgba(255,153,51,0.25)",
                   display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>📬</div>
                 <div>
                   <div style={{fontSize:14,fontWeight:600,color:th.text,fontFamily:bf}}>{pt.reportLabel}</div>
-                  <div style={{fontSize:10,color:th.textSub,marginTop:1}}>{pt.reportSub}</div>
+                  <div style={{fontSize:11,color:th.textSub,marginTop:1}}>{pt.reportSub}</div>
                 </div>
               </div>
-              <div style={{color:th.textSub,fontSize:18}}>›</div>
+              <div style={{width:28,height:28,borderRadius:8,background:dark?"rgba(0,0,0,0.18)":"rgba(0,0,0,0.05)",border:`1.5px solid ${th.border3}`,display:"flex",alignItems:"center",justifyContent:"center",color:th.textSub,fontSize:15,fontWeight:700}}>›</div>
             </div>
           )}
 
           {/* Admin Panel — only visible to admin */}
           {isAdmin&&(
             <div onClick={()=>{haptic();onAdminOpen?.();}}
-              style={{padding:"13px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",
-                borderBottom:`1px solid ${th.border}`}}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:36,height:36,borderRadius:10,
-                  background:"linear-gradient(135deg,#003580,rgba(255,153,51,0.9))",
-                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🛡️</div>
+              style={{padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",borderBottom:`1px solid ${th.border}`}}>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <div style={{width:38,height:38,borderRadius:11,
+                  background:"linear-gradient(135deg,#002060,rgba(255,153,51,0.85))",
+                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,
+                  boxShadow:"0 2px 8px rgba(0,32,96,0.22)"}}>🛡️</div>
                 <div>
                   <div style={{fontSize:14,fontWeight:700,color:th.text,fontFamily:bf}}>Admin Dashboard</div>
-                  <div style={{fontSize:10,color:th.textSub}}>View users, stats & export data</div>
+                  <div style={{fontSize:11,color:th.textSub,marginTop:1}}>View users, stats & export data</div>
                 </div>
               </div>
-              <div style={{color:th.textSub,fontSize:18}}>›</div>
+              <div style={{width:28,height:28,borderRadius:8,background:"rgba(0,32,96,0.08)",border:"1.5px solid rgba(0,32,96,0.18)",display:"flex",alignItems:"center",justifyContent:"center",color:ASHOKA_BLUE,fontSize:15,fontWeight:700}}>›</div>
             </div>
           )}
 
-          {/* About Yojana Sahay — visible to all */}
+          {/* About Yojana Sahay */}
           <div onClick={()=>{haptic();setShowAbout(true);}}
-            style={{padding:"13px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <div style={{width:36,height:36,borderRadius:10,
-                background:"linear-gradient(135deg,rgba(0,53,128,0.12),rgba(255,153,51,0.10))",
-                border:"1.5px solid rgba(0,53,128,0.18)",
+            style={{padding:"14px 18px",borderBottom:`1px solid ${th.divider}`,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:38,height:38,borderRadius:11,
+                background:dark?"rgba(0,53,128,0.18)":"rgba(0,53,128,0.06)",
+                border:`1.5px solid ${dark?"rgba(0,53,128,0.32)":"rgba(0,53,128,0.16)"}`,
                 display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>ℹ️</div>
               <div>
                 <div style={{fontSize:14,fontWeight:600,color:th.text,fontFamily:bf}}>
@@ -3341,17 +3512,20 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                 </div>
               </div>
             </div>
-            <div style={{color:th.textSub,fontSize:18}}>›</div>
+            <div style={{width:28,height:28,borderRadius:8,background:dark?"rgba(0,53,128,0.16)":"rgba(0,53,128,0.06)",border:`1.5px solid ${dark?"rgba(0,53,128,0.28)":"rgba(0,53,128,0.14)"}`,display:"flex",alignItems:"center",justifyContent:"center",color:dark?"#7ba7f0":ASHOKA_BLUE,fontSize:15,fontWeight:700}}>›</div>
           </div>
 
           {/* Sign Out */}
           <div onClick={()=>{haptic([50,60,50]);handleSignOut();}}
-            style={{padding:"13px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <div style={{width:36,height:36,borderRadius:10,background:"#FEF2F2",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🚪</div>
-              <div style={{fontSize:14,fontWeight:600,color:"#DC2626",fontFamily:bf}}>{pt.signOut}</div>
+            style={{padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:38,height:38,borderRadius:11,background:"#FEF2F2",border:"1.5px solid #FECACA",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🚪</div>
+              <div>
+                <div style={{fontSize:14,fontWeight:600,color:"#DC2626",fontFamily:bf}}>{pt.signOut}</div>
+                <div style={{fontSize:11,color:"#f87171",marginTop:1}}>{isHindi?"सुरक्षित साइन आउट":"Sign out securely"}</div>
+              </div>
             </div>
-            <div style={{color:"#DC2626",fontSize:18}}>›</div>
+            <div style={{width:28,height:28,borderRadius:8,background:"rgba(220,38,38,0.08)",border:"1.5px solid rgba(220,38,38,0.18)",display:"flex",alignItems:"center",justifyContent:"center",color:"#DC2626",fontSize:15,fontWeight:700}}>›</div>
           </div>
         </div>
       </div>
