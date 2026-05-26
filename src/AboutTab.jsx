@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect } from "react";
+import appLogo from "./logo.webp";
 
 // ─── SECURITY HELPER ──────────────────────────────────────────────────────────
 // Prevents reverse tabnapping: sets noopener+noreferrer and nullifies opener
@@ -680,15 +681,12 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
 
           {/* App icon */}
           <div style={{
-            width: 76, height: 76, borderRadius: 24,
-            background: "linear-gradient(135deg, rgba(255,153,51,0.28) 0%, rgba(255,255,255,0.08) 100%)",
-            border: "1.5px solid rgba(255,255,255,0.22)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 36, marginBottom: 20,
-            boxShadow: "0 12px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15)",
-            backdropFilter: "blur(4px)",
+            width: 76, height: 76, borderRadius: 22,
+            overflow: "hidden", marginBottom: 20, flexShrink: 0,
+            boxShadow: "0 12px 40px rgba(0,0,0,0.35), 0 0 0 1.5px rgba(255,255,255,0.25)",
           }}>
-            🏛️
+            <img src={appLogo} alt="Yojana Sahay"
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
           </div>
 
           {/* App name */}
