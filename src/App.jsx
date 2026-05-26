@@ -3584,160 +3584,230 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           onClick={()=>{if(!signOutLoading)setShowSignOutModal(false);}}
           style={{
             position:"fixed",inset:0,zIndex:1000,
-            background:dark?"rgba(0,0,0,0.72)":"rgba(15,23,42,0.55)",
-            backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",
+            background:dark?"rgba(0,0,0,0.80)":"rgba(8,14,36,0.60)",
+            backdropFilter:"blur(20px) saturate(180%)",
+            WebkitBackdropFilter:"blur(20px) saturate(180%)",
             display:"flex",alignItems:"center",justifyContent:"center",
-            padding:"24px",
-            animation:"soBackdropIn 0.22s ease",
+            padding:"20px",
+            animation:"so_bd 0.25s ease both",
           }}>
           <style>{`
-            @keyframes soBackdropIn{from{opacity:0}to{opacity:1}}
-            @keyframes soDialogIn{from{opacity:0;transform:scale(0.88) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
-            @keyframes soIconPulse{0%,100%{transform:scale(1);box-shadow:${dark?"0 0 0 0 rgba(220,38,38,0.5)":"0 0 0 0 rgba(220,38,38,0.3)"}}70%{transform:scale(1.05);box-shadow:${dark?"0 0 0 10px rgba(220,38,38,0)":"0 0 0 12px rgba(220,38,38,0)"}}}
-            @keyframes soShimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+            @keyframes so_bd{from{opacity:0}to{opacity:1}}
+            @keyframes so_in{
+              0%  {opacity:0;transform:scale(0.82) translateY(24px)}
+              65% {opacity:1;transform:scale(1.02) translateY(-3px)}
+              100%{opacity:1;transform:scale(1)   translateY(0)}
+            }
+            @keyframes so_ring1{0%,100%{transform:scale(1);opacity:0.5}50%{transform:scale(1.18);opacity:0}}
+            @keyframes so_ring2{0%,100%{transform:scale(1);opacity:0.35}50%{transform:scale(1.32);opacity:0}}
+            @keyframes so_iconbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+            @keyframes so_fadeslide{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+            @keyframes so_avatarring{0%,100%{box-shadow:0 0 0 3px rgba(255,153,51,0.55)}50%{box-shadow:0 0 0 5px rgba(255,153,51,0.18)}}
+            @keyframes so_btnshine{0%{left:-80%}100%{left:130%}}
           `}</style>
+
           <div
             onClick={e=>e.stopPropagation()}
             style={{
-              width:"100%",maxWidth:360,
-              background:dark
-                ?"linear-gradient(160deg,#1e1e22 0%,#18181b 100%)"
-                :"linear-gradient(160deg,#ffffff 0%,#f8f7ff 100%)",
-              borderRadius:28,
+              width:"100%",maxWidth:348,
+              borderRadius:32,
               overflow:"hidden",
-              animation:"soDialogIn 0.32s cubic-bezier(0.34,1.56,0.64,1)",
-              boxShadow:dark
-                ?"0 32px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.07)"
-                :"0 32px 80px rgba(15,23,42,0.22),0 0 0 1px rgba(0,0,0,0.06)",
+              animation:"so_in 0.48s cubic-bezier(0.22,1,0.36,1) both",
               position:"relative",
+              /* Layered glass card */
+              background:dark
+                ?"linear-gradient(145deg,rgba(30,30,36,0.97) 0%,rgba(20,20,25,0.99) 100%)"
+                :"linear-gradient(145deg,rgba(255,255,255,0.98) 0%,rgba(248,246,255,0.99) 100%)",
+              boxShadow:dark
+                ?`0 0 0 1px rgba(255,255,255,0.08),
+                  0 8px 16px rgba(0,0,0,0.4),
+                  0 40px 80px rgba(0,0,0,0.65),
+                  inset 0 1px 0 rgba(255,255,255,0.07)`
+                :`0 0 0 1px rgba(0,0,0,0.07),
+                  0 8px 20px rgba(15,23,42,0.10),
+                  0 40px 80px rgba(15,23,42,0.18),
+                  inset 0 1px 0 rgba(255,255,255,1)`,
             }}>
 
-            {/* Top accent bar — saffron→red gradient */}
+            {/* ── Decorative top gradient strip ── */}
             <div style={{
-              height:3,
-              background:"linear-gradient(90deg,#FF9933 0%,#ef4444 50%,#B91C1C 100%)",
+              height:4,
+              background:"linear-gradient(90deg,#FF9933 0%,#f97316 30%,#ef4444 60%,#dc2626 100%)",
+              boxShadow:"0 2px 12px rgba(239,68,68,0.5)",
             }}/>
 
-            {/* Subtle corner glow */}
+            {/* ── Ambient glow blobs ── */}
             <div style={{
-              position:"absolute",top:0,right:0,width:160,height:160,
+              position:"absolute",top:-40,left:"50%",transform:"translateX(-50%)",
+              width:220,height:120,
+              background:"radial-gradient(ellipse,rgba(220,38,38,0.18) 0%,transparent 70%)",
+              pointerEvents:"none",filter:"blur(2px)",
+            }}/>
+            <div style={{
+              position:"absolute",bottom:60,right:-30,
+              width:140,height:140,
               background:dark
-                ?"radial-gradient(circle at top right,rgba(220,38,38,0.10) 0%,transparent 70%)"
-                :"radial-gradient(circle at top right,rgba(220,38,38,0.07) 0%,transparent 70%)",
+                ?"radial-gradient(circle,rgba(255,153,51,0.08) 0%,transparent 70%)"
+                :"radial-gradient(circle,rgba(0,53,128,0.05) 0%,transparent 70%)",
               pointerEvents:"none",
             }}/>
 
-            {/* Body */}
-            <div style={{padding:"28px 28px 24px",position:"relative"}}>
+            {/* ── Content ── */}
+            <div style={{padding:"30px 26px 26px",position:"relative"}}>
 
-              {/* Close × button */}
+              {/* Close button */}
               <div
                 onClick={()=>{if(!signOutLoading){haptic(30);setShowSignOutModal(false);}}}
                 style={{
-                  position:"absolute",top:20,right:20,
-                  width:30,height:30,borderRadius:"50%",
-                  background:dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.06)",
-                  border:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(0,0,0,0.08)"}`,
+                  position:"absolute",top:16,right:16,
+                  width:32,height:32,borderRadius:"50%",
+                  background:dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.05)",
+                  border:`1px solid ${dark?"rgba(255,255,255,0.11)":"rgba(0,0,0,0.09)"}`,
                   display:"flex",alignItems:"center",justifyContent:"center",
-                  cursor:"pointer",color:th.textSub,fontSize:16,lineHeight:1,
-                  WebkitTapHighlightColor:"transparent",
-                }}>✕</div>
+                  cursor:"pointer",WebkitTapHighlightColor:"transparent",flexShrink:0,
+                }}>
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                  <path d="M1 1l10 10M11 1L1 11" stroke={dark?"rgba(255,255,255,0.45)":"rgba(0,0,0,0.35)"} strokeWidth="1.8" strokeLinecap="round"/>
+                </svg>
+              </div>
 
-              {/* Icon */}
-              <div style={{
-                width:72,height:72,borderRadius:22,margin:"0 auto 20px",
-                background:dark
-                  ?"linear-gradient(145deg,#2d1515,#3b1a1a)"
-                  :"linear-gradient(145deg,#fff1f2,#ffe4e6)",
-                border:`1.5px solid ${dark?"rgba(220,38,38,0.35)":"rgba(220,38,38,0.18)"}`,
-                display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,
-                animation:"soIconPulse 2.6s ease-in-out infinite",
-                boxShadow:dark
-                  ?"0 8px 24px rgba(220,38,38,0.20),inset 0 1px 0 rgba(255,255,255,0.06)"
-                  :"0 8px 24px rgba(220,38,38,0.14),inset 0 1px 0 rgba(255,255,255,0.8)",
-              }}>🚪</div>
+              {/* ── Icon with pulsing rings ── */}
+              <div style={{display:"flex",justifyContent:"center",marginBottom:22,animation:"so_fadeslide 0.4s 0.1s ease both"}}>
+                <div style={{position:"relative",width:90,height:90,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {/* Ring 2 — outermost */}
+                  <div style={{
+                    position:"absolute",inset:-14,borderRadius:"50%",
+                    border:`1.5px solid ${dark?"rgba(220,38,38,0.22)":"rgba(220,38,38,0.15)"}`,
+                    animation:"so_ring2 2.8s ease-in-out 0.3s infinite",
+                  }}/>
+                  {/* Ring 1 */}
+                  <div style={{
+                    position:"absolute",inset:-6,borderRadius:"50%",
+                    border:`1.5px solid ${dark?"rgba(220,38,38,0.38)":"rgba(220,38,38,0.25)"}`,
+                    animation:"so_ring1 2.8s ease-in-out infinite",
+                  }}/>
+                  {/* Icon circle */}
+                  <div style={{
+                    width:90,height:90,borderRadius:"50%",
+                    background:dark
+                      ?"linear-gradient(145deg,#2c1414 0%,#3d1919 60%,#2a1212 100%)"
+                      :"linear-gradient(145deg,#fff0f0 0%,#ffe2e2 60%,#ffd6d6 100%)",
+                    border:`1.5px solid ${dark?"rgba(239,68,68,0.30)":"rgba(239,68,68,0.20)"}`,
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    animation:"so_iconbob 3s ease-in-out infinite",
+                    boxShadow:dark
+                      ?"0 0 0 0 rgba(220,38,38,0),0 12px 32px rgba(220,38,38,0.28),inset 0 1px 0 rgba(255,255,255,0.07)"
+                      :"0 0 0 0 rgba(220,38,38,0),0 12px 32px rgba(220,38,38,0.18),inset 0 2px 0 rgba(255,255,255,0.9)",
+                  }}>
+                    {/* SVG logout icon */}
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+                      stroke={dark?"#f87171":"#dc2626"} strokeWidth="1.8"
+                      strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                      <polyline points="16 17 21 12 16 7"/>
+                      <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
 
-              {/* Heading */}
-              <div style={{textAlign:"center",marginBottom:8}}>
+              {/* ── Heading ── */}
+              <div style={{textAlign:"center",marginBottom:20,animation:"so_fadeslide 0.4s 0.15s ease both"}}>
                 <div style={{
-                  fontSize:20,fontWeight:800,fontFamily:bf,letterSpacing:-0.4,
-                  color:th.text,lineHeight:1.2,marginBottom:6,
+                  fontSize:22,fontWeight:800,fontFamily:bf,letterSpacing:-0.5,
+                  color:th.text,lineHeight:1.15,marginBottom:8,
                 }}>
                   {isHindi?"साइन आउट करें?":"Sign Out?"}
                 </div>
                 <div style={{
-                  fontSize:13,color:th.textMid,fontFamily:bf,lineHeight:1.6,
-                  maxWidth:260,margin:"0 auto",
+                  fontSize:13,lineHeight:1.65,fontFamily:bf,
+                  color:dark?"rgba(180,180,190,0.85)":"rgba(80,80,100,0.80)",
+                  maxWidth:250,margin:"0 auto",
                 }}>
                   {isHindi
                     ?"आपकी प्रोफाइल और प्रगति सुरक्षित रहेगी।"
-                    :"Your profile & progress stays safe. We'll be right here when you return."}
+                    :"Your profile & progress stays safe. Everything will be right here when you return."}
                 </div>
               </div>
 
-              {/* Divider */}
-              <div style={{height:1,background:dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)",margin:"18px 0"}}/>
-
-              {/* User info card */}
+              {/* ── User card ── */}
               {auth.currentUser&&(
                 <div style={{
-                  padding:"12px 14px",
-                  background:dark
-                    ?"rgba(255,255,255,0.04)"
-                    :"rgba(0,53,128,0.03)",
-                  border:`1.5px solid ${dark?"rgba(255,255,255,0.08)":"rgba(0,53,128,0.10)"}`,
-                  borderRadius:16,
+                  animation:"so_fadeslide 0.4s 0.22s ease both",
+                  marginBottom:18,
+                  padding:"13px 14px",
+                  borderRadius:20,
                   display:"flex",alignItems:"center",gap:12,
-                  marginBottom:20,
+                  background:dark
+                    ?"linear-gradient(135deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.02) 100%)"
+                    :"linear-gradient(135deg,rgba(0,53,128,0.04) 0%,rgba(0,53,128,0.02) 100%)",
+                  border:`1px solid ${dark?"rgba(255,255,255,0.09)":"rgba(0,53,128,0.12)"}`,
+                  boxShadow:dark?"inset 0 1px 0 rgba(255,255,255,0.04)":"inset 0 1px 0 rgba(255,255,255,0.8)",
                 }}>
                   {/* Avatar */}
-                  {auth.currentUser.photoURL
-                    ?<img src={auth.currentUser.photoURL} alt=""
-                        style={{width:42,height:42,borderRadius:"50%",objectFit:"cover",flexShrink:0,
-                          border:`2px solid ${dark?"rgba(255,153,51,0.5)":"rgba(255,153,51,0.4)"}`,
-                          boxShadow:"0 2px 8px rgba(255,153,51,0.25)"}}/>
-                    :<div style={{
-                        width:42,height:42,borderRadius:"50%",flexShrink:0,
-                        background:"linear-gradient(135deg,#FF9933 0%,#FF6B00 100%)",
-                        display:"flex",alignItems:"center",justifyContent:"center",
-                        fontSize:17,fontWeight:800,color:"#fff",
-                        boxShadow:"0 3px 10px rgba(255,107,0,0.40)",
-                        border:`2px solid ${dark?"rgba(255,153,51,0.30)":"rgba(255,255,255,0.6)"}`,
-                      }}>
-                      {(profile?.name||auth.currentUser.displayName||auth.currentUser.email||"U").charAt(0).toUpperCase()}
-                    </div>
-                  }
-                  {/* Name & email */}
+                  <div style={{position:"relative",flexShrink:0}}>
+                    {auth.currentUser.photoURL
+                      ?<img src={auth.currentUser.photoURL} alt="" style={{
+                          width:46,height:46,borderRadius:"50%",objectFit:"cover",display:"block",
+                          animation:"so_avatarring 2.5s ease-in-out infinite",
+                        }}/>
+                      :<div style={{
+                          width:46,height:46,borderRadius:"50%",
+                          background:"linear-gradient(135deg,#FF9933 0%,#f97316 50%,#ea580c 100%)",
+                          display:"flex",alignItems:"center",justifyContent:"center",
+                          fontSize:18,fontWeight:800,color:"#fff",
+                          animation:"so_avatarring 2.5s ease-in-out infinite",
+                          boxShadow:"0 4px 14px rgba(249,115,22,0.45)",
+                        }}>
+                        {(profile?.name||auth.currentUser.displayName||auth.currentUser.email||"U").charAt(0).toUpperCase()}
+                      </div>
+                    }
+                    {/* Online dot */}
+                    <div style={{
+                      position:"absolute",bottom:1,right:1,
+                      width:12,height:12,borderRadius:"50%",
+                      background:"#22c55e",
+                      border:`2px solid ${dark?"#1e1e22":"#fff"}`,
+                      boxShadow:"0 0 6px rgba(34,197,94,0.6)",
+                    }}/>
+                  </div>
+
+                  {/* Name + email */}
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:14,fontWeight:700,color:th.text,fontFamily:bf,
-                      overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",lineHeight:1.3}}>
+                    <div style={{
+                      fontSize:14,fontWeight:700,color:th.text,fontFamily:bf,
+                      overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                      lineHeight:1.3,marginBottom:3,
+                    }}>
                       {profile?.name||auth.currentUser.displayName||(isHindi?"नागरिक":"Citizen")}
                     </div>
-                    <div style={{fontSize:11.5,color:th.textSub,fontFamily:bf,
-                      overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:2}}>
+                    <div style={{
+                      fontSize:11.5,color:th.textSub,fontFamily:bf,
+                      overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                    }}>
                       {auth.currentUser.email||auth.currentUser.phoneNumber||""}
                     </div>
                   </div>
-                  {/* Verified badge */}
+
+                  {/* Verified pill */}
                   <div style={{
-                    display:"flex",alignItems:"center",gap:4,flexShrink:0,
-                    fontSize:10.5,fontWeight:700,color:"#16a34a",
-                    background:dark?"rgba(22,163,74,0.14)":"rgba(22,163,74,0.09)",
-                    border:"1.5px solid rgba(22,163,74,0.25)",
-                    borderRadius:20,padding:"3px 9px",
+                    flexShrink:0,display:"flex",alignItems:"center",gap:4,
+                    padding:"4px 10px",borderRadius:20,
+                    background:dark?"rgba(34,197,94,0.14)":"rgba(22,163,74,0.09)",
+                    border:"1.5px solid rgba(34,197,94,0.28)",
                   }}>
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    {isHindi?"सत्यापित":"Verified"}
+                    <div style={{width:6,height:6,borderRadius:"50%",background:"#22c55e",boxShadow:"0 0 5px rgba(34,197,94,0.7)"}}/>
+                    <span style={{fontSize:10.5,fontWeight:700,color:"#16a34a",fontFamily:bf,letterSpacing:0.2}}>
+                      {isHindi?"सत्यापित":"Verified"}
+                    </span>
                   </div>
                 </div>
               )}
 
-              {/* Action buttons */}
-              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              {/* ── Buttons ── */}
+              <div style={{display:"flex",flexDirection:"column",gap:10,animation:"so_fadeslide 0.4s 0.28s ease both"}}>
 
-                {/* Sign Out — primary destructive */}
+                {/* Sign Out */}
                 <div
                   onClick={async()=>{
                     if(signOutLoading)return;
@@ -3747,48 +3817,58 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                     setSignOutLoading(false);
                     setShowSignOutModal(false);
                   }}
-                  className={signOutLoading?"signin-loading":""}
                   style={{
+                    position:"relative",overflow:"hidden",
                     background:signOutLoading
-                      ?"linear-gradient(270deg,#b91c1c,#dc2626,#991b1b,#dc2626)"
-                      :"linear-gradient(135deg,#dc2626 0%,#b91c1c 100%)",
-                    backgroundSize:signOutLoading?"200% auto":"100% 100%",
-                    borderRadius:16,padding:"15px 20px",
+                      ?"linear-gradient(135deg,#b91c1c,#991b1b)"
+                      :"linear-gradient(135deg,#ef4444 0%,#dc2626 40%,#b91c1c 100%)",
+                    borderRadius:18,padding:"16px",
                     display:"flex",alignItems:"center",justifyContent:"center",gap:9,
                     cursor:signOutLoading?"default":"pointer",
                     boxShadow:signOutLoading
-                      ?"0 4px 18px rgba(220,38,38,0.20)"
-                      :"0 4px 18px rgba(185,28,28,0.40),inset 0 1px 0 rgba(255,255,255,0.15)",
-                    transition:"box-shadow 0.2s,opacity 0.2s",
+                      ?"0 4px 12px rgba(185,28,28,0.25)"
+                      :"0 4px 8px rgba(239,68,68,0.20),0 12px 28px rgba(185,28,28,0.42),inset 0 1px 0 rgba(255,255,255,0.18)",
+                    transition:"box-shadow 0.25s,transform 0.15s",
                     WebkitTapHighlightColor:"transparent",
                     userSelect:"none",
                   }}>
+                  {/* Shine sweep */}
+                  {!signOutLoading&&(
+                    <div style={{
+                      position:"absolute",top:0,bottom:0,width:"55%",
+                      background:"linear-gradient(105deg,transparent 0%,rgba(255,255,255,0.14) 50%,transparent 100%)",
+                      animation:"so_btnshine 2.8s ease-in-out 0.6s infinite",
+                      pointerEvents:"none",
+                    }}/>
+                  )}
                   {signOutLoading
                     ?<div className="btn-spinner"/>
-                    :<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                    :<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                      <polyline points="16 17 21 12 16 7"/>
+                      <line x1="21" y1="12" x2="9" y2="12"/>
                     </svg>
                   }
-                  <span style={{fontSize:14.5,fontWeight:800,color:"#fff",fontFamily:bf,letterSpacing:0.1}}>
+                  <span style={{fontSize:15,fontWeight:800,color:"#fff",fontFamily:bf,letterSpacing:0.15,position:"relative"}}>
                     {signOutLoading?(isHindi?"साइन आउट हो रहा है...":"Signing out…"):(isHindi?"हाँ, साइन आउट करें":"Yes, Sign Out")}
                   </span>
                 </div>
 
-                {/* Cancel — secondary */}
+                {/* Cancel */}
                 <div
                   onClick={()=>{if(!signOutLoading){haptic();setShowSignOutModal(false);}}}
                   style={{
-                    background:"transparent",
-                    border:`1.5px solid ${dark?"rgba(255,255,255,0.12)":"rgba(0,0,0,0.10)"}`,
-                    borderRadius:16,padding:"14px 20px",
+                    borderRadius:18,padding:"15px",
                     display:"flex",alignItems:"center",justifyContent:"center",
                     cursor:signOutLoading?"default":"pointer",
-                    transition:"background 0.18s",
+                    background:"transparent",
+                    border:`1.5px solid ${dark?"rgba(255,255,255,0.10)":"rgba(0,0,0,0.09)"}`,
                     WebkitTapHighlightColor:"transparent",
                     userSelect:"none",
-                    opacity:signOutLoading?0.45:1,
+                    opacity:signOutLoading?0.4:1,
+                    transition:"opacity 0.2s",
                   }}>
-                  <span style={{fontSize:14,fontWeight:600,color:th.textMid,fontFamily:bf}}>
+                  <span style={{fontSize:14,fontWeight:600,fontFamily:bf,color:dark?"rgba(200,200,210,0.7)":"rgba(80,80,100,0.65)"}}>
                     {isHindi?"रद्द करें":"Cancel"}
                   </span>
                 </div>
