@@ -4337,6 +4337,8 @@ export default function YojanaSahay(){
         @keyframes fadeSlide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
         @keyframes tabEnter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes iconPop{0%{transform:scale(1)}45%{transform:scale(1.28)}100%{transform:scale(1)}}
+        @keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+        @keyframes badgePulse{0%,100%{opacity:1}50%{opacity:0.6}}
         @keyframes calc-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.85)}}
         @keyframes calc-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
         @keyframes calc-slide-in{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
@@ -4354,55 +4356,117 @@ export default function YojanaSahay(){
           {/* HOME */}
           {activeTab==="home"&&(
             <div style={{flex:1,overflowY:"auto"}}>
-          {/* Header */}
-          <div style={{background:"linear-gradient(135deg,#FF9933 0%,#FF8C00 40%,#003580 100%)",padding:"0 0 24px",position:"relative",overflow:"hidden"}}>
-            <div style={{position:"absolute",right:-40,top:-40,width:180,height:180,borderRadius:"50%",border:"2px solid rgba(255,255,255,0.1)"}}>
-              <div className="spin" style={{width:"100%",height:"100%",borderRadius:"50%",border:"1.5px solid rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:60,opacity:0.12}}>☸</div>
+          {/* ── PREMIUM HEADER ── */}
+          <div style={{background:"linear-gradient(160deg,#0c1445 0%,#06038D 38%,#003580 65%,#FF8C00 100%)",padding:"0 0 0",position:"relative",overflow:"hidden"}}>
+            {/* Decorative: large spinning chakra watermark */}
+            <div className="spin" style={{position:"absolute",right:-55,top:-55,width:220,height:220,borderRadius:"50%",border:"2px solid rgba(255,255,255,0.06)",opacity:1,pointerEvents:"none"}}>
+              <svg width="220" height="220" viewBox="0 0 220 220" style={{position:"absolute",inset:0,opacity:0.07}}>
+                {Array.from({length:24},(_,i)=>{
+                  const a=(i*360/24)*Math.PI/180,cx=110,cy=110,r=100,ir=28;
+                  return <line key={i} x1={cx+ir*Math.cos(a)} y1={cy+ir*Math.sin(a)} x2={cx+r*0.78*Math.cos(a)} y2={cy+r*0.78*Math.sin(a)} stroke="#fff" strokeWidth={3}/>;
+                })}
+                <circle cx="110" cy="110" r="100" fill="none" stroke="#fff" strokeWidth="5"/>
+                <circle cx="110" cy="110" r="28" fill="#fff"/>
+              </svg>
             </div>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"52px 20px 16px"}}>
+            {/* Decorative: saffron orb bottom-left */}
+            <div style={{position:"absolute",left:-30,bottom:-20,width:130,height:130,borderRadius:"50%",background:"radial-gradient(circle,rgba(255,153,51,0.18) 0%,transparent 70%)",pointerEvents:"none"}}/>
+            {/* Decorative: green orb top-center */}
+            <div style={{position:"absolute",top:0,left:"30%",width:80,height:80,borderRadius:"50%",background:"radial-gradient(circle,rgba(19,136,8,0.12) 0%,transparent 70%)",pointerEvents:"none"}}/>
+
+            {/* Top nav bar */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"52px 20px 14px",position:"relative"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:42,height:42,background:"rgba(255,255,255,0.2)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,0.35)",fontSize:22}}>🏛️</div>
+                <div style={{width:40,height:40,background:"rgba(255,255,255,0.15)",borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid rgba(255,255,255,0.3)",fontSize:20,backdropFilter:"blur(8px)"}}>🏛️</div>
                 <div>
-                  <div style={{color:"#fff",fontSize:18,fontWeight:800,fontFamily:bf}}>{t.appName}</div>
-                  <div style={{color:"rgba(255,255,255,0.75)",fontSize:10.5}}>🇮🇳 {t.appSub}</div>
+                  <div style={{color:"#fff",fontSize:17,fontWeight:900,fontFamily:bf,letterSpacing:-0.3}}>{t.appName}</div>
+                  <div style={{display:"flex",alignItems:"center",gap:4,marginTop:1}}>
+                    <span style={{fontSize:10}}>🇮🇳</span>
+                    <span style={{color:"rgba(255,255,255,0.65)",fontSize:10,fontWeight:600,letterSpacing:0.2}}>{t.appSub}</span>
+                  </div>
                 </div>
               </div>
-              {/* Theme + Language controls — always visible, even before login */}
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <DarkModeToggle dark={dark} onToggle={toggleDark}/>
                 <LangToggle lang={lang} onToggle={toggleLang} dark={true}/>
               </div>
             </div>
-            <div style={{padding:"0 20px 16px"}}>
-              <div style={{color:"rgba(255,255,255,0.85)",fontSize:13,marginBottom:2}}>{t.greeting(profile?.name)}</div>
-              <div style={{color:"#fff",fontSize:20,fontWeight:800,lineHeight:1.3,fontFamily:bf}}>{t.headline}</div>
-              <div style={{color:"rgba(255,255,255,0.8)",fontSize:13,marginTop:2}}>{t.subheadline}</div>
+
+            {/* Hero content */}
+            <div style={{padding:"4px 20px 22px",position:"relative"}}>
+              {/* Trust badge — only when NOT logged in */}
+              {!profile&&(
+                <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.12)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:20,padding:"4px 10px",marginBottom:10,backdropFilter:"blur(6px)"}}>
+                  <div style={{width:6,height:6,borderRadius:"50%",background:"#4ade80",boxShadow:"0 0 6px #4ade80"}}/>
+                  <span style={{color:"rgba(255,255,255,0.9)",fontSize:10,fontWeight:700,letterSpacing:0.4}}>
+                    {isHindi?"सरकारी योजना सहायता • निःशुल्क":"Official Scheme Finder • Free Service"}
+                  </span>
+                </div>
+              )}
+              {profile&&(
+                <div style={{color:"rgba(255,255,255,0.8)",fontSize:12.5,marginBottom:4,fontFamily:bf}}>{t.greeting(profile?.name)}</div>
+              )}
+              <div style={{color:"#fff",fontSize:22,fontWeight:900,lineHeight:1.25,fontFamily:bf,letterSpacing:-0.4,marginBottom:5}}>{t.headline}</div>
+              <div style={{color:"rgba(255,255,255,0.72)",fontSize:13,lineHeight:1.5}}>{t.subheadline}</div>
             </div>
-            <div style={{padding:"0 20px"}}>
+
+            {/* Search bar — elevated card style */}
+            <div style={{padding:"0 16px",position:"relative",zIndex:2}}>
               <div className={`sb ${searchFocused?"fc":""}`}
-                style={{background:th.card,borderRadius:14,display:"flex",alignItems:"center",gap:10,padding:"12px 16px",border:"2px solid rgba(255,255,255,0.4)"}}>
-                <span style={{fontSize:18}}>🔍</span>
+                style={{background:th.card,borderRadius:16,display:"flex",alignItems:"center",gap:10,padding:"11px 14px",
+                  border:`2px solid ${searchFocused?"#FF9933":"rgba(255,255,255,0.5)"}`,
+                  boxShadow:"0 8px 32px rgba(0,0,0,0.22)",transition:"border-color 0.2s,box-shadow 0.2s"}}>
+                <div style={{width:32,height:32,background:"linear-gradient(135deg,#FF9933,#FF8C00)",borderRadius:9,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <span style={{fontSize:15}}>🔍</span>
+                </div>
                 <input value={searchText} onChange={e=>setSearchText(e.target.value)}
                   onFocus={()=>setSearchFocused(true)}
                   onBlur={()=>setSearchFocused(false)}
                   onKeyDown={e=>{if(e.key==="Enter"&&searchText.trim())setActiveTab("search");}}
                   placeholder={t.searchPlaceholder}
                   style={{border:"none",outline:"none",fontSize:14,flex:1,background:"transparent",color:th.text,fontFamily:bf}}/>
-                <div onClick={()=>{if(searchText.trim()){haptic();setActiveTab("search");}}}
-                  style={{background:"linear-gradient(135deg,#FF9933,#FF8C00)",borderRadius:8,padding:"6px 12px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-                  {t.searchBtn}
-                </div>
+                {searchText.trim()&&(
+                  <div onClick={()=>{haptic();setActiveTab("search");}}
+                    style={{background:"linear-gradient(135deg,#FF9933,#FF8C00)",borderRadius:9,padding:"7px 13px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0,boxShadow:"0 3px 10px rgba(255,140,0,0.35)"}}>
+                    {t.searchBtn}
+                  </div>
+                )}
               </div>
+            </div>
+            {/* Wave divider */}
+            <div style={{height:28,position:"relative",marginTop:6}}>
+              <svg viewBox="0 0 420 28" preserveAspectRatio="none" style={{width:"100%",height:"100%",display:"block"}}>
+                <path d={`M0,28 L0,14 Q105,0 210,14 Q315,28 420,14 L420,28 Z`} fill={th.appBg}/>
+              </svg>
             </div>
           </div>
 
           {/* Stats — animated count-up on load */}
           <div className={`fu s1 ${loaded?"show":""}`}
-            style={{background:th.card,margin:"0 16px",borderRadius:"0 0 18px 18px",padding:"14px 8px",display:"flex",boxShadow:dark?"0 4px 20px rgba(0,0,0,0.2)":"0 4px 20px rgba(0,0,0,0.07)",marginBottom:4}}>
-            {animatedStats.map((s,i)=>(
-              <div key={i} style={{flex:1,textAlign:"center",borderRight:i<2?`1px solid ${th.border}`:'none',padding:"0 8px"}}>
-                <div style={{fontSize:20,fontWeight:800,color:i===0?"#FF9933":i===1?"#003580":"#138808",fontVariantNumeric:"tabular-nums",transition:"color 0.3s"}}>{s.number}</div>
-                <div style={{fontSize:10,color:th.textSub,marginTop:2,fontFamily:bf}}>{s.label}</div>
+            style={{background:th.card,margin:"-4px 14px 0",borderRadius:16,padding:"14px 6px 12px",display:"flex",
+              boxShadow:dark?"0 4px 24px rgba(0,0,0,0.25)":"0 4px 24px rgba(0,53,128,0.10)",
+              border:`1.5px solid ${th.border}`,marginBottom:6,position:"relative",zIndex:1}}>
+            <div style={{position:"absolute",top:0,left:"10%",right:"10%",height:2,borderRadius:"0 0 2px 2px",
+              background:"linear-gradient(90deg,#FF9933,#06038D,#138808)",opacity:0.6}}/>
+            {[
+              {icon:"📋",color:"#FF9933",grad:"rgba(255,153,51,0.08)"},
+              {icon:"🗺️",color:"#06038D",grad:"rgba(6,3,141,0.06)"},
+              {icon:"👨‍👩‍👧",color:"#138808",grad:"rgba(19,136,8,0.07)"},
+            ].map((meta,i)=>(
+              <div key={i} style={{flex:1,textAlign:"center",padding:"0 6px",
+                borderRight:i<2?`1px solid ${th.border}`:'none'}}>
+                <div style={{width:30,height:30,borderRadius:9,background:meta.grad,
+                  border:`1px solid ${meta.color}22`,
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:14,margin:"0 auto 6px"}}>
+                  {meta.icon}
+                </div>
+                <div style={{fontSize:18,fontWeight:900,color:meta.color,fontVariantNumeric:"tabular-nums",lineHeight:1,fontFamily:"'Noto Sans',sans-serif"}}>
+                  {animatedStats[i].number}
+                </div>
+                <div style={{fontSize:9.5,color:th.textSub,marginTop:3,fontWeight:600,fontFamily:bf,letterSpacing:0.2}}>
+                  {animatedStats[i].label}
+                </div>
               </div>
             ))}
           </div>
@@ -4410,13 +4474,21 @@ export default function YojanaSahay(){
           <div style={{padding:"14px 16px 100px"}}>
             {/* Eligibility CTA */}
             <div className={`fu s1 cp ${loaded?"show":""}`} onClick={()=>{haptic();setShowChecker(true);}}
-              style={{background:"linear-gradient(135deg,#138808,#16a34a)",borderRadius:18,padding:18,marginBottom:16,display:"flex",alignItems:"center",gap:14,cursor:"pointer"}}>
-              <div style={{width:52,height:52,background:"rgba(255,255,255,0.2)",borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0,border:"1.5px solid rgba(255,255,255,0.3)"}}>🎯</div>
+              style={{background:"linear-gradient(135deg,#138808 0%,#16a34a 60%,#15803d 100%)",borderRadius:18,padding:"17px 18px",marginBottom:14,
+                display:"flex",alignItems:"center",gap:14,cursor:"pointer",position:"relative",overflow:"hidden",
+                boxShadow:"0 8px 28px rgba(19,136,8,0.32)",WebkitTapHighlightColor:"transparent"}}
+              onTouchStart={e=>{e.currentTarget.style.transform="scale(0.98)";}}
+              onTouchEnd={e=>{e.currentTarget.style.transform="scale(1)";}}>
+              {/* Decorative orb */}
+              <div style={{position:"absolute",right:-20,top:-20,width:90,height:90,borderRadius:"50%",background:"rgba(255,255,255,0.08)",pointerEvents:"none"}}/>
+              <div style={{width:50,height:50,background:"rgba(255,255,255,0.18)",borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,border:"1.5px solid rgba(255,255,255,0.28)",boxShadow:"0 2px 12px rgba(0,0,0,0.15)"}}>🎯</div>
               <div style={{flex:1}}>
-                <div style={{color:"#fff",fontSize:15,fontWeight:700,fontFamily:bf}}>{t.ctaTitle}</div>
-                <div style={{color:"rgba(255,255,255,0.8)",fontSize:12,marginTop:3}}>{t.ctaSub(!!profile)}</div>
+                <div style={{color:"#fff",fontSize:15,fontWeight:800,fontFamily:bf,marginBottom:3}}>{t.ctaTitle}</div>
+                <div style={{color:"rgba(255,255,255,0.78)",fontSize:11.5,lineHeight:1.4}}>{t.ctaSub(!!profile)}</div>
               </div>
-              <div style={{background:"rgba(255,255,255,0.25)",borderRadius:12,padding:"10px 14px",color:"#fff",fontSize:13,fontWeight:700,border:"1.5px solid rgba(255,255,255,0.4)",fontFamily:bf,flexShrink:0}}>{t.ctaBtn(!!profile)}</div>
+              <div style={{background:"rgba(255,255,255,0.22)",borderRadius:11,padding:"10px 13px",color:"#fff",fontSize:12.5,fontWeight:800,border:"1.5px solid rgba(255,255,255,0.38)",fontFamily:bf,flexShrink:0,textAlign:"center",lineHeight:1.3}}>
+                {t.ctaBtn(!!profile)}
+              </div>
             </div>
 
             {/* Benefit Calculator — shown when profile has matched schemes with annual benefits */}
@@ -4429,11 +4501,62 @@ export default function YojanaSahay(){
               <DocumentVaultCard allMatchedSchemes={allMatchedSchemes} lang={lang} dark={dark} uid={auth.currentUser?.uid||null}/>
             )}
 
+            {/* How It Works — only pre-login */}
+            {!profile&&(
+              <div className={`fu s2 ${loaded?"show":""}`} style={{marginBottom:14}}>
+                <div style={{fontSize:12,fontWeight:700,color:th.textSub,marginBottom:9,letterSpacing:0.5,textTransform:"uppercase",fontFamily:bf}}>
+                  {isHindi?"कैसे काम करता है":"How It Works"}
+                </div>
+                <div style={{background:th.card,borderRadius:16,overflow:"hidden",border:`1.5px solid ${th.border}`,boxShadow:dark?"0 2px 12px rgba(0,0,0,0.2)":"0 2px 12px rgba(0,0,0,0.05)"}}>
+                  {[
+                    {num:"1",icon:"✍️",color:"#FF9933",bg:"rgba(255,153,51,0.10)",
+                      title:isHindi?"6 सवाल जवाब दें":"Answer 6 Quick Questions",
+                      sub:isHindi?"अपनी जानकारी भरें":"Fill in your basic details"},
+                    {num:"2",icon:"🔍",color:"#06038D",bg:"rgba(6,3,141,0.08)",
+                      title:isHindi?"AI मिलान करता है":"AI Matches Your Profile",
+                      sub:isHindi?"3000+ योजनाओं में खोज":"Searches 3,000+ schemes for you"},
+                    {num:"3",icon:"✅",color:"#138808",bg:"rgba(19,136,8,0.08)",
+                      title:isHindi?"योजना पाएं — आवेदन करें":"Get Results & Apply",
+                      sub:isHindi?"पात्र योजनाएं देखें और आवेदन करें":"View matched schemes and apply online"},
+                  ].map((step,i,arr)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:13,padding:"13px 15px",
+                      borderBottom:i<arr.length-1?`1px solid ${th.divider}`:"none"}}>
+                      <div style={{width:38,height:38,borderRadius:11,background:step.bg,border:`1.5px solid ${step.color}28`,
+                        display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}}>
+                        <span style={{fontSize:18}}>{step.icon}</span>
+                        <div style={{position:"absolute",top:-7,right:-7,width:16,height:16,borderRadius:"50%",
+                          background:step.color,display:"flex",alignItems:"center",justifyContent:"center",
+                          fontSize:8,fontWeight:900,color:"#fff",border:"1.5px solid #fff",fontFamily:"'Noto Sans',sans-serif"}}>
+                          {step.num}
+                        </div>
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:12.5,fontWeight:700,color:th.text,fontFamily:bf,lineHeight:1.3}}>{step.title}</div>
+                        <div style={{fontSize:11,color:th.textSub,marginTop:2,fontFamily:bf}}>{step.sub}</div>
+                      </div>
+                      {i===arr.length-1&&(
+                        <div style={{width:24,height:24,borderRadius:"50%",background:"#138808",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6.5L4.5 9L10 3" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Categories — now CLICKABLE, opens CategorySheet */}
-            <div style={{marginBottom:16}}>
+            <div style={{marginBottom:14}}>
               <div className={`fu s2 ${loaded?"show":""}`} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                <div style={{fontSize:15,fontWeight:800,color:th.text,fontFamily:bf}}>{t.categoriesTitle}</div>
-                <div onClick={()=>{haptic();setActiveTab("schemes");}} style={{color:"#003580",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t.seeAll}</div>
+                <div>
+                  <div style={{fontSize:15,fontWeight:800,color:th.text,fontFamily:bf}}>{t.categoriesTitle}</div>
+                  <div style={{fontSize:11,color:th.textSub,marginTop:1}}>{t.categoriesSub}</div>
+                </div>
+                <div onClick={()=>{haptic();setActiveTab("schemes");}}
+                  style={{display:"flex",alignItems:"center",gap:4,color:"#003580",fontSize:12,fontWeight:700,cursor:"pointer",
+                    background:"rgba(0,53,128,0.07)",borderRadius:20,padding:"5px 11px",border:"1px solid rgba(0,53,128,0.15)"}}>
+                  {t.seeAll}
+                </div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
                 {categories.map((cat,i)=>{
@@ -4441,19 +4564,19 @@ export default function YojanaSahay(){
                   return(
                     <div key={i} className={`fu ch c${i} ${loaded?"show":""}`}
                       onClick={()=>{haptic();setSelectedCategory(cat);}}
-                      style={{background:cat.bg,borderRadius:14,padding:"13px 8px",textAlign:"center",border:`1.5px solid ${cat.color}20`,position:"relative"}}>
+                      style={{background:cat.bg,borderRadius:15,padding:"14px 8px 12px",textAlign:"center",
+                        border:`1.5px solid ${cat.color}22`,position:"relative",
+                        boxShadow:dark?"0 2px 8px rgba(0,0,0,0.2)":"0 2px 8px rgba(0,0,0,0.04)",
+                        transition:"transform 0.2s,box-shadow 0.2s"}}
+                      onTouchStart={e=>{e.currentTarget.style.transform="scale(0.95)";}}
+                      onTouchEnd={e=>{e.currentTarget.style.transform="scale(1)";}}>
                       {/* Scheme count badge */}
-                      <div style={{
-                        position:"absolute",top:7,right:7,
-                        background:cat.color,color:"#fff",
-                        fontSize:9,fontWeight:800,
-                        borderRadius:20,padding:"2px 6px",
-                        minWidth:18,lineHeight:"14px",textAlign:"center",
-                        boxShadow:`0 2px 6px ${cat.color}55`,
-                        letterSpacing:0,
-                      }}>{count}</div>
-                      <div style={{fontSize:24,marginBottom:5}}>{cat.icon}</div>
-                      <div style={{fontSize:11,fontWeight:700,color:cat.color,fontFamily:bf}}>{cat.label}</div>
+                      <div style={{position:"absolute",top:7,right:7,
+                        background:cat.color,color:"#fff",fontSize:9,fontWeight:800,
+                        borderRadius:20,padding:"2px 6px",minWidth:18,lineHeight:"14px",textAlign:"center",
+                        boxShadow:`0 2px 6px ${cat.color}55`}}>{count}</div>
+                      <div style={{fontSize:26,marginBottom:6}}>{cat.icon}</div>
+                      <div style={{fontSize:11,fontWeight:700,color:cat.color,fontFamily:bf,lineHeight:1.3}}>{cat.label}</div>
                     </div>
                   );
                 })}
@@ -4461,13 +4584,18 @@ export default function YojanaSahay(){
             </div>
 
             {/* Matched for You — personalised if profile exists, setup prompt if not */}
-            <div className={`fu s3 ${loaded?"show":""}`} style={{marginBottom:16}}>
+            <div className={`fu s3 ${loaded?"show":""}`} style={{marginBottom:14}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                 <div>
                   <div style={{fontSize:15,fontWeight:800,color:th.text,fontFamily:bf}}>{t.matchedTitle}</div>
-                  {profile&&<div style={{fontSize:11,color:th.textSub}}>{t.matchedSub(matchedSchemes.length)}</div>}
+                  {profile&&<div style={{fontSize:11,color:th.textSub,marginTop:1}}>{t.matchedSub(matchedSchemes.length)}</div>}
+                  {!profile&&<div style={{fontSize:11,color:th.textSub,marginTop:1}}>{isHindi?"प्रोफाइल बनाएं — अपनी योजनाएं देखें":"Create profile to see your matched schemes"}</div>}
                 </div>
-                {profile&&<div onClick={()=>{haptic();setShowChecker(true);}} style={{color:"#003580",fontSize:12,fontWeight:600,cursor:"pointer"}}>{t.seeAll}</div>}
+                {profile&&<div onClick={()=>{haptic();setShowChecker(true);}}
+                  style={{display:"flex",alignItems:"center",gap:4,color:"#003580",fontSize:12,fontWeight:700,cursor:"pointer",
+                    background:"rgba(0,53,128,0.07)",borderRadius:20,padding:"5px 11px",border:"1px solid rgba(0,53,128,0.15)"}}>
+                  {t.seeAll}
+                </div>}
               </div>
 
               {profile ? (
@@ -4505,16 +4633,68 @@ export default function YojanaSahay(){
                   </div>
                 )
               ) : (
-                /* No profile — nudge to set up */
-                <div style={{background:`linear-gradient(135deg,#003580,#1a56db)`,borderRadius:16,padding:"18px 20px",display:"flex",alignItems:"center",gap:14,boxShadow:"0 6px 22px rgba(0,53,128,0.22)"}}>
-                  <div style={{fontSize:38,flexShrink:0}}>🎯</div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{color:"#fff",fontSize:13,fontWeight:700,fontFamily:bf,marginBottom:4}}>{t.noProfileTitle}</div>
-                    <div style={{color:"rgba(255,255,255,0.75)",fontSize:11,lineHeight:1.5,fontFamily:bf}}>{t.noProfileSub}</div>
+                /* ── NO PROFILE — Premium showcase ── */
+                <div>
+                  {/* Hero unlock card */}
+                  <div style={{background:"linear-gradient(145deg,#0c1445 0%,#06038D 55%,#003580 100%)",borderRadius:20,padding:"20px 18px 18px",marginBottom:12,
+                    boxShadow:"0 10px 36px rgba(6,3,141,0.30)",border:"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
+                    {/* Decorative orbs */}
+                    <div style={{position:"absolute",right:-30,top:-30,width:110,height:110,borderRadius:"50%",background:"radial-gradient(circle,rgba(255,153,51,0.18) 0%,transparent 70%)",pointerEvents:"none"}}/>
+                    <div style={{position:"absolute",left:-20,bottom:-20,width:90,height:90,borderRadius:"50%",background:"radial-gradient(circle,rgba(19,136,8,0.15) 0%,transparent 70%)",pointerEvents:"none"}}/>
+                    {/* India flag stripe */}
+                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#FF9933 33%,#fff 33%,#fff 66%,#138808 66%)",opacity:0.7,borderRadius:"20px 20px 0 0"}}/>
+                    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+                      <div style={{width:46,height:46,background:"rgba(255,255,255,0.12)",border:"1.5px solid rgba(255,255,255,0.25)",borderRadius:13,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,backdropFilter:"blur(6px)"}}>🎯</div>
+                      <div style={{flex:1}}>
+                        <div style={{color:"#fff",fontSize:15,fontWeight:800,fontFamily:bf,lineHeight:1.25,marginBottom:3}}>{t.noProfileTitle}</div>
+                        <div style={{color:"rgba(255,255,255,0.65)",fontSize:11.5,lineHeight:1.5,fontFamily:bf}}>{t.noProfileSub}</div>
+                      </div>
+                    </div>
+                    {/* CTA button */}
+                    <div onClick={()=>{haptic();setActiveTab("profile");}}
+                      style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                        background:"linear-gradient(135deg,#FF9933,#FF8C00)",borderRadius:13,padding:"13px 20px",
+                        cursor:"pointer",boxShadow:"0 4px 18px rgba(255,140,0,0.40)",
+                        transition:"transform 0.15s,box-shadow 0.15s",WebkitTapHighlightColor:"transparent"}}
+                      onTouchStart={e=>{e.currentTarget.style.transform="scale(0.97)";e.currentTarget.style.boxShadow="0 2px 10px rgba(255,140,0,0.3)";}}
+                      onTouchEnd={e=>{e.currentTarget.style.transform="scale(1)";e.currentTarget.style.boxShadow="0 4px 18px rgba(255,140,0,0.40)";}}>
+                      <span style={{color:"#fff",fontSize:14,fontWeight:800,fontFamily:bf}}>{t.setupProfileBtn}</span>
+                      <span style={{fontSize:16}}>🚀</span>
+                    </div>
+                    {/* Hint */}
+                    <div style={{textAlign:"center",marginTop:10,color:"rgba(255,255,255,0.38)",fontSize:10,fontFamily:bf,letterSpacing:0.2}}>
+                      {isHindi?"✓ निःशुल्क · 2 मिनट में पूरा":"✓ Free · Takes only 2 minutes"}
+                    </div>
                   </div>
-                  <div onClick={()=>{haptic();setActiveTab("profile");}}
-                    style={{flexShrink:0,background:"rgba(255,255,255,0.18)",border:"1.5px solid rgba(255,255,255,0.35)",borderRadius:12,padding:"9px 12px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:bf,whiteSpace:"nowrap",textAlign:"center",lineHeight:1.4}}>
-                    {t.setupProfileBtn}
+
+                  {/* Feature benefit cards — 2×2 grid */}
+                  <div style={{marginBottom:4}}>
+                    <div style={{fontSize:11,fontWeight:700,color:th.textSub,marginBottom:8,letterSpacing:0.5,textTransform:"uppercase",fontFamily:bf,paddingLeft:2}}>
+                      {isHindi?"साइन अप करने के फायदे":"Why create a profile?"}
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                      {(isHindi?[
+                        {icon:"🎯",title:"मिलान योजनाएं सेव",sub:"पात्र योजनाएं अकाउंट में ऑटो-सेव",color:"#FF9933",bg:"rgba(255,153,51,0.08)"},
+                        {icon:"🤖",title:"पर्सनल AI जवाब",sub:"AI प्रोफाइल देखकर सटीक जवाब देता है",color:"#06038D",bg:"rgba(6,3,141,0.07)"},
+                        {icon:"💾",title:"प्रगति कभी न खोएं",sub:"परिणाम और चैट इतिहास सेव",color:"#138808",bg:"rgba(19,136,8,0.07)"},
+                        {icon:"🔔",title:"योजना अलर्ट",sub:"नई योजनाएं व डेडलाइन की सूचना",color:"#8B5CF6",bg:"rgba(139,92,246,0.07)"},
+                      ]:[
+                        {icon:"🎯",title:"Matched Schemes Saved",sub:"Qualifying schemes auto-saved to your account",color:"#FF9933",bg:"rgba(255,153,51,0.08)"},
+                        {icon:"🤖",title:"Personalized AI",sub:"AI knows your profile, gives tailored replies",color:"#06038D",bg:"rgba(6,3,141,0.07)"},
+                        {icon:"💾",title:"Progress Saved",sub:"Eligibility results & chat history kept safe",color:"#138808",bg:"rgba(19,136,8,0.07)"},
+                        {icon:"🔔",title:"Deadline Alerts",sub:"Get notified about new schemes & deadlines",color:"#8B5CF6",bg:"rgba(139,92,246,0.07)"},
+                      ]).map((f,i)=>(
+                        <div key={i} style={{background:th.card,borderRadius:14,padding:"13px 12px",
+                          border:`1.5px solid ${f.color}20`,boxShadow:dark?"0 2px 10px rgba(0,0,0,0.2)":"0 2px 10px rgba(0,0,0,0.05)"}}>
+                          <div style={{width:34,height:34,borderRadius:10,background:f.bg,border:`1px solid ${f.color}28`,
+                            display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,marginBottom:8}}>
+                            {f.icon}
+                          </div>
+                          <div style={{fontSize:11.5,fontWeight:800,color:th.text,fontFamily:bf,lineHeight:1.3,marginBottom:4}}>{f.title}</div>
+                          <div style={{fontSize:10,color:th.textSub,lineHeight:1.45,fontFamily:bf}}>{f.sub}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -4522,14 +4702,23 @@ export default function YojanaSahay(){
 
             {/* Helpline */}
             <div className={`fu s4 ${loaded?"show":""}`}
-              style={{background:th.card,borderRadius:16,padding:15,display:"flex",alignItems:"center",gap:12,border:"1.5px solid #FF993328",boxShadow:"0 2px 10px rgba(0,0,0,0.05)"}}>
-              <div style={{fontSize:26}}>📞</div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:13,fontWeight:700,color:th.text,fontFamily:bf}}>{t.helplineTitle}</div>
-                <div style={{fontSize:11,color:th.textSub}}>{t.helplineSub}</div>
+              style={{background:th.card,borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,
+                border:`1.5px solid rgba(255,153,51,0.22)`,
+                boxShadow:dark?"0 3px 14px rgba(0,0,0,0.2)":"0 3px 14px rgba(255,153,51,0.10)",
+                position:"relative",overflow:"hidden"}}>
+              {/* Saffron left accent bar */}
+              <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,background:"linear-gradient(180deg,#FF9933,#FF8C00)",borderRadius:"16px 0 0 16px"}}/>
+              <div style={{marginLeft:4,width:38,height:38,background:"rgba(255,153,51,0.12)",borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,border:"1px solid rgba(255,153,51,0.22)"}}>📞</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:800,color:th.text,fontFamily:bf,lineHeight:1.2}}>{t.helplineTitle}</div>
+                <div style={{fontSize:10.5,color:th.textSub,marginTop:2,fontWeight:600}}>{t.helplineSub}</div>
               </div>
               <div onClick={()=>{haptic([50,60,50]);window.location.href="tel:1800111555";}}
-                style={{background:"#FF9933",borderRadius:10,padding:"8px 14px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:bf}}>{t.helplineBtn}</div>
+                style={{background:"linear-gradient(135deg,#FF9933,#FF8C00)",borderRadius:10,padding:"9px 15px",
+                  color:"#fff",fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:bf,flexShrink:0,
+                  boxShadow:"0 3px 10px rgba(255,140,0,0.30)",WebkitTapHighlightColor:"transparent"}}>
+                {t.helplineBtn}
+              </div>
             </div>
           </div>
         </div>
