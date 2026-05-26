@@ -3521,19 +3521,19 @@ function BenefitCalculatorCard({ allMatchedSchemes, lang, dark }) {
         </div>
         <div style={{ flex:1 }}>
           <div style={{ color:"#fff", fontSize:13, fontWeight:800, fontFamily:bf, lineHeight:1.2 }}>
-            {isHindi ? "आपका अनुमानित लाभ" : "Your Benefit Potential"}
+            {isHindi ? "सरकारी पैसा जो आप पा सकते हैं" : "Govt. Money You Can Receive"}
           </div>
           <div style={{ color:"rgba(255,255,255,0.5)", fontSize:10, marginTop:2 }}>
             {isHindi
-              ? `${schemesWithBenefit.length} योजनाओं का संयुक्त वार्षिक लाभ`
-              : `Combined annual from ${schemesWithBenefit.length} scheme${schemesWithBenefit.length !== 1 ? "s" : ""}`}
+              ? `${schemesWithBenefit.length} योजनाओं में आप पात्र हो सकते हैं`
+              : `You may qualify for ${schemesWithBenefit.length} scheme${schemesWithBenefit.length !== 1 ? "s" : ""}`}
           </div>
         </div>
         {/* Live indicator */}
         <div style={{ display:"flex", alignItems:"center", gap:5, background:"rgba(74,222,128,0.15)", border:"1px solid rgba(74,222,128,0.35)", borderRadius:20, padding:"4px 9px" }}>
           <div style={{ width:6, height:6, borderRadius:"50%", background:"#4ade80", animation:"calc-pulse 1.6s ease-in-out infinite" }}/>
           <span style={{ color:"#4ade80", fontSize:9, fontWeight:800, letterSpacing:0.7 }}>
-            {isHindi ? "लाइव" : "LIVE"}
+            {isHindi ? "परिणाम" : "YOUR RESULT"}
           </span>
         </div>
       </div>
@@ -3543,7 +3543,7 @@ function BenefitCalculatorCard({ allMatchedSchemes, lang, dark }) {
         {/* Ambient glow behind number */}
         <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:220, height:70, borderRadius:"50%", background:"radial-gradient(ellipse, rgba(255,153,51,0.14) 0%, transparent 70%)", pointerEvents:"none" }}/>
         <div style={{ fontSize:10.5, fontWeight:700, letterSpacing:1.4, color:"rgba(255,255,255,0.45)", textTransform:"uppercase", marginBottom:5, fontFamily:bf }}>
-          {isHindi ? "वार्षिक सरकारी सहायता" : "Annual Govt. Assistance"}
+          {isHindi ? "आपको मिल सकता है" : "You May Receive Up To"}
         </div>
         <div style={{
           fontSize: 40, fontWeight: 900,
@@ -3563,7 +3563,7 @@ function BenefitCalculatorCard({ allMatchedSchemes, lang, dark }) {
           {`₹${animTotal.toLocaleString("en-IN")}`}
         </div>
         <div style={{ marginTop:6, fontSize:10.5, color:"rgba(255,255,255,0.38)", fontFamily:bf, letterSpacing:0.3 }}>
-          {isHindi ? "प्रति वर्ष · आपकी पात्रता के आधार पर" : "per year · based on your eligibility"}
+          {isHindi ? "हर साल — सरकारी योजनाओं से" : "every year — from government schemes"}
         </div>
       </div>
 
@@ -3571,6 +3571,9 @@ function BenefitCalculatorCard({ allMatchedSchemes, lang, dark }) {
       <div style={{ height:1, background:"linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)", marginBottom:12 }}/>
 
       {/* Scheme breakdown list */}
+      <div style={{ fontSize:9.5, color:"rgba(255,255,255,0.35)", marginBottom:7, fontFamily:bf, letterSpacing:0.3 }}>
+        {isHindi ? "👇 योजना पर टैप करें और आवेदन करें" : "👇 Tap a scheme below to apply"}
+      </div>
       <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
         {visibleSchemes.map((s, i) => (
           <div key={s.id} style={{
@@ -3604,8 +3607,10 @@ function BenefitCalculatorCard({ allMatchedSchemes, lang, dark }) {
       )}
 
       {/* Bottom disclaimer */}
-      <div style={{ marginTop:10, fontSize:9.5, color:"rgba(255,255,255,0.25)", textAlign:"center", lineHeight:1.4, fontFamily:bf }}>
-        {isHindi ? "* अनुमानित। वास्तविक लाभ पात्रता पर निर्भर करता है।" : "* Estimated. Actual benefits depend on final eligibility."}
+      <div style={{ marginTop:10, fontSize:10, color:"rgba(255,255,255,0.32)", textAlign:"center", lineHeight:1.5, fontFamily:bf }}>
+        {isHindi
+          ? "* यह अनुमान है। असली लाभ पाने के लिए योजना में आवेदन करें।"
+          : "* Estimated amount. Apply to each scheme to confirm & claim your benefits."}
       </div>
     </div>
   );
