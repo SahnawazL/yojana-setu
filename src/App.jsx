@@ -2376,22 +2376,6 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
         </div>
         <div style={{color:"rgba(255,255,255,0.84)",fontSize:12.5,lineHeight:1.65,fontFamily:bf,marginBottom:16}}>{pt.signInSub}</div>
 
-        {/* ── Stats strip ── */}
-        <div style={{display:"flex",gap:6,marginBottom:16}}>
-          {[{num:"3,000+",label:isHindi?"योजनाएं":"Schemes",col:"#FF9933"},
-            {num:"28",label:isHindi?"राज्य":"States",col:"#138808"},
-            {num:"50L+",label:isHindi?"लाभार्थी":"Beneficiaries",col:"#4285F4"}].map((s,i)=>(
-            <div key={i} style={{flex:1,background:"rgba(0,0,0,0.18)",borderRadius:10,
-              padding:"8px 4px",textAlign:"center",
-              borderTop:`2.5px solid ${s.col}`,
-              border:`1px solid rgba(255,255,255,0.12)`,
-              borderTopWidth:2.5,borderTopColor:s.col}}>
-              <div style={{fontSize:13,fontWeight:900,color:"#fff",fontFamily:bf,lineHeight:1}}>{s.num}</div>
-              <div style={{fontSize:8.5,color:"rgba(255,255,255,0.65)",marginTop:3,fontWeight:600,letterSpacing:0.2}}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-
         {/* ── What you unlock — 2×2 benefit grid ── */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
           {pt.loginBenefits.map((b,i)=>{
