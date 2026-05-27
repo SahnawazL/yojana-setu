@@ -2022,6 +2022,34 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     else if(!profile&&stage==="dashboard") setStage("phone");
   },[profile,stage]);
 
+  // ── HARDWARE BACK BUTTON (Android) ──────────────────────────────────────────
+  // Push a history entry whenever we enter a sub-view so the back button
+  // navigates within the app instead of closing it.
+  useEffect(()=>{
+    const isSubView=
+      stage==="otp"||stage==="setup1"||stage==="setup2"||stage==="setup3"||stage==="setup4"||
+      showReport||showAbout||showSignOutModal;
+    if(isSubView) window.history.pushState({ysProfileSubView:true},"");
+  },[stage,showReport,showAbout,showSignOutModal]);
+
+  useEffect(()=>{
+    const handlePop=()=>{
+      // Close modals first (highest priority)
+      if(showSignOutModal){setShowSignOutModal(false);return;}
+      if(showReport)     {setShowReport(false);return;}
+      if(showAbout)      {setShowAbout(false);return;}
+      // Walk back through setup stages
+      if(stage==="setup4"){setStage("setup3");return;}
+      if(stage==="setup3"){setStage("setup2");return;}
+      if(stage==="setup2"){setStage("setup1");return;}
+      if(stage==="setup1"){profile?setStage("dashboard"):setStage("phone");return;}
+      if(stage==="otp")   {setStage("phone");return;}
+      // dashboard stage — let parent/browser decide (no-op here)
+    };
+    window.addEventListener("popstate",handlePop);
+    return()=>window.removeEventListener("popstate",handlePop);
+  },[stage,showReport,showAbout,showSignOutModal,profile]);
+
   // OTP countdown timer
   useEffect(()=>{
     if(!timerOn)return;
@@ -4596,6 +4624,26 @@ export default function YojanaSahay(){
   const isHindi=lang==="hi";
   const bf=fontFamily(lang);
   const toggleLang=()=>{setLangAnim(true);setTimeout(()=>{setLang(l=>l==="en"?"hi":"en");setLangAnim(false);},120);};
+
+  // ── HARDWARE BACK BUTTON (Android) — top-level overlays ─────────────────────
+  // Push a history entry for each top-level overlay so pressing back closes it
+  // instead of closing the whole app.
+  useEffect(()=>{
+    const hasOverlay=showAdmin||showChecker||!!selectedScheme||!!selectedCategory;
+    if(hasOverlay) window.history.pushState({ysOverlay:true},"");
+  },[showAdmin,showChecker,selectedScheme,selectedCategory]);
+
+  useEffect(()=>{
+    const handlePop=()=>{
+      // Close in reverse-open order (most recently opened first)
+      if(showAdmin)        {setShowAdmin(false);return;}
+      if(showChecker)      {setShowChecker(false);return;}
+      if(selectedScheme)   {setSelectedScheme(null);return;}
+      if(selectedCategory) {setSelectedCategory(null);return;}
+    };
+    window.addEventListener("popstate",handlePop);
+    return()=>window.removeEventListener("popstate",handlePop);
+  },[showAdmin,showChecker,selectedScheme,selectedCategory]);
 
   // Animated stat counters — raw targets: 3000, 28, 50 (formatted below)
   const [c0,c1,c2]=useCountUp(STAT_TARGETS,loaded,1400);
