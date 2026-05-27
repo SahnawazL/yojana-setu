@@ -2346,62 +2346,108 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   if(stage==="phone") return(
     <div style={{flex:1,display:"flex",flexDirection:"column",background:th.appBg,overflowY:"auto"}}>
       <TriHeader>
-        <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
-          <div style={{width:52,height:52,borderRadius:16,background:"rgba(255,255,255,0.18)",border:"2px solid rgba(255,255,255,0.35)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 16px rgba(0,0,0,0.15)"}}>
-            <AshokaChakra size={30} color="#fff" spinning={false}/>
+        {/* ── Tricolor bar at absolute top (India flag stripe) ── */}
+        <div style={{position:"absolute",top:0,left:0,right:0,height:5,display:"flex",zIndex:10,pointerEvents:"none"}}>
+          <div style={{flex:1,background:"#FF9933"}}/>
+          <div style={{flex:1,background:"#fff"}}/>
+          <div style={{flex:1,background:"#138808"}}/>
+        </div>
+        {/* ── Large Ashoka Chakra watermark — big, absolute, behind content ── */}
+        <div style={{position:"absolute",right:-55,top:-10,opacity:0.07,pointerEvents:"none"}}>
+          <AshokaChakra size={190} color="#fff"/>
+        </div>
+
+        {/* ── Header row: logo + title + Official badge ── */}
+        <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:12}}>
+          <div style={{width:56,height:56,borderRadius:18,background:"rgba(255,255,255,0.18)",border:"2px solid rgba(255,255,255,0.35)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 18px rgba(0,0,0,0.22)",flexShrink:0}}>
+            <AshokaChakra size={32} color="#fff" spinning={false}/>
           </div>
-          <div>
-            <div style={{color:"#fff",fontSize:21,fontWeight:800,fontFamily:bf,lineHeight:1.1}}>{pt.signInTitle}</div>
-            <div style={{color:"rgba(255,255,255,0.75)",fontSize:11.5,marginTop:3}}>🇮🇳 Yojana Sahay</div>
+          <div style={{flex:1,paddingTop:4}}>
+            <div style={{display:"flex",alignItems:"center",gap:7,flexWrap:"wrap"}}>
+              <div style={{color:"#fff",fontSize:20,fontWeight:900,fontFamily:bf,lineHeight:1.1,letterSpacing:-0.3}}>{pt.signInTitle}</div>
+              <div style={{background:"rgba(255,255,255,0.25)",border:"1px solid rgba(255,255,255,0.45)",borderRadius:20,padding:"2px 9px",fontSize:8,fontWeight:800,color:"#fff",letterSpacing:0.9,textTransform:"uppercase",flexShrink:0}}>✦ OFFICIAL</div>
+            </div>
+            <div style={{color:"rgba(255,255,255,0.72)",fontSize:11,marginTop:4,fontWeight:600}}>🇮🇳 India's Scheme Finder Platform</div>
           </div>
         </div>
-        <div style={{color:"rgba(255,255,255,0.88)",fontSize:13,lineHeight:1.6,fontFamily:bf}}>{pt.signInSub}</div>
+        <div style={{color:"rgba(255,255,255,0.88)",fontSize:12.5,lineHeight:1.6,fontFamily:bf,marginBottom:16}}>{pt.signInSub}</div>
 
-        {/* ── What you unlock — 2×2 benefit grid ── */}
-        <div style={{marginTop:20,display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
-          {pt.loginBenefits.map((b,i)=>(
-            <div key={i} style={{
-              background:"rgba(255,255,255,0.13)",
-              border:"1px solid rgba(255,255,255,0.22)",
-              borderRadius:13,padding:"11px 11px 10px",
-              backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",
-            }}>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
-                <span style={{fontSize:16}}>{b.icon}</span>
-                <span style={{
-                  fontSize:8.5,fontWeight:800,letterSpacing:0.6,textTransform:"uppercase",
-                  background:"rgba(255,255,255,0.22)",borderRadius:20,padding:"2px 7px",
-                  color:"rgba(255,255,255,0.9)",
-                }}>UNLOCKS</span>
-              </div>
-              <div style={{fontSize:11,fontWeight:700,color:"#fff",lineHeight:1.3,fontFamily:bf,marginBottom:3}}>{b.title}</div>
-              <div style={{fontSize:9.5,color:"rgba(255,255,255,0.68)",lineHeight:1.45,fontFamily:bf}}>{b.sub}</div>
+        {/* ── Stats strip with colored backgrounds ── */}
+        <div style={{display:"flex",gap:7,marginBottom:16}}>
+          {[{n:"3,000+",l:"Schemes",bg:"rgba(255,153,51,0.30)"},{n:"28",l:"States",bg:"rgba(255,255,255,0.15)"},{n:"50L+",l:"Citizens",bg:"rgba(19,136,8,0.30)"}].map((s,i)=>(
+            <div key={i} style={{flex:1,background:s.bg,borderRadius:12,padding:"9px 4px",textAlign:"center",border:"1px solid rgba(255,255,255,0.18)",backdropFilter:"blur(6px)"}}>
+              <div style={{fontSize:14,fontWeight:900,color:"#fff",fontFamily:bf,lineHeight:1}}>{s.n}</div>
+              <div style={{fontSize:9,color:"rgba(255,255,255,0.72)",marginTop:2,fontWeight:600,letterSpacing:0.2}}>{s.l}</div>
             </div>
           ))}
         </div>
+
+        {/* ── What you unlock — 2×2 benefit grid with top accent stripes ── */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+          {pt.loginBenefits.map((b,i)=>{
+            const accents=["#FF9933","#ffffff","#138808","#A78BFA"];
+            return(
+            <div key={i} style={{
+              background:"rgba(255,255,255,0.11)",
+              border:"1px solid rgba(255,255,255,0.18)",
+              borderRadius:13,overflow:"hidden",
+              backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",
+            }}>
+              {/* Top accent stripe */}
+              <div style={{height:3,background:accents[i%accents.length]}}/>
+              <div style={{padding:"9px 10px 10px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:5}}>
+                  <span style={{fontSize:15}}>{b.icon}</span>
+                  <div style={{fontSize:11,fontWeight:700,color:"#fff",lineHeight:1.3,fontFamily:bf}}>{b.title}</div>
+                </div>
+                <div style={{fontSize:9.5,color:"rgba(255,255,255,0.63)",lineHeight:1.45,fontFamily:bf}}>{b.sub}</div>
+              </div>
+            </div>
+          );})}
+        </div>
       </TriHeader>
 
-      <Card dark={dark}>
+      {/* ── Section header: Choose a sign-in method ── */}
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"18px 20px 4px"}}>
+        <div style={{flex:1,height:1,background:dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.07)"}}/>
+        <span style={{fontSize:10.5,fontWeight:700,color:dark?"#555":"#aaa",letterSpacing:0.9,textTransform:"uppercase"}}>
+          {isHindi?"साइन इन करें":"Choose a sign-in method"}
+        </span>
+        <div style={{flex:1,height:1,background:dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.07)"}}/>
+      </div>
+
+      <Card dark={dark} mt={8}>
         {/* ── Google Sign-In button (ACTIVE) ── */}
         <div onClick={!googleLoading?()=>{haptic();handleGoogleSignIn();}:undefined}
-          style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,
-            background:googleLoading?(dark?"#2c2c2e":"#f9f9f9"):"#fff",
-            border:`1.5px solid ${googleLoading?"#4285F4":(dark?"#3a3a3c":"#e0e0e0")}`,
-            borderRadius:14,padding:"14px 16px",cursor:googleLoading?"default":"pointer",
-            boxShadow:googleLoading?"0 0 0 3px rgba(66,133,244,0.12)":"0 2px 12px rgba(0,0,0,0.08)",
-            transition:"all 0.25s",userSelect:"none",opacity:googleLoading?0.85:1}}>
+          style={{
+            display:"flex",alignItems:"center",justifyContent:"center",gap:12,
+            background:googleLoading?(dark?"#2c2c2e":"#f7f7f7"):(dark?"#2c2c2e":"#fff"),
+            border:`2px solid ${googleLoading?"#4285F4":(dark?"#3a3a3c":"#e4e4e4")}`,
+            borderRadius:16,padding:"15px 18px",cursor:googleLoading?"default":"pointer",
+            boxShadow:googleLoading?"0 0 0 4px rgba(66,133,244,0.10)":(dark?"0 3px 14px rgba(0,0,0,0.30)":"0 3px 14px rgba(66,133,244,0.08)"),
+            transition:"all 0.25s",userSelect:"none",opacity:googleLoading?0.85:1,
+            position:"relative",overflow:"hidden",WebkitTapHighlightColor:"transparent"}}>
+          {/* Rainbow left accent bar (Google colors) */}
+          {!googleLoading&&<div style={{position:"absolute",left:0,top:0,bottom:0,width:3.5,background:"linear-gradient(180deg,#4285F4 25%,#34A853 50%,#FBBC05 75%,#EA4335 100%)",borderRadius:"16px 0 0 16px"}}/>}
+          <div style={{paddingLeft:googleLoading?0:3,flexShrink:0}}>
           {googleLoading
             ?<div className="google-spinner"/>
-            :<svg width="20" height="20" viewBox="0 0 24 24" style={{flexShrink:0}}>
+            :<svg width="22" height="22" viewBox="0 0 24 24" style={{flexShrink:0,display:"block"}}>
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
           }
-          <span style={{fontSize:15,fontWeight:700,color:googleLoading?"#4285F4":"#3c3c3c",fontFamily:bf,transition:"color 0.2s"}}>
-            {googleLoading?(isHindi?"साइन इन हो रहे हैं...":"Signing in…"):pt.googleBtn}
-          </span>
+          </div>
+          <div style={{textAlign:"center",flex:1}}>
+            <div style={{fontSize:15,fontWeight:700,color:googleLoading?"#4285F4":(dark?"#f0f0f0":"#2c2c2c"),fontFamily:bf,transition:"color 0.2s"}}>
+              {googleLoading?(isHindi?"साइन इन हो रहे हैं...":"Signing in…"):pt.googleBtn}
+            </div>
+            {!googleLoading&&<div style={{fontSize:9.5,color:dark?"#666":"#bbb",marginTop:1.5,fontFamily:bf}}>
+              {isHindi?"तेज़ · सुरक्षित · पासवर्ड की जरूरत नहीं":"Fast · Secure · No password needed"}
+            </div>}
+          </div>
         </div>
         {authError&&!emailLoading&&<div style={{marginTop:10,fontSize:12,color:"#e53e3e",textAlign:"center",fontFamily:bf,padding:"8px 12px",background:"#FFF5F5",borderRadius:10,border:"1px solid #FED7D7"}}>{authError}</div>}
       </Card>
@@ -2414,7 +2460,16 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       </div>
 
       {/* ── Email / Password Card (ACTIVE) ── */}
-      <div style={{margin:"0 16px 14px",background:dark?"#1c1c1e":"#fff",borderRadius:20,padding:20,border:`1.5px solid ${dark?"#2c2c2e":"#f0f0f0"}`,boxShadow:dark?"0 6px 28px rgba(0,0,0,0.35)":"0 6px 28px rgba(0,0,0,0.10)"}}>
+      <div style={{margin:"0 16px 14px",background:dark?"#1c1c1e":"#fff",borderRadius:20,padding:20,border:`1.5px solid ${dark?"#2c2c2e":"#f0f0f0"}`,boxShadow:dark?"0 6px 28px rgba(0,0,0,0.35)":"0 6px 28px rgba(0,0,0,0.10)",position:"relative",overflow:"hidden"}}>
+        {/* Left accent bar — navy blue */}
+        <div style={{position:"absolute",left:0,top:0,bottom:0,width:3.5,background:"linear-gradient(180deg,#003580,#1a56db)",borderRadius:"20px 0 0 20px"}}/>
+        {/* Card heading */}
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16,paddingLeft:8}}>
+          <div style={{width:28,height:28,borderRadius:9,background:dark?"rgba(26,86,219,0.18)":"rgba(0,53,128,0.08)",border:`1px solid ${dark?"rgba(26,86,219,0.30)":"rgba(0,53,128,0.14)"}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={dark?"#6B90FF":"#003580"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7"/></svg>
+          </div>
+          <div style={{fontSize:13,fontWeight:800,color:dark?"#f0f0f0":"#1a1a1a",fontFamily:bf}}>{isHindi?"ईमेल से साइन इन":"Sign in with Email"}</div>
+        </div>
 
         {/* Sign In / Create Account tab switcher */}
         <div style={{display:"flex",background:dark?"#2c2c2e":"#f5f5f0",borderRadius:12,padding:3,marginBottom:18,gap:3}}>
@@ -2481,8 +2536,9 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           </div>
           {/* Hint text */}
           {emailTab==="signin"&&(
-            <div style={{marginTop:5,fontSize:10.5,color:dark?"#555":"#bbb",fontFamily:bf}}>
-              {pt.forgotHint}
+            <div style={{marginTop:6,display:"inline-flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,background:dark?"rgba(255,153,51,0.10)":"rgba(255,153,51,0.09)",border:`1px solid ${dark?"rgba(255,153,51,0.22)":"rgba(255,153,51,0.20)"}`}}>
+              <span style={{fontSize:11}}>💡</span>
+              <span style={{fontSize:10.5,color:dark?"#FFA950":"#CC6600",fontFamily:bf,fontWeight:600}}>{pt.forgotHint}</span>
             </div>
           )}
           {emailTab==="signup"&&passwordInput&&!isValidPassword(passwordInput)&&(
@@ -2537,40 +2593,74 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
         <div style={{flex:1,height:1,background:dark?"#3a3a3c":"#e8e8e8"}}/>
       </div>
 
-      {/* ── Phone Sign-In (visible but COMING SOON — remove opacity + pointerEvents when billing is enabled) ── */}
-      <div style={{opacity:0.45,pointerEvents:"none",margin:"0 16px 32px"}}>
-        <div style={{background:dark?"#1c1c1e":"#fff",borderRadius:20,padding:22,border:`1.5px solid ${dark?"#2c2c2e":"#f0f0f0"}`,position:"relative",overflow:"hidden",boxShadow:dark?"0 6px 28px rgba(0,0,0,0.35)":"0 6px 28px rgba(0,0,0,0.10)"}}>
-          {/* COMING SOON badge */}
-          <div style={{position:"absolute",top:14,right:14,background:"#FF9933",borderRadius:20,padding:"3px 10px",fontSize:9,fontWeight:800,color:"#fff",letterSpacing:0.8,textTransform:"uppercase",boxShadow:"0 2px 6px rgba(255,153,51,0.4)"}}>
-            {isHindi?"जल्द आएगा":"COMING SOON"}
+      {/* ── Phone Sign-In (COMING SOON — premium frosted disabled state) ── */}
+      <div style={{margin:"0 16px 32px",position:"relative"}}>
+        {/* Frosted overlay with prominent badge */}
+        <div style={{position:"absolute",inset:0,zIndex:2,borderRadius:20,
+          background:dark?"rgba(17,17,17,0.52)":"rgba(255,255,255,0.52)",
+          backdropFilter:"blur(2.5px)",WebkitBackdropFilter:"blur(2.5px)",
+          display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"all"}}>
+          <div style={{
+            background:"linear-gradient(135deg,#FF9933,#FF8C00)",
+            borderRadius:28,padding:"8px 18px 8px 14px",
+            display:"flex",alignItems:"center",gap:9,
+            boxShadow:"0 6px 20px rgba(255,140,0,0.38)",
+            border:"1.5px solid rgba(255,255,255,0.28)"}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            <div>
+              <div style={{fontSize:10,fontWeight:900,color:"#fff",letterSpacing:1,textTransform:"uppercase",lineHeight:1}}>{isHindi?"जल्द आएगा":"COMING SOON"}</div>
+              <div style={{fontSize:8.5,color:"rgba(255,255,255,0.82)",fontFamily:bf,marginTop:2}}>{isHindi?"OTP से साइन इन":"Phone OTP Sign-in"}</div>
+            </div>
           </div>
-          <div style={{fontSize:12,fontWeight:700,color:dark?"#aaa":"#555",marginBottom:8,fontFamily:bf,letterSpacing:0.3}}>📱 {pt.phoneLabel}</div>
-          <div style={{display:"flex",alignItems:"center",border:"2px solid #FF9933",borderRadius:14,overflow:"hidden",marginBottom:18}}>
-            <div style={{padding:"14px 12px",borderRight:"1.5px solid rgba(255,153,51,0.35)",background:"#FFF7ED",fontSize:14,fontWeight:700,color:"#CC6600",flexShrink:0}}>+91</div>
-            <input type="tel" inputMode="numeric" maxLength={10} value={phone}
-              onChange={e=>setPhone(e.target.value.replace(/\D/g,"").slice(0,10))}
-              placeholder={pt.phonePh}
-              style={{flex:1,border:"none",outline:"none",fontSize:15,padding:"14px 14px",background:"transparent",fontFamily:bf,color:dark?"#f0f0f0":"#1a1a1a",letterSpacing:1.5}}/>
-          </div>
-          <div style={{background:"#ddd",borderRadius:14,padding:"15px",textAlign:"center",fontSize:15,fontWeight:700,color:"#fff",fontFamily:bf}}>
-            {pt.getOtpBtn}
-          </div>
-          {/* recaptcha-container must remain in the DOM for when phone billing is enabled */}
-          <div id="recaptcha-container"/>
         </div>
+        <div style={{opacity:0.32,pointerEvents:"none"}}>
+          <div style={{background:dark?"#1c1c1e":"#fff",borderRadius:20,padding:22,border:`1.5px solid ${dark?"#2c2c2e":"#f0f0f0"}`,position:"relative",overflow:"hidden",boxShadow:dark?"0 6px 28px rgba(0,0,0,0.35)":"0 6px 28px rgba(0,0,0,0.10)"}}>
+            <div style={{fontSize:12,fontWeight:700,color:dark?"#aaa":"#555",marginBottom:8,fontFamily:bf,letterSpacing:0.3}}>📱 {pt.phoneLabel}</div>
+            <div style={{display:"flex",alignItems:"center",border:"2px solid #FF9933",borderRadius:14,overflow:"hidden",marginBottom:18}}>
+              <div style={{padding:"14px 12px",borderRight:"1.5px solid rgba(255,153,51,0.35)",background:"#FFF7ED",fontSize:14,fontWeight:700,color:"#CC6600",flexShrink:0}}>+91</div>
+              <input type="tel" inputMode="numeric" maxLength={10} value={phone}
+                onChange={e=>setPhone(e.target.value.replace(/\D/g,"").slice(0,10))}
+                placeholder={pt.phonePh}
+                style={{flex:1,border:"none",outline:"none",fontSize:15,padding:"14px 14px",background:"transparent",fontFamily:bf,color:dark?"#f0f0f0":"#1a1a1a",letterSpacing:1.5}}/>
+            </div>
+            <div style={{background:"#ddd",borderRadius:14,padding:"15px",textAlign:"center",fontSize:15,fontWeight:700,color:"#fff",fontFamily:bf}}>
+              {pt.getOtpBtn}
+            </div>
+            {/* recaptcha-container must remain in the DOM for when phone billing is enabled */}
+            <div id="recaptcha-container"/>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Trust badges row ── */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",flexWrap:"wrap",gap:7,padding:"2px 16px 14px"}}>
+        {[
+          {icon:"🔒",label:"SSL Secured"},
+          {icon:"🇮🇳",label:"India Platform"},
+          {icon:"🛡️",label:"Firebase Auth"},
+        ].map((b,i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:5,padding:"5px 11px",borderRadius:20,
+            background:dark?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.04)",
+            border:`1px solid ${dark?"rgba(255,255,255,0.09)":"rgba(0,0,0,0.08)"}`,}}>
+            <span style={{fontSize:11}}>{b.icon}</span>
+            <span style={{fontSize:9.5,fontWeight:700,color:dark?"#555":"#aaa",fontFamily:bf,letterSpacing:0.3}}>{b.label}</span>
+          </div>
+        ))}
       </div>
 
       {/* About Yojana Sahay — accessible without login */}
       <div onClick={()=>{haptic();setShowAbout(true);}}
-        style={{
-          display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-          padding:"4px 20px 36px",cursor:"pointer",
-        }}>
-        <span style={{fontSize:15}}>ℹ️</span>
-        <span style={{fontSize:13,fontWeight:600,color:dark?"#555":"#bbb",fontFamily:bf}}>
-          {isHindi?"ऐप के बारे में जानें":"About Yojana Sahay"}
-        </span>
-        <span style={{color:dark?"#444":"#ccc",fontSize:16}}>›</span>
+        style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"0 20px 36px",cursor:"pointer"}}>
+        <div style={{display:"flex",alignItems:"center",gap:7,padding:"8px 20px",borderRadius:28,
+          background:dark?"rgba(255,255,255,0.06)":"rgba(0,53,128,0.06)",
+          border:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(0,53,128,0.13)"}`,
+          WebkitTapHighlightColor:"transparent"}}>
+          <span style={{fontSize:13}}>ℹ️</span>
+          <span style={{fontSize:12.5,fontWeight:700,color:dark?"#888":"#003580",fontFamily:bf}}>
+            {isHindi?"ऐप के बारे में जानें":"About Yojana Sahay"}
+          </span>
+          <span style={{color:dark?"#666":"#003580",fontSize:15,fontWeight:700}}>›</span>
+        </div>
       </div>
 
       {/* ── About Screen Overlay (phone/logged-out stage) ── */}
