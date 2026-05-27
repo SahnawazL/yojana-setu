@@ -1,74 +1,71 @@
 /* ============================================================
-   YojanaSahay — Service Worker  (sw.js)
-   Place this file in: public/sw.js
+   YojanaSahay — Service Worker v2
+   public/sw.js
    ============================================================ */
 
-const CACHE_NAME = "yojanasahay-v1";
+const CACHE_NAME = "yojanasahay-v2";
 
-/* Files to cache immediately on install */
 const PRE_CACHE = [
   "/",
   "/index.html",
   "/manifest.json",
-  "/logo192.png",
-  "/logo512.png",
-  "/apple-touch-icon.png",
+  "/icons/logo192.png",
+  "/icons/logo512.png",
+  "/icons/apple-touch-icon.png",
+  "/icons/favicon-16x16.png",
+  "/icons/favicon-32x32.png",
   "/favicon.ico",
 ];
 
-/* ── Install: cache app shell ─────────────────────────────── */
+/* ── Install ──────────────────────────────────────────────── */
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRE_CACHE))
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll(PRE_CACHE).catch(() => {/* silent fail on missing files */})
+    )
   );
-  self.skipWaiting(); /* activate immediately */
+  self.skipWaiting();
 });
 
-/* ── Activate: remove old caches ─────────────────────────── */
+/* ── Activate ─────────────────────────────────────────────── */
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
       )
     )
   );
   self.clients.claim();
 });
 
-/* ── Fetch: network-first, fall back to cache ────────────── */
+/* ── Fetch ────────────────────────────────────────────────── */
 self.addEventListener("fetch", (event) => {
-  /* Only handle GET requests */
   if (event.request.method !== "GET") return;
 
-  /* Skip Firebase, Groq API, and other external calls —
-     let them go straight to the network                   */
   const url = new URL(event.request.url);
-  const isExternal =
+
+  /* Skip all external APIs */
+  const skip =
     url.hostname.includes("firebase") ||
     url.hostname.includes("firestore") ||
     url.hostname.includes("googleapis") ||
     url.hostname.includes("groq") ||
-    url.hostname.includes("emailjs");
+    url.hostname.includes("emailjs") ||
+    url.hostname.includes("vercel") && url.pathname.startsWith("/api");
 
-  if (isExternal) return;
+  if (skip) return;
 
   event.respondWith(
     fetch(event.request)
-      .then((networkResponse) => {
-        /* Cache a copy of every successful response */
-        const responseClone = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) =>
-          cache.put(event.request, responseClone)
-        );
-        return networkResponse;
+      .then((res) => {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then((c) => c.put(event.request, clone));
+        return res;
       })
       .catch(() =>
-        /* Network failed — serve from cache */
-        caches.match(event.request).then(
-          (cached) => cached || caches.match("/index.html")
+        caches.match(event.request).then((cached) =>
+          cached || caches.match("/index.html")
         )
       )
   );

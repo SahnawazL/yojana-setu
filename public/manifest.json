@@ -6,11 +6,18 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "portrait",
   "background_color": "#003580",
   "theme_color": "#FF9933",
   "lang": "en-IN",
   "dir": "ltr",
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
   "icons": [
     {
       "src": "/icons/favicon-16x16.png",
@@ -58,9 +65,31 @@
       "sizes": "512x512",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Yojana Sahay Home Screen"
+      "label": "Yojana Sahay — Home Screen"
+    },
+    {
+      "src": "/icons/logo512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Yojana Sahay — Government Scheme Finder"
     }
   ],
   "categories": ["government", "utilities", "finance"],
-  "prefer_related_applications": false
+  "shortcuts": [
+    {
+      "name": "Find Schemes",
+      "short_name": "Schemes",
+      "description": "Search government schemes",
+      "url": "/",
+      "icons": [{ "src": "/icons/logo192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Check Eligibility",
+      "short_name": "Eligibility",
+      "description": "Check your scheme eligibility",
+      "url": "/",
+      "icons": [{ "src": "/icons/logo192.png", "sizes": "192x192" }]
+    }
+  ]
 }
