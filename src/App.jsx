@@ -2380,22 +2380,13 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
           {pt.loginBenefits.map((b,i)=>(
             <div key={i} style={{
-              background:"rgba(255,255,255,0.11)",
-              border:"1px solid rgba(255,255,255,0.18)",
-              borderRadius:13,overflow:"hidden",
+              background:"rgba(0,0,0,0.20)",
+              border:"1px solid rgba(255,255,255,0.15)",
+              borderRadius:13,padding:"11px 12px 11px",
               backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",
             }}>
-              {/* Uniform subtle top stripe */}
-              <div style={{height:2,background:"rgba(255,255,255,0.20)"}}/>
-              <div style={{padding:"9px 11px 10px"}}>
-                {/* Icon + title on same line */}
-                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                  <span style={{fontSize:15,lineHeight:1}}>{b.icon}</span>
-                  <span style={{fontSize:10.5,fontWeight:700,color:"#fff",lineHeight:1.25,fontFamily:bf}}>{b.title}</span>
-                </div>
-                {/* Sub text */}
-                <div style={{fontSize:9.5,color:"rgba(255,255,255,0.62)",lineHeight:1.45,fontFamily:bf,paddingLeft:1}}>{b.sub}</div>
-              </div>
+              <div style={{fontSize:10.5,fontWeight:700,color:"#fff",lineHeight:1.3,fontFamily:bf,marginBottom:4}}>{b.title}</div>
+              <div style={{fontSize:9.5,color:"rgba(255,255,255,0.58)",lineHeight:1.45,fontFamily:bf}}>{b.sub}</div>
             </div>
           ))}
         </div>
