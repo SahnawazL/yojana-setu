@@ -2462,7 +2462,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       {/* ── Email / Password Card (ACTIVE) ── */}
       <div style={{margin:"0 16px 14px",background:dark?"#1c1c1e":"#fff",borderRadius:20,padding:20,border:`1.5px solid ${dark?"#2c2c2e":"#f0f0f0"}`,boxShadow:dark?"0 6px 28px rgba(0,0,0,0.35)":"0 6px 28px rgba(0,0,0,0.10)",position:"relative",overflow:"hidden"}}>
         {/* Left accent bar — navy blue */}
-        <div style={{position:"absolute",left:0,top:0,bottom:0,width:3.5,background:"linear-gradient(180deg,#003580,#1a56db)",borderRadius:"20px 0 0 20px"}}/>
+        <div style={{position:"absolute",left:0,top:0,bottom:0,width:4,background:"linear-gradient(180deg,#003580,#1a56db)"}}/>
         {/* Card heading */}
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16,paddingLeft:8}}>
           <div style={{width:28,height:28,borderRadius:9,background:dark?"rgba(26,86,219,0.18)":"rgba(0,53,128,0.08)",border:`1px solid ${dark?"rgba(26,86,219,0.30)":"rgba(0,53,128,0.14)"}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
