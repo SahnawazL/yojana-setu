@@ -2378,29 +2378,26 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
 
         {/* ── What you unlock — 2×2 benefit grid ── */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          {pt.loginBenefits.map((b,i)=>{
-            const accentCols=["#FF9933","#1a56db","#138808","#8B5CF6"];
-            const ac=accentCols[i%accentCols.length];
-            return(
+          {pt.loginBenefits.map((b,i)=>(
             <div key={i} style={{
               background:"rgba(255,255,255,0.11)",
               border:"1px solid rgba(255,255,255,0.18)",
               borderRadius:13,overflow:"hidden",
               backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",
             }}>
-              {/* Colored top accent stripe */}
-              <div style={{height:3,background:ac}}/>
+              {/* Uniform subtle top stripe */}
+              <div style={{height:2,background:"rgba(255,255,255,0.20)"}}/>
               <div style={{padding:"9px 11px 10px"}}>
                 {/* Icon + title on same line */}
                 <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                   <span style={{fontSize:15,lineHeight:1}}>{b.icon}</span>
                   <span style={{fontSize:10.5,fontWeight:700,color:"#fff",lineHeight:1.25,fontFamily:bf}}>{b.title}</span>
                 </div>
-                {/* Sub text indented */}
+                {/* Sub text */}
                 <div style={{fontSize:9.5,color:"rgba(255,255,255,0.62)",lineHeight:1.45,fontFamily:bf,paddingLeft:1}}>{b.sub}</div>
               </div>
             </div>
-          );})}
+          ))}
         </div>
       </TriHeader>
 
@@ -2516,8 +2513,11 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
               }}/>
             {/* Eye toggle */}
             <div onClick={()=>{haptic(30);setShowPassword(v=>!v);}}
-              style={{position:"absolute",right:13,top:"50%",transform:"translateY(-50%)",cursor:"pointer",fontSize:18,lineHeight:1,color:dark?"#666":"#aaa",userSelect:"none"}}>
-              {showPassword?"🙈":"👁️"}
+              style={{position:"absolute",right:13,top:"50%",transform:"translateY(-50%)",cursor:"pointer",lineHeight:1,color:dark?"#666":"#aaa",userSelect:"none",display:"flex",alignItems:"center"}}>
+              {showPassword
+                ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              }
             </div>
           </div>
           {/* Hint text */}
@@ -2569,7 +2569,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
               ?(isHindi?"कृपया प्रतीक्षा करें...":"Please wait…")
               :(emailTab==="signin"?pt.signInBtn:pt.createAcctBtn)}
           </span>
-          {!emailLoading&&<span style={{fontSize:16,opacity:0.85}}>→</span>}
+          {!emailLoading&&<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.85}}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>}
         </div>
       </div>
 
