@@ -4827,11 +4827,104 @@ export default function YojanaSahay(){
   },[profileAnswers]);
 
   const navItems=useMemo(()=>[
-    {icon:"🏠",label:t.navHome,tab:"home"},
-    {icon:"🔍",label:t.navSearch,tab:"search"},
-    {icon:"📋",label:t.navSchemes,tab:"schemes"},
-    {icon:"🤖",label:t.navAI,tab:"ai"},
-    {icon:"👤",label:t.navProfile,tab:"profile"},
+    {
+      tab:"home", label:t.navHome,
+      iconFilled:(c)=>(
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <defs>
+            <linearGradient id="ng-home" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#FF9933"/>
+              <stop offset="100%" stopColor="#FF6B00"/>
+            </linearGradient>
+          </defs>
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" fill="url(#ng-home)" opacity="0.18"/>
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" stroke={c} strokeWidth="1.8" strokeLinejoin="round" fill="none"/>
+          <path d="M9 21v-6a1 1 0 011-1h4a1 1 0 011 1v6" stroke={c} strokeWidth="1.8" strokeLinejoin="round"/>
+        </svg>
+      ),
+      iconOutline:(c)=>(
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/>
+          <path d="M9 21v-6a1 1 0 011-1h4a1 1 0 011 1v6" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/>
+        </svg>
+      ),
+    },
+    {
+      tab:"search", label:t.navSearch,
+      iconFilled:(c)=>(
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <defs>
+            <linearGradient id="ng-srch" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#FF9933"/>
+              <stop offset="100%" stopColor="#FF6B00"/>
+            </linearGradient>
+          </defs>
+          <circle cx="11" cy="11" r="7" fill="url(#ng-srch)" opacity="0.18"/>
+          <circle cx="11" cy="11" r="7" stroke={c} strokeWidth="1.8"/>
+          <line x1="16.5" y1="16.5" x2="21" y2="21" stroke={c} strokeWidth="2" strokeLinecap="round"/>
+          <line x1="8" y1="11" x2="14" y2="11" stroke={c} strokeWidth="1.6" strokeLinecap="round"/>
+          <line x1="11" y1="8" x2="11" y2="14" stroke={c} strokeWidth="1.6" strokeLinecap="round"/>
+        </svg>
+      ),
+      iconOutline:(c)=>(
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="7" stroke={c} strokeWidth="1.7"/>
+          <line x1="16.5" y1="16.5" x2="21" y2="21" stroke={c} strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+      ),
+    },
+    {
+      tab:"schemes", label:t.navSchemes,
+      iconFilled:(c)=>(
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <defs>
+            <linearGradient id="ng-sch" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#FF9933"/>
+              <stop offset="100%" stopColor="#FF6B00"/>
+            </linearGradient>
+          </defs>
+          <rect x="4" y="3" width="16" height="18" rx="2.5" fill="url(#ng-sch)" opacity="0.18"/>
+          <rect x="4" y="3" width="16" height="18" rx="2.5" stroke={c} strokeWidth="1.8"/>
+          <line x1="8" y1="8" x2="16" y2="8" stroke={c} strokeWidth="1.6" strokeLinecap="round"/>
+          <line x1="8" y1="12" x2="16" y2="12" stroke={c} strokeWidth="1.6" strokeLinecap="round"/>
+          <line x1="8" y1="16" x2="12" y2="16" stroke={c} strokeWidth="1.6" strokeLinecap="round"/>
+        </svg>
+      ),
+      iconOutline:(c)=>(
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <rect x="4" y="3" width="16" height="18" rx="2.5" stroke={c} strokeWidth="1.7"/>
+          <line x1="8" y1="8" x2="16" y2="8" stroke={c} strokeWidth="1.5" strokeLinecap="round"/>
+          <line x1="8" y1="12" x2="16" y2="12" stroke={c} strokeWidth="1.5" strokeLinecap="round"/>
+          <line x1="8" y1="16" x2="12" y2="16" stroke={c} strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      ),
+    },
+    {
+      tab:"ai", label:t.navAI,
+      isChakra:true,
+    },
+    {
+      tab:"profile", label:t.navProfile,
+      iconFilled:(c)=>(
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <defs>
+            <linearGradient id="ng-pro" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#FF9933"/>
+              <stop offset="100%" stopColor="#FF6B00"/>
+            </linearGradient>
+          </defs>
+          <circle cx="12" cy="8" r="3.5" fill="url(#ng-pro)" opacity="0.22"/>
+          <circle cx="12" cy="8" r="3.5" stroke={c} strokeWidth="1.8"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={c} strokeWidth="1.8" strokeLinecap="round" fill="none"/>
+        </svg>
+      ),
+      iconOutline:(c)=>(
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8" r="3.5" stroke={c} strokeWidth="1.7"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={c} strokeWidth="1.7" strokeLinecap="round"/>
+        </svg>
+      ),
+    },
   ],[t]);
 
   return(
@@ -4860,8 +4953,20 @@ export default function YojanaSahay(){
         .c0{transition-delay:0.20s!important}.c1{transition-delay:0.28s!important}.c2{transition-delay:0.36s!important}
         .c3{transition-delay:0.44s!important}.c4{transition-delay:0.52s!important}.c5{transition-delay:0.60s!important}
         .c6{transition-delay:0.68s!important}.c7{transition-delay:0.76s!important}.c8{transition-delay:0.84s!important}
-        .bn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;cursor:pointer;border-radius:12px;transition:background 0.25s,transform 0.2s;flex:1;}
-        .bn:active{transform:scale(0.93);}
+        .bn{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;flex:1;-webkit-tap-highlight-color:transparent;position:relative;padding:6px 4px 5px;}
+        .bn:active .bn-pill{transform:scale(0.88);}
+        .bn-pill{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 14px 5px;border-radius:16px;transition:background 0.28s cubic-bezier(0.22,1,0.36,1),box-shadow 0.28s cubic-bezier(0.22,1,0.36,1),transform 0.18s cubic-bezier(0.34,1.56,0.64,1);will-change:transform;}
+        .bn-pill.active{background:linear-gradient(145deg,rgba(255,153,51,0.18) 0%,rgba(255,107,0,0.12) 100%);box-shadow:0 2px 12px rgba(255,153,51,0.22);}
+        .bn-pill:not(.active){background:transparent;}
+        .bn-icon-wrap{transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1);}
+        .bn-icon-wrap.popping{animation:navIconPop 0.38s cubic-bezier(0.34,1.56,0.64,1) forwards;}
+        @keyframes navIconPop{0%{transform:scale(1) translateY(0)}35%{transform:scale(1.32) translateY(-3px)}65%{transform:scale(0.92) translateY(1px)}100%{transform:scale(1) translateY(0)}}
+        @keyframes navChakraSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        .bn-chakra-active{animation:navChakraSpin 3s linear infinite;}
+        .bn-label{font-size:9.5px;font-weight:600;letter-spacing:0.2px;transition:color 0.22s,font-weight 0.18s,transform 0.22s;transform-origin:center;}
+        .bn-label.active{font-weight:800;transform:scale(1.05);}
+        .bn-dot{width:4px;height:4px;border-radius:50%;background:linear-gradient(135deg,#FF9933,#FF6B00);position:absolute;bottom:2px;left:50%;transform:translateX(-50%);box-shadow:0 0 6px rgba(255,153,51,0.7);transition:opacity 0.22s,transform 0.22s;}
+
         .cp{animation:cp 2.5s ease-in-out infinite;}
         @keyframes cp{0%,100%{box-shadow:0 6px 24px rgba(19,136,8,0.3)}50%{box-shadow:0 6px 32px rgba(19,136,8,0.55)}}
         .app-root{height:100vh;height:100dvh;}
@@ -5369,23 +5474,85 @@ export default function YojanaSahay(){
         />
       </div>
 
-      {/* Bottom nav */}
-      <div className="bnav-wrap" style={{background:th.navBg,borderTop:`1.5px solid ${th.navBorder}`,paddingTop:"8px",paddingLeft:"4px",paddingRight:"4px",display:"flex",position:"relative",boxShadow:dark?"0 -4px 20px rgba(0,0,0,0.25)":"0 -4px 20px rgba(0,0,0,0.07)",zIndex:100}}>
-        {/* Sliding orange indicator — single element that glides between tabs */}
+      {/* ── PREMIUM BOTTOM NAV ── */}
+      <div className="bnav-wrap" style={{
+        background: dark
+          ? "rgba(28,28,30,0.97)"
+          : "rgba(255,255,255,0.97)",
+        borderTop:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)"}`,
+        backdropFilter:"blur(20px)",
+        WebkitBackdropFilter:"blur(20px)",
+        paddingTop:"4px",
+        paddingLeft:"0px",
+        paddingRight:"0px",
+        display:"flex",
+        position:"relative",
+        boxShadow: dark
+          ? "0 -1px 0 rgba(255,255,255,0.05), 0 -8px 32px rgba(0,0,0,0.4)"
+          : "0 -1px 0 rgba(0,0,0,0.06), 0 -8px 32px rgba(0,0,0,0.08)",
+        zIndex:100,
+      }}>
+        {/* Sliding saffron top bar */}
         <div style={{
-          position:"absolute",top:0,height:3,width:"14%",borderRadius:"0 0 3px 3px",
-          background:"#FF9933",
-          left:`calc(${navItems.findIndex(i=>i.tab===activeTab)} * 20% + 3%)`,
-          transition:"left 0.32s cubic-bezier(0.22,1,0.36,1)",
-          boxShadow:"0 0 8px rgba(255,153,51,0.6)",
+          position:"absolute",top:0,height:2.5,
+          width:"13%",borderRadius:"0 0 4px 4px",
+          background:"linear-gradient(90deg,#FF9933,#FF6B00)",
+          left:`calc(${navItems.findIndex(i=>i.tab===activeTab)} * 20% + 3.5%)`,
+          transition:"left 0.36s cubic-bezier(0.22,1,0.36,1)",
+          boxShadow:"0 0 10px rgba(255,153,51,0.75), 0 0 20px rgba(255,107,0,0.4)",
         }}/>
+
         {navItems.map(item=>{
-          const active=activeTab===item.tab;
+          const active = activeTab===item.tab;
+          const iconColor = active
+            ? (dark ? "#FF9933" : "#FF6B00")
+            : (dark ? "#666" : "#aaa");
+          const labelColor = active
+            ? (dark ? "#FF9933" : "#FF6B00")
+            : (dark ? "#555" : "#bbb");
+
           return(
-            <div key={item.tab} className="bn" onClick={()=>{haptic();setActiveTab(item.tab);}}
-              style={{position:"relative",background:active?(dark?"rgba(255,153,51,0.14)":"#EFF6FF"):"transparent",borderRadius:12,padding:"6px 8px 7px"}}>
-              <div className={`bn-icon${active?" active":""}`} style={{fontSize:20,filter:active?"none":"grayscale(0.3)"}}>{item.icon}</div>
-              <div style={{fontSize:9,fontWeight:active?800:500,color:active?(dark?"#FF9933":"#003580"):th.textSub,fontFamily:bf,transition:"color 0.22s,font-weight 0.22s"}}>{item.label}</div>
+            <div key={item.tab} className="bn"
+              onClick={()=>{ haptic(); setActiveTab(item.tab); }}>
+              <div className={`bn-pill${active?" active":""}`}>
+
+                {/* Icon */}
+                <div className={`bn-icon-wrap${active?" popping":""}`}
+                  key={`${item.tab}-${active}`}>
+                  {item.isChakra ? (
+                    <div className={active?"bn-chakra-active":""} style={{
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      width:22,height:22,
+                      opacity: active ? 1 : 0.38,
+                      filter: active
+                        ? "drop-shadow(0 0 4px rgba(255,153,51,0.7))"
+                        : "none",
+                      transition:"opacity 0.22s, filter 0.22s",
+                    }}>
+                      <AshokaChakra
+                        size={22}
+                        color={active ? (dark?"#FF9933":"#FF6B00") : (dark?"#666":"#bbb")}
+                        spinning={false}
+                      />
+                    </div>
+                  ) : active ? (
+                    item.iconFilled(iconColor)
+                  ) : (
+                    item.iconOutline(iconColor)
+                  )}
+                </div>
+
+                {/* Label */}
+                <div className={`bn-label${active?" active":""}`}
+                  style={{color:labelColor, fontFamily:bf}}>
+                  {item.label}
+                </div>
+              </div>
+
+              {/* Active dot indicator */}
+              {active && (
+                <div className="bn-dot"/>
+              )}
             </div>
           );
         })}
