@@ -29,6 +29,11 @@ const ASHOKA_BLUE = "#06038D";
 const R = { sm: 10, md: 14, lg: 20, xl: 26 };
 const EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
 
+// ─── NON-TRANSLATED CONSTANTS ─────────────────────────────────────────────────
+const PLATFORM_ID   = "Platform ID: YSH-2026-IND · MIT Licensed · Beta";
+const DEV_WEBSITE   = "https://sahnawaz-portfolio.vercel.app";
+const CONTACT_EMAIL = "yojanasahayofficial@gmail.com";
+
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const THEME = {
   light: {
@@ -167,17 +172,30 @@ const STRINGS = {
       { icon:"🐙", name:"GitHub",    role:"Source Code & Version Control — Full development history, issue tracking, and secure build pipeline",            badge:"Open Dev" },
     ],
 
-    privacyTitle: "Privacy & Data",
-    privacyBody:
-      "User data is handled with strict confidentiality. Profile information is used solely to personalise the in-app experience and is never sold, shared, or disclosed to third parties. All data is stored securely on Firebase infrastructure.",
+    privacyTitle:   "Privacy Policy",
+    privacyEyebrow: "PRIVACY POLICY",
+    privacyIntro:
+      "YojanaSahay is committed to protecting your privacy. This policy explains how your data is collected, used, and safeguarded.",
+    privacyPoints: [
+      { icon:"🔒", text:"Data Collection & Purpose — We collect only the minimum data necessary: your name, email address, state, age range, income range, and occupation category. This information is used exclusively to power personalised eligibility results, AI recommendations, and scheme discovery within the app. We never collect data beyond what is required for your experience." },
+      { icon:"🚫", text:"No Third-Party Sharing — We do not sell, rent, license, share, or disclose your personal information to any third-party individual, company, or organisation — under any circumstances, including commercial partnerships or advertising. YojanaSahay is, and will always remain, an entirely ad-free platform." },
+      { icon:"☁️",  text:"Secure Cloud Storage — All user data is stored on Firebase, a Google Cloud platform that implements AES-256 encryption at rest and TLS 1.2+ encryption in transit. Firebase complies with major international security standards including ISO 27001, SOC 1, SOC 2, and SOC 3, and undergoes regular independent security audits." },
+      { icon:"💬", text:"AI Conversation Privacy — Your conversations with the AI Assistant are stored securely in your private Firestore account, fully isolated from all other users. Your conversations are never shared with third parties, never disclosed publicly, and never used to train, fine-tune, or evaluate any external AI model or service." },
+      { icon:"📧", text:"Email Usage Policy — Your email address is used strictly for: (a) account authentication via Firebase Auth, (b) automatic submission confirmations when you file a report or query, and (c) official responses from the platform support team. We do not send newsletters, promotional campaigns, or any unsolicited marketing communications — ever." },
+      { icon:"🛡️", text:"Data Access Controls — Access to your personal data is restricted exclusively to authorised platform administrators, and only when required to investigate or resolve a support request you have submitted. All administrative access is logged. Your data is never accessed, analysed, or processed for commercial, advertising, or profiling purposes." },
+      { icon:"🍪", text:"Cookies & Analytics — YojanaSahay does not use third-party advertising cookies, retargeting pixels, or behavioural tracking tools. Any anonymous usage analytics collected are used solely to measure platform performance and improve the citizen experience. No individual-level behavioural profiling is performed at any time." },
+      { icon:"👤", text:"Minors & Sensitive Data — YojanaSahay does not knowingly collect personal data from individuals under the age of 13. The platform does not request, accept, or store highly sensitive personal details such as Aadhaar numbers, PAN card information, bank account or financial data, biometric identifiers, or government-issued ID numbers. Citizens are strongly advised never to share such information within the app." },
+      { icon:"🌍", text:"Data Residency — Your data is stored and processed on Firebase infrastructure, which may utilise globally distributed Google Cloud data centres. Google Cloud maintains robust cross-border data protection agreements and complies with applicable international data protection frameworks to ensure your information is safeguarded regardless of the processing location." },
+      { icon:"🗑️", text:"Your Rights & Data Deletion — You have the right to access, correct, export, or permanently delete your account and all associated personal data at any time. To exercise any of these rights, contact us at yojanasahayofficial@gmail.com. Upon a verified deletion request, all personally identifiable information will be permanently and irreversibly removed from our systems within 30 calendar days." },
+      { icon:"🔄", text:"Policy Updates — This Privacy Policy may be updated periodically to reflect improvements in our data practices or changes in applicable law. Any material updates will be clearly communicated within the app prior to taking effect. Your continued use of YojanaSahay following such notification will constitute your acceptance of the revised policy." },
+      { icon:"⚖️", text:"Governing Law — This Privacy Policy is governed by the laws of India, including applicable provisions of the Information Technology Act, 2000, the IT (Amendment) Act, 2008, and the Digital Personal Data Protection Act, 2023 (DPDPA). Any disputes arising under or in connection with this policy shall be subject to the exclusive jurisdiction of competent courts in India." },
+    ],
 
     devTitle:   "About the Developer",
     devBody:    "YojanaSahay is designed, developed, and maintained by Sahnawaz Ahmed Laskar — an independent developer with a vision to make government welfare more accessible to every citizen of India.",
-    devWebsite: "https://sahnawaz-portfolio.vercel.app",
     devLink:    "Visit Official Website →",
 
     contactTitle: "Official Contact",
-    contactEmail: "yojanasahayofficial@gmail.com",
     contactNote:  "For platform-related inquiries only. For scheme-specific support, please use the in-app Report & Query feature.",
 
     lastUpdated: "Last Updated · May 2026",
@@ -204,12 +222,11 @@ const STRINGS = {
 
     grievanceTitle:   "User Support & Complaints",
     grievanceBody:    "YojanaSahay is committed to resolving every user concern promptly and transparently. Every submission made through the in-app Report & Query system receives an automatic confirmation email instantly. The platform administrator is notified immediately upon each submission and personally reviews every concern.",
-    grievanceContact: "yojanasahayofficial@gmail.com",
     grievanceNote:    "Platform Administrator: Sahnawaz Ahmed Laskar",
 
     copyright:  "© 2026 Sahnawaz Ahmed Laskar · Open source under MIT License",
     footerNote: "YojanaSahay · An independent civic technology platform · India",
-    platformId: "Platform ID: YSH-2026-IND · MIT Licensed · Beta",
+    platformId: PLATFORM_ID,
   },
 
   hi: {
@@ -292,17 +309,30 @@ const STRINGS = {
       { icon:"🐙", name:"GitHub",    role:"सोर्स कोड और संस्करण नियंत्रण — पूर्ण विकास इतिहास, इश्यू ट्रैकिंग और सुरक्षित बिल्ड पाइपलाइन",     badge:"Open Dev" },
     ],
 
-    privacyTitle: "गोपनीयता और डेटा",
-    privacyBody:
-      "उपयोगकर्ता डेटा को सख्त गोपनीयता के साथ संभाला जाता है। प्रोफाइल जानकारी केवल इन-ऐप अनुभव को वैयक्तिकृत करने के लिए उपयोग की जाती है और इसे कभी बेचा, साझा या तीसरे पक्ष को प्रकट नहीं किया जाता।",
+    privacyTitle:   "गोपनीयता नीति",
+    privacyEyebrow: "गोपनीयता नीति",
+    privacyIntro:
+      "योजना सहाय आपकी गोपनीयता की रक्षा के लिए प्रतिबद्ध है। यह नीति बताती है कि आपका डेटा कैसे एकत्र, उपयोग और सुरक्षित किया जाता है।",
+    privacyPoints: [
+      { icon:"🔒", text:"डेटा संग्रह और उद्देश्य — हम केवल न्यूनतम आवश्यक डेटा एकत्र करते हैं: आपका नाम, ईमेल पता, राज्य, आयु वर्ग, आय वर्ग और व्यवसाय श्रेणी। यह जानकारी विशेष रूप से ऐप में व्यक्तिगत पात्रता परिणाम, AI सुझाव और योजना खोज को बेहतर बनाने के लिए उपयोग की जाती है। हम आपके अनुभव के लिए आवश्यकता से अधिक डेटा कभी नहीं लेते।" },
+      { icon:"🚫", text:"तृतीय पक्ष के साथ साझाकरण नहीं — हम किसी भी परिस्थिति में — किसी भी व्यावसायिक साझेदारी या विज्ञापन उद्देश्य सहित — आपकी व्यक्तिगत जानकारी को किसी भी तृतीय पक्ष को नहीं बेचते, किराए पर नहीं देते, लाइसेंस नहीं देते, साझा नहीं करते या प्रकट नहीं करते। योजना सहाय एक पूर्ण विज्ञापन-मुक्त प्लेटफ़ॉर्म है और सदा रहेगा।" },
+      { icon:"☁️",  text:"सुरक्षित क्लाउड स्टोरेज — सभी उपयोगकर्ता डेटा Firebase पर संग्रहीत है — एक Google Cloud प्लेटफ़ॉर्म जो AES-256 एन्क्रिप्शन (डेटा स्थिरता में) और TLS 1.2+ एन्क्रिप्शन (डेटा प्रसारण में) लागू करता है। Firebase ISO 27001, SOC 1, SOC 2 और SOC 3 सहित प्रमुख अंतर्राष्ट्रीय सुरक्षा मानकों का अनुपालन करता है।" },
+      { icon:"💬", text:"AI बातचीत की गोपनीयता — AI सहायक के साथ आपकी बातचीत आपके निजी Firestore खाते में सुरक्षित रूप से संग्रहीत होती है और अन्य सभी उपयोगकर्ताओं से पूरी तरह अलग रहती है। आपकी बातचीत कभी साझा नहीं की जाती, सार्वजनिक नहीं की जाती और किसी भी बाहरी AI मॉडल को प्रशिक्षित या बेहतर बनाने के लिए उपयोग नहीं की जाती।" },
+      { icon:"📧", text:"ईमेल उपयोग नीति — आपका ईमेल पता केवल इन उद्देश्यों के लिए उपयोग किया जाता है: (क) Firebase Auth के माध्यम से खाता प्रमाणीकरण, (ख) रिपोर्ट या प्रश्न सबमिट करने पर स्वचालित पुष्टि ईमेल, और (ग) प्लेटफ़ॉर्म सपोर्ट टीम के आधिकारिक उत्तर। हम न्यूज़लेटर, प्रचार अभियान या कोई भी अवांछित मार्केटिंग संदेश कभी नहीं भेजते।" },
+      { icon:"🛡️", text:"डेटा पहुंच नियंत्रण — आपके व्यक्तिगत डेटा तक पहुंच केवल अधिकृत प्लेटफ़ॉर्म प्रशासकों तक सीमित है, और केवल तभी जब आपके द्वारा सबमिट किए गए सपोर्ट अनुरोध की जांच या समाधान के लिए आवश्यक हो। सभी प्रशासनिक पहुंच लॉग की जाती है। आपका डेटा कभी भी व्यावसायिक, विज्ञापन या प्रोफाइलिंग उद्देश्यों के लिए उपयोग नहीं किया जाता।" },
+      { icon:"🍪", text:"कुकी और एनालिटिक्स — योजना सहाय तृतीय-पक्ष विज्ञापन कुकी, रिटार्गेटिंग पिक्सेल या व्यवहार ट्रैकिंग टूल का उपयोग नहीं करता। एकत्र किया गया कोई भी अनाम उपयोग एनालिटिक्स डेटा केवल प्लेटफ़ॉर्म प्रदर्शन मापने और नागरिक अनुभव सुधारने के लिए उपयोग किया जाता है। किसी भी स्तर पर व्यक्तिगत व्यवहार प्रोफाइलिंग नहीं की जाती।" },
+      { icon:"👤", text:"नाबालिग और संवेदनशील डेटा — योजना सहाय 13 वर्ष से कम आयु के व्यक्तियों से जानबूझकर व्यक्तिगत डेटा एकत्र नहीं करता। प्लेटफ़ॉर्म आधार नंबर, PAN कार्ड जानकारी, बैंक खाता या वित्तीय डेटा, बायोमेट्रिक पहचान या सरकारी ID नंबर जैसी अत्यंत संवेदनशील जानकारी का अनुरोध, स्वीकृति या संग्रहण नहीं करता। नागरिकों को दृढ़ता से सलाह दी जाती है कि वे ऐसी जानकारी ऐप में कभी साझा न करें।" },
+      { icon:"🌍", text:"डेटा स्थान — आपका डेटा Firebase अवसंरचना पर संग्रहीत और संसाधित है, जो वैश्विक वितरित Google Cloud डेटा केंद्रों का उपयोग कर सकता है। Google Cloud मजबूत सीमा-पार डेटा सुरक्षा समझौतों को बनाए रखता है और लागू अंतर्राष्ट्रीय डेटा सुरक्षा नियमों का अनुपालन करता है।" },
+      { icon:"🗑️", text:"आपके अधिकार और डेटा हटाना — आपको किसी भी समय अपने खाते और सभी संबंधित व्यक्तिगत डेटा तक पहुंचने, उसे सुधारने, निर्यात करने या स्थायी रूप से हटाने का अधिकार है। इन अधिकारों का उपयोग करने के लिए yojanasahayofficial@gmail.com पर संपर्क करें। सत्यापित हटाने के अनुरोध पर, 30 कैलेंडर दिनों के भीतर सभी व्यक्तिगत पहचान योग्य जानकारी हमारे सिस्टम से स्थायी और अपरिवर्तनीय रूप से हटा दी जाएगी।" },
+      { icon:"🔄", text:"नीति अपडेट — यह गोपनीयता नीति समय-समय पर हमारी डेटा प्रथाओं में सुधार या लागू कानून में बदलाव को दर्शाने के लिए अपडेट की जा सकती है। कोई भी महत्वपूर्ण अपडेट लागू होने से पहले ऐप के भीतर स्पष्ट रूप से सूचित किया जाएगा। ऐसी सूचना के बाद योजना सहाय का उपयोग जारी रखना संशोधित नीति की आपकी स्वीकृति माना जाएगा।" },
+      { icon:"⚖️", text:"शासी कानून — यह गोपनीयता नीति भारत के कानूनों द्वारा शासित है, जिसमें सूचना प्रौद्योगिकी अधिनियम, 2000, IT (संशोधन) अधिनियम, 2008 और डिजिटल व्यक्तिगत डेटा संरक्षण अधिनियम, 2023 (DPDPA) के लागू प्रावधान शामिल हैं। इस नीति के अंतर्गत उत्पन्न कोई भी विवाद भारत के सक्षम न्यायालयों के अनन्य अधिकार क्षेत्र के अधीन होगा।" },
+    ],
 
     devTitle:   "डेवलपर के बारे में",
     devBody:    "योजना सहाय को Sahnawaz Ahmed Laskar द्वारा — एक स्वतंत्र डेवलपर जो भारत के प्रत्येक नागरिक तक सरकारी कल्याण को सुलभ बनाने की दृष्टि रखते हैं — डिज़ाइन, विकसित और अनुरक्षित किया गया है।",
-    devWebsite: "https://sahnawaz-portfolio.vercel.app",
     devLink:    "आधिकारिक वेबसाइट देखें →",
 
     contactTitle: "आधिकारिक संपर्क",
-    contactEmail: "yojanasahayofficial@gmail.com",
     contactNote:  "केवल प्लेटफ़ॉर्म संबंधी पूछताछ के लिए। योजना-विशिष्ट सहायता के लिए इन-ऐप Report & Query सुविधा का उपयोग करें।",
 
     lastUpdated: "अंतिम अपडेट · मई 2026",
@@ -329,12 +359,11 @@ const STRINGS = {
 
     grievanceTitle:   "उपयोगकर्ता सहायता और शिकायत",
     grievanceBody:    "योजना सहाय हर उपयोगकर्ता की समस्या को शीघ्र और पारदर्शी तरीके से हल करने के लिए प्रतिबद्ध है। इन-ऐप Report & Query के माध्यम से सबमिट की गई हर शिकायत पर तुरंत स्वचालित पुष्टि ईमेल भेजी जाती है। प्लेटफ़ॉर्म प्रशासक को प्रत्येक सबमिशन की तत्काल सूचना मिलती है और वे व्यक्तिगत रूप से हर समस्या की समीक्षा करते हैं।",
-    grievanceContact: "yojanasahayofficial@gmail.com",
     grievanceNote:    "प्लेटफ़ॉर्म प्रशासक: Sahnawaz Ahmed Laskar",
 
     copyright:  "© 2026 Sahnawaz Ahmed Laskar · MIT License के अंतर्गत ओपन सोर्स",
     footerNote: "योजना सहाय · एक स्वतंत्र नागरिक प्रौद्योगिकी प्लेटफ़ॉर्म · भारत",
-    platformId: "Platform ID: YSH-2026-IND · MIT Licensed · Beta",
+    platformId: PLATFORM_ID,
   },
 };
 
@@ -1095,7 +1124,7 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                 📋 {s.grievanceNote}
               </div>
               <div style={{ fontSize: 12, fontWeight: 600, color: th.textMid, fontFamily: bf }}>
-                📧 {s.grievanceContact}
+                📧 {CONTACT_EMAIL}
               </div>
               <div style={{
                 height: 1, background: `linear-gradient(to right, transparent, rgba(220,38,38,0.18), transparent)`,
@@ -1195,32 +1224,62 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
           </Card>
         </div>
 
-        {/* ── PRIVACY & DATA ───────────────────────────────────────────── */}
+        {/* ── PRIVACY POLICY ───────────────────────────────────────────── */}
         <div className="ys-card">
-          <div style={{
-            background: dark ? `${NAVY}22` : `${NAVY}06`,
-            borderRadius: R.xl, padding: "20px",
-            border: `1px solid ${NAVY}22`,
-          }}>
-            <div style={{ display: "flex", gap: 13, alignItems: "flex-start" }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: R.md, flexShrink: 0,
-                background: dark ? `${NAVY}30` : `${NAVY}10`,
-                border: `1px solid ${NAVY}22`,
-                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
-              }}>
-                🔒
-              </div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: th.text, marginBottom: 6, fontFamily: bf }}>
-                  {s.privacyTitle}
-                </div>
-                <div style={{ fontSize: 12, color: th.textMid, lineHeight: 1.8, fontFamily: bf }}>
-                  {s.privacyBody}
-                </div>
-              </div>
+          <Card dark={dark} accentColor={NAVY}>
+            <SectionHeader
+              title={s.privacyTitle}
+              accent={NAVY}
+              dark={dark}
+              bf={bf}
+              eyebrow={s.privacyEyebrow}
+            />
+
+            {/* Intro */}
+            <div style={{ fontSize: 12, color: th.textSub, lineHeight: 1.75, marginBottom: 16, fontFamily: bf }}>
+              {s.privacyIntro}
             </div>
-          </div>
+
+            {/* Policy points */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {s.privacyPoints.map((pt, i) => (
+                <div key={i} style={{
+                  display: "flex", gap: 12, alignItems: "flex-start",
+                  background: dark ? `${NAVY}18` : `${NAVY}05`,
+                  border: `1px solid ${NAVY}18`,
+                  borderRadius: R.md, padding: "11px 13px",
+                }}>
+                  <div style={{
+                    width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+                    background: dark ? `${NAVY}30` : `${NAVY}0D`,
+                    border: `1px solid ${NAVY}22`,
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+                  }}>
+                    {pt.icon}
+                  </div>
+                  <div style={{ fontSize: 12, color: th.textMid, lineHeight: 1.75, fontFamily: bf, paddingTop: 5 }}>
+                    {pt.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Effective date badge */}
+            <div style={{
+              marginTop: 16,
+              display: "flex", alignItems: "center", gap: 8,
+              background: dark ? "rgba(255,255,255,0.04)" : th.card2,
+              border: `1px solid ${th.border}`,
+              borderRadius: R.md, padding: "9px 13px",
+            }}>
+              <span style={{ fontSize: 13 }}>📄</span>
+              <span style={{ fontSize: 10, color: th.textSub, fontFamily: bf, lineHeight: 1.5 }}>
+                {isHindi
+                  ? "यह गोपनीयता नीति · मई 2026 से प्रभावी · प्लेटफ़ॉर्म अपडेट के साथ संशोधित की जा सकती है"
+                  : "This Privacy Policy · Effective May 2026 · Subject to revision with platform updates"}
+              </span>
+            </div>
+          </Card>
         </div>
 
         {/* ── ABOUT THE DEVELOPER ──────────────────────────────────────── */}
@@ -1233,11 +1292,11 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
             {/* Website CTA */}
             <div
               className="ys-link-row"
-              onClick={() => safeOpen(s.devWebsite)}
+              onClick={() => safeOpen(DEV_WEBSITE)}
               role="link"
               tabIndex={0}
               aria-label="Visit developer website"
-              onKeyDown={e => e.key === "Enter" && safeOpen(s.devWebsite)}
+              onKeyDown={e => e.key === "Enter" && safeOpen(DEV_WEBSITE)}
               style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 background: `linear-gradient(135deg, ${NAVY} 0%, #1A3A8A 100%)`,
@@ -1257,7 +1316,7 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                     {s.devLink}
                   </div>
                   <div style={{ fontSize: 9, color: "rgba(255,255,255,0.50)", marginTop: 2, fontFamily: bf }}>
-                    sahnawaz-portfolio.vercel.app
+                    {DEV_WEBSITE.replace("https://", "")}
                   </div>
                 </div>
               </div>
@@ -1275,11 +1334,11 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
             {/* Email row */}
             <div
               className="ys-link-row"
-              onClick={() => safeOpen(`mailto:${s.contactEmail}`)}
+              onClick={() => safeOpen(`mailto:${CONTACT_EMAIL}`)}
               role="link"
               tabIndex={0}
-              aria-label={`Email ${s.contactEmail}`}
-              onKeyDown={e => e.key === "Enter" && safeOpen(`mailto:${s.contactEmail}`)}
+              aria-label={`Email ${CONTACT_EMAIL}`}
+              onKeyDown={e => e.key === "Enter" && safeOpen(`mailto:${CONTACT_EMAIL}`)}
               style={{
                 display: "flex", alignItems: "center", gap: 13,
                 background: dark ? `${SAFFRON}12` : `${SAFFRON}07`,
@@ -1298,7 +1357,7 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                   overflow: "hidden", textOverflow: "ellipsis",
                   whiteSpace: "nowrap", fontFamily: bf,
                 }}>
-                  {s.contactEmail}
+                  {CONTACT_EMAIL}
                 </div>
                 <div style={{ fontSize: 10, color: th.textSub, marginTop: 2, fontFamily: bf }}>
                   {isHindi ? "आधिकारिक ईमेल पता" : "Official Email Address"}
