@@ -1054,75 +1054,148 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
 
         {/* ── YOJANASAHAY PRO — COMING SOON ───────────────────────────── */}
         <div className="ys-card">
-          <Card dark={dark} accentColor={SAFFRON}>
-            <SectionHeader
-              title={s.proTitle}
-              eyebrow={s.proEyebrow}
-              accent={SAFFRON}
-              dark={dark}
-              bf={bf}
-            />
+          <div style={{
+            borderRadius: R.xl,
+            padding: "26px 20px 24px",
+            background: dark
+              ? "linear-gradient(155deg, rgba(26,14,2,0.97) 0%, rgba(12,8,1,0.98) 60%, rgba(20,12,2,0.97) 100%)"
+              : "linear-gradient(155deg, rgba(255,255,255,0.97) 0%, rgba(255,251,244,0.99) 60%, rgba(255,248,236,0.98) 100%)",
+            border: `1.5px solid ${SAFFRON}32`,
+            boxShadow: dark
+              ? `0 0 0 1px ${SAFFRON}0A, 0 2px 8px rgba(0,0,0,0.60), 0 16px 56px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05)`
+              : `0 0 0 1px ${SAFFRON}0C, 0 4px 16px ${SAFFRON}0E, 0 20px 56px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.90)`,
+            position: "relative",
+            overflow: "hidden",
+          }}>
 
-            {/* Subtitle */}
+            {/* Ambient top glow */}
             <div style={{
-              fontSize: 11, fontWeight: 600, color: th.textSub,
-              marginTop: -10, marginBottom: 16, fontFamily: bf,
-            }}>
-              {s.proSubtitle}
+              position: "absolute", top: -100, left: "50%",
+              transform: "translateX(-50%)",
+              width: 320, height: 200,
+              background: `radial-gradient(ellipse at center, ${SAFFRON}1E 0%, transparent 68%)`,
+              pointerEvents: "none",
+            }} />
+
+            {/* Subtle dot-grid texture */}
+            <div style={{
+              position: "absolute", inset: 0, pointerEvents: "none",
+              backgroundImage: `radial-gradient(circle, ${dark ? `${SAFFRON}08` : `${SAFFRON}07`} 1px, transparent 1px)`,
+              backgroundSize: "20px 20px",
+              opacity: 0.8,
+            }} />
+
+            {/* ── HEADER ── */}
+            <div style={{ position: "relative", marginBottom: 20 }}>
+
+              {/* Eyebrow pill */}
+              <div style={{
+                display: "inline-flex", alignItems: "center",
+                background: dark ? `${SAFFRON}16` : `${SAFFRON}10`,
+                border: `1px solid ${SAFFRON}35`,
+                borderRadius: 20, padding: "3px 12px",
+                marginBottom: 13,
+                boxShadow: `0 0 12px ${SAFFRON}18`,
+              }}>
+                <span style={{
+                  fontSize: 8.5, fontWeight: 800, letterSpacing: 1.8,
+                  textTransform: "uppercase", color: SAFFRON, fontFamily: bf,
+                }}>
+                  {s.proEyebrow}
+                </span>
+              </div>
+
+              {/* Title */}
+              <div style={{
+                fontSize: 21, fontWeight: 800, color: th.text,
+                letterSpacing: -0.5, lineHeight: 1.1,
+                fontFamily: bf, marginBottom: 6,
+              }}>
+                {s.proTitle}
+              </div>
+
+              {/* Subtitle */}
+              <div style={{
+                fontSize: 11, fontWeight: 500, color: th.textSub,
+                fontFamily: bf, marginBottom: 17,
+              }}>
+                {s.proSubtitle}
+              </div>
+
+              {/* Gradient rule */}
+              <div style={{
+                height: 1,
+                background: `linear-gradient(to right, ${SAFFRON}55, ${SAFFRON}18, transparent)`,
+              }} />
             </div>
 
             {/* Body text */}
-            <div style={{ fontSize: 13, color: th.textMid, lineHeight: 1.85, marginBottom: 20, fontFamily: bf }}>
+            <div style={{
+              fontSize: 13, color: th.textMid, lineHeight: 1.85,
+              marginBottom: 22, fontFamily: bf, position: "relative",
+            }}>
               {s.proBody}
             </div>
 
-            {/* Free vs Pro comparison table */}
-            <div>
+            {/* ── COMPARISON TABLE ── */}
+            <div style={{
+              borderRadius: R.md,
+              border: `1px solid ${dark ? `${SAFFRON}1A` : `${SAFFRON}22`}`,
+              overflow: "hidden",
+              position: "relative",
+              backdropFilter: "blur(10px)",
+              boxShadow: dark
+                ? `inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 16px rgba(0,0,0,0.25)`
+                : `inset 0 1px 0 rgba(255,255,255,0.90), 0 2px 12px rgba(0,0,0,0.04)`,
+            }}>
 
               {/* Column headers */}
-              <div style={{
-                display: "grid", gridTemplateColumns: "1fr 80px 80px",
-                gap: 0, marginBottom: 0,
-              }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 76px 76px" }}>
                 <div style={{
                   fontSize: 9, fontWeight: 700, color: th.textSub, fontFamily: bf,
-                  letterSpacing: 0.4, padding: "7px 8px 7px 10px",
-                  borderBottom: `1px solid ${th.border2}`,
+                  letterSpacing: 0.8, textTransform: "uppercase", padding: "9px 10px",
+                  background: dark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
+                  borderBottom: `1px solid ${dark ? `${SAFFRON}14` : `${SAFFRON}18`}`,
                 }}>
                   {isHindi ? "सुविधा" : "Feature"}
                 </div>
                 <div style={{
-                  textAlign: "center", fontSize: 10, fontWeight: 800,
-                  color: th.textSub, fontFamily: bf, letterSpacing: 0.4,
-                  background: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
-                  borderRadius: "8px 0 0 0", padding: "7px 4px",
-                  border: `1px solid ${th.border2}`, borderRight: "none",
+                  textAlign: "center", fontSize: 9.5, fontWeight: 800,
+                  letterSpacing: 0.5, color: th.textSub, fontFamily: bf, padding: "9px 4px",
+                  background: dark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
+                  borderLeft: `1px solid ${dark ? `${SAFFRON}14` : `${SAFFRON}18`}`,
+                  borderBottom: `1px solid ${dark ? `${SAFFRON}14` : `${SAFFRON}18`}`,
                 }}>
                   {isHindi ? "निःशुल्क" : "Free"}
                 </div>
                 <div style={{
-                  textAlign: "center", fontSize: 10, fontWeight: 800,
-                  color: "#fff", fontFamily: bf, letterSpacing: 0.4,
-                  background: `linear-gradient(135deg, ${SAFFRON}, #D97706)`,
-                  borderRadius: "0 8px 0 0", padding: "7px 4px",
+                  textAlign: "center", fontSize: 9.5, fontWeight: 800,
+                  letterSpacing: 1, color: "#fff", fontFamily: bf, padding: "9px 4px",
+                  background: `linear-gradient(160deg, ${SAFFRON}E8 0%, #C96A00E0 100%)`,
+                  borderLeft: `1px solid ${SAFFRON}45`,
+                  borderBottom: `1px solid ${SAFFRON}50`,
+                  textShadow: "0 1px 4px rgba(0,0,0,0.28)",
+                  letterSpacing: 1.2,
                 }}>
-                  Pro
+                  PRO
                 </div>
               </div>
 
               {/* Rows */}
               {s.proFeatures.map((f, i) => {
                 const isLast = i === s.proFeatures.length - 1;
+                const isEven = i % 2 === 0;
                 return (
                   <div key={i} style={{
-                    display: "grid", gridTemplateColumns: "1fr 80px 80px",
-                    gap: 0,
-                    borderBottom: isLast ? "none" : `1px solid ${th.border}`,
+                    display: "grid", gridTemplateColumns: "1fr 76px 76px",
+                    borderBottom: isLast ? "none" : `1px solid ${dark ? "rgba(255,153,51,0.07)" : "rgba(255,153,51,0.09)"}`,
                   }}>
-                    {/* Feature label — no emoji, clean text */}
+                    {/* Feature label */}
                     <div style={{
-                      padding: "10px 8px 10px 10px",
-                      borderLeft: `1px solid ${th.border2}`,
+                      padding: "11px 10px",
+                      background: dark
+                        ? (isEven ? "rgba(255,255,255,0.015)" : "rgba(255,255,255,0.025)")
+                        : (isEven ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.85)"),
                     }}>
                       <div style={{ fontSize: 11, fontWeight: 700, color: th.text, fontFamily: bf, lineHeight: 1.3 }}>
                         {f.title}
@@ -1135,13 +1208,12 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                     {/* Free cell */}
                     <div style={{
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      padding: "10px 4px",
-                      borderLeft: `1px solid ${th.border2}`,
-                      borderRight: `1px solid ${th.border2}`,
-                      background: dark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
+                      padding: "11px 4px",
+                      borderLeft: `1px solid ${dark ? "rgba(255,153,51,0.08)" : "rgba(255,153,51,0.12)"}`,
+                      background: dark ? "rgba(255,255,255,0.01)" : "rgba(0,0,0,0.015)",
                     }}>
                       <span style={{
-                        fontSize: f.free === "✗" ? 14 : 10,
+                        fontSize: f.free === "✗" ? 13 : 10,
                         fontWeight: 700,
                         color: f.free === "✗" ? th.textLight
                           : f.free === "✓" ? IND_GREEN
@@ -1155,12 +1227,12 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                     {/* Pro cell */}
                     <div style={{
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      padding: "10px 4px",
-                      borderRight: `1px solid ${SAFFRON}30`,
-                      background: dark ? `${SAFFRON}08` : `${SAFFRON}05`,
+                      padding: "11px 4px",
+                      borderLeft: `1px solid ${SAFFRON}28`,
+                      background: dark ? `${SAFFRON}0C` : `${SAFFRON}08`,
                     }}>
                       <span style={{
-                        fontSize: f.pro === "✓" ? 14 : 10,
+                        fontSize: f.pro === "✓" ? 13 : 10,
                         fontWeight: 700,
                         color: f.pro === "✓" ? IND_GREEN : SAFFRON,
                         fontFamily: bf, textAlign: "center", lineHeight: 1.3,
@@ -1171,77 +1243,110 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                   </div>
                 );
               })}
-
-              {/* Bottom border line */}
-              <div style={{
-                height: 1,
-                background: `linear-gradient(to right, ${th.border2}, ${SAFFRON}40, ${th.border2})`,
-                marginBottom: 4,
-              }} />
             </div>
 
-            {/* Pricing */}
-            <div style={{ marginTop: 20 }}>
+            {/* ── PRICING ── */}
+            <div style={{ marginTop: 22, position: "relative" }}>
               <div style={{
-                fontSize: 10, fontWeight: 700, color: th.textSub,
-                letterSpacing: 1.2, textTransform: "uppercase",
-                marginBottom: 10, fontFamily: bf,
+                fontSize: 9, fontWeight: 700, color: th.textSub,
+                letterSpacing: 1.6, textTransform: "uppercase",
+                marginBottom: 12, fontFamily: bf,
               }}>
                 {s.proPricingTitle}
               </div>
+
               <div style={{ display: "flex", gap: 10 }}>
+
                 {/* Monthly */}
                 <div style={{
                   flex: 1,
-                  background: dark ? `${SAFFRON}14` : `${SAFFRON}09`,
-                  border: `1.5px solid ${SAFFRON}30`,
-                  borderRadius: R.md, padding: "12px 14px", textAlign: "center",
+                  background: dark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.75)",
+                  border: `1.5px solid ${SAFFRON}2A`,
+                  borderRadius: R.md, padding: "15px 12px", textAlign: "center",
+                  backdropFilter: "blur(10px)",
+                  boxShadow: dark
+                    ? `inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 12px rgba(0,0,0,0.30)`
+                    : `inset 0 1px 0 rgba(255,255,255,0.90), 0 2px 8px rgba(0,0,0,0.04)`,
                 }}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: SAFFRON, fontFamily: bf }}>
+                  <div style={{
+                    fontSize: 9, fontWeight: 600, color: th.textSub,
+                    letterSpacing: 0.9, textTransform: "uppercase",
+                    marginBottom: 6, fontFamily: bf,
+                  }}>
+                    {isHindi ? "मासिक" : "Monthly"}
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: SAFFRON, fontFamily: bf, letterSpacing: -0.3 }}>
                     {s.proMonthly}
                   </div>
                 </div>
-                {/* Yearly */}
+
+                {/* Yearly — highlighted */}
                 <div style={{
                   flex: 1, position: "relative",
-                  background: `linear-gradient(135deg, ${SAFFRON}22, ${SAFFRON}12)`,
-                  border: `1.5px solid ${SAFFRON}50`,
-                  borderRadius: R.md, padding: "12px 14px", textAlign: "center",
+                  background: dark
+                    ? `linear-gradient(145deg, ${SAFFRON}1C 0%, ${SAFFRON}0E 100%)`
+                    : `linear-gradient(145deg, ${SAFFRON}16 0%, ${SAFFRON}0A 100%)`,
+                  border: `1.5px solid ${SAFFRON}45`,
+                  borderRadius: R.md, padding: "15px 12px", textAlign: "center",
+                  backdropFilter: "blur(10px)",
+                  boxShadow: dark
+                    ? `0 0 0 1px ${SAFFRON}12, 0 4px 20px ${SAFFRON}14, inset 0 1px 0 rgba(255,255,255,0.06)`
+                    : `0 0 0 1px ${SAFFRON}10, 0 4px 20px ${SAFFRON}18, inset 0 1px 0 rgba(255,255,255,0.90)`,
                 }}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: SAFFRON, fontFamily: bf }}>
-                    {s.proYearly}
-                  </div>
+                  {/* Save badge */}
                   <div style={{
-                    position: "absolute", top: -9, right: 10,
-                    background: IND_GREEN, borderRadius: 20, padding: "2px 8px",
+                    position: "absolute", top: -10, right: 10,
+                    background: `linear-gradient(135deg, ${IND_GREEN} 0%, #0A5C04 100%)`,
+                    borderRadius: 20, padding: "2px 9px",
+                    boxShadow: `0 3px 10px ${IND_GREEN}38`,
                   }}>
-                    <span style={{ fontSize: 8, fontWeight: 800, color: "#fff", fontFamily: bf }}>
+                    <span style={{ fontSize: 8, fontWeight: 800, color: "#fff", fontFamily: bf, letterSpacing: 0.3 }}>
                       {s.proSaveLabel}
                     </span>
                   </div>
+                  <div style={{
+                    fontSize: 9, fontWeight: 600, color: th.textSub,
+                    letterSpacing: 0.9, textTransform: "uppercase",
+                    marginBottom: 6, fontFamily: bf,
+                  }}>
+                    {isHindi ? "वार्षिक" : "Yearly"}
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: SAFFRON, fontFamily: bf, letterSpacing: -0.3 }}>
+                    {s.proYearly}
+                  </div>
                 </div>
               </div>
-              <div style={{ fontSize: 10, color: th.textSub, marginTop: 10, lineHeight: 1.6, fontFamily: bf }}>
+
+              <div style={{ fontSize: 10.5, color: th.textSub, marginTop: 11, lineHeight: 1.65, fontFamily: bf }}>
                 {s.proPricingNote}
               </div>
             </div>
 
-            {/* Login required notice */}
+            {/* ── LOGIN NOTICE ── */}
             <div style={{
-              marginTop: 16,
-              background: dark ? `${SAFFRON}10` : `${SAFFRON}07`,
-              border: `1px solid ${SAFFRON}38`,
-              borderRadius: R.md, padding: "13px 14px",
+              marginTop: 18, position: "relative",
+              background: dark ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.72)",
+              border: `1px solid ${SAFFRON}28`,
+              borderLeft: `3px solid ${SAFFRON}CC`,
+              borderRadius: `0 ${R.md}px ${R.md}px 0`,
+              padding: "13px 15px",
+              backdropFilter: "blur(10px)",
+              boxShadow: dark
+                ? `inset 0 1px 0 rgba(255,255,255,0.04)`
+                : `inset 0 1px 0 rgba(255,255,255,0.85), 0 2px 8px rgba(0,0,0,0.03)`,
             }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: SAFFRON, marginBottom: 5, fontFamily: bf }}>
+              <div style={{
+                fontSize: 11.5, fontWeight: 700, color: SAFFRON,
+                marginBottom: 5, fontFamily: bf, letterSpacing: 0.1,
+              }}>
                 {s.proLoginTitle}
               </div>
-              <div style={{ fontSize: 11, color: th.textMid, lineHeight: 1.7, fontFamily: bf }}>
+              <div style={{ fontSize: 11, color: th.textMid, lineHeight: 1.75, fontFamily: bf }}>
                 {s.proLoginNotice}
               </div>
             </div>
 
-          </Card>
+          </div>
         </div>
 
         {/* ── SIGN-IN BENEFITS ─────────────────────────────────────────── */}
