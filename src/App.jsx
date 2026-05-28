@@ -4958,76 +4958,89 @@ export default function YojanaSahay(){
           display:flex;flex-direction:column;align-items:center;justify-content:center;
           cursor:pointer;flex:1;-webkit-tap-highlight-color:transparent;
           position:relative;padding:5px 2px 4px;
-          /* staggered entrance */
-          opacity:0;transform:translateY(10px);
-          animation:navItemIn 0.42s cubic-bezier(0.22,1,0.36,1) forwards;
+          opacity:0;transform:translateY(6px);
+          animation:navItemIn 0.55s cubic-bezier(0.16,1,0.3,1) forwards;
         }
-        .bn:nth-child(2){animation-delay:0.04s;}
-        .bn:nth-child(3){animation-delay:0.08s;}
-        .bn:nth-child(4){animation-delay:0.12s;}
-        .bn:nth-child(5){animation-delay:0.16s;}
-        .bn:nth-child(6){animation-delay:0.20s;}
+        .bn:nth-child(2){animation-delay:0.03s;}
+        .bn:nth-child(3){animation-delay:0.06s;}
+        .bn:nth-child(4){animation-delay:0.09s;}
+        .bn:nth-child(5){animation-delay:0.12s;}
+        .bn:nth-child(6){animation-delay:0.15s;}
         @keyframes navItemIn{
-          from{opacity:0;transform:translateY(10px);}
+          from{opacity:0;transform:translateY(6px);}
           to{opacity:1;transform:translateY(0);}
         }
-        /* Pill — expanding on active */
+        /* Pill — NO padding transition (causes reflow/jump).
+           Use scaleX on a pseudo-width via transform instead.
+           Pill stays same padding always; width controlled by label visibility. */
         .bn-pill{
           display:flex;flex-direction:row;align-items:center;justify-content:center;
           gap:0px;
-          padding:7px 12px;border-radius:50px;
+          padding:8px 13px;border-radius:50px;
           transition:
-            background 0.32s cubic-bezier(0.22,1,0.36,1),
-            box-shadow 0.32s cubic-bezier(0.22,1,0.36,1),
-            border-color 0.32s ease,
-            padding 0.32s cubic-bezier(0.22,1,0.36,1),
-            transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
-          will-change:transform,background;
+            background 0.38s cubic-bezier(0.16,1,0.3,1),
+            box-shadow 0.38s cubic-bezier(0.16,1,0.3,1),
+            border-color 0.38s ease,
+            gap 0.38s cubic-bezier(0.16,1,0.3,1);
+          will-change:background,box-shadow;
           border:1px solid transparent;
           overflow:hidden;
-          max-width:100%;
         }
         .bn-pill.active{
-          background:linear-gradient(145deg,rgba(255,153,51,0.16) 0%,rgba(255,107,0,0.10) 100%);
-          box-shadow:0 2px 16px rgba(255,153,51,0.20), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(255,153,51,0.12);
-          border-color:rgba(255,153,51,0.22);
-          padding:7px 16px;
-          gap:6px;
+          background:linear-gradient(145deg,rgba(255,153,51,0.15) 0%,rgba(255,107,0,0.09) 100%);
+          box-shadow:0 2px 14px rgba(255,153,51,0.18), inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(255,153,51,0.10);
+          border-color:rgba(255,153,51,0.20);
+          gap:7px;
         }
-        .bn:active .bn-pill{transform:scale(0.87);transition:transform 0.1s ease;}
-        /* Icon spring */
+        /* Tap feedback — gentle, no jump */
+        .bn:active .bn-pill{
+          transform:scale(0.92);
+          transition:transform 0.12s cubic-bezier(0.16,1,0.3,1);
+        }
+        /* Icon — NO translateY, only gentle scale */
         .bn-icon-wrap{
           display:flex;align-items:center;justify-content:center;
           flex-shrink:0;
-          transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1),filter 0.22s;
+          transition:filter 0.28s ease;
+          will-change:filter;
         }
-        .bn-icon-wrap.popping{animation:navIconPop 0.40s cubic-bezier(0.34,1.56,0.64,1) forwards;}
+        .bn-icon-wrap.popping{animation:navIconPop 0.45s cubic-bezier(0.16,1,0.3,1) forwards;}
         @keyframes navIconPop{
-          0%  {transform:scale(1)   translateY(0px);}
-          30% {transform:scale(1.35) translateY(-4px);}
-          60% {transform:scale(0.90) translateY(1px);}
-          80% {transform:scale(1.06) translateY(-1px);}
-          100%{transform:scale(1)   translateY(0px);}
+          0%  {transform:scale(1);}
+          40% {transform:scale(1.18);}
+          70% {transform:scale(0.94);}
+          100%{transform:scale(1);}
         }
         /* Chakra */
         @keyframes navChakraSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        .bn-chakra-active{animation:navChakraSpin 2.8s linear infinite;}
-        /* Label — only shown on active, slides+fades in */
+        .bn-chakra-active{animation:navChakraSpin 3s linear infinite;}
+        /* Label — clip-path fade instead of max-width (no reflow, truly smooth) */
         .bn-label{
-          font-size:10.5px;font-weight:800;letter-spacing:0.15px;white-space:nowrap;
-          max-width:0;overflow:hidden;opacity:0;
-          transition:max-width 0.32s cubic-bezier(0.22,1,0.36,1), opacity 0.22s ease, color 0.22s;
+          font-size:10.5px;font-weight:800;letter-spacing:0.1px;white-space:nowrap;
+          overflow:hidden;
+          /* clip-path slides the label in from left, opacity fades it */
+          clip-path:inset(0 100% 0 0);
+          opacity:0;
+          width:0;
+          transition:
+            clip-path 0.42s cubic-bezier(0.16,1,0.3,1),
+            opacity 0.30s ease,
+            width 0.42s cubic-bezier(0.16,1,0.3,1);
         }
-        .bn-label.active{max-width:80px;opacity:1;}
-        /* Glow dot */
+        .bn-label.active{
+          clip-path:inset(0 0% 0 0);
+          opacity:1;
+          width:52px;
+        }
+        /* Glow dot — fades in softly, no spring bounce */
         .bn-dot{
-          width:3.5px;height:3.5px;border-radius:50%;
+          width:3px;height:3px;border-radius:50%;
           background:linear-gradient(135deg,#FF9933,#FF6B00);
           position:absolute;bottom:1px;left:50%;transform:translateX(-50%);
-          box-shadow:0 0 5px rgba(255,153,51,0.9),0 0 10px rgba(255,107,0,0.5);
-          animation:dotPop 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+          box-shadow:0 0 6px rgba(255,153,51,0.85),0 0 12px rgba(255,107,0,0.4);
+          animation:dotFadeIn 0.35s ease forwards;
         }
-        @keyframes dotPop{from{transform:translateX(-50%) scale(0);}to{transform:translateX(-50%) scale(1);}}
+        @keyframes dotFadeIn{from{opacity:0;transform:translateX(-50%) scale(0.3);}to{opacity:1;transform:translateX(-50%) scale(1);}}
 
         .cp{animation:cp 2.5s ease-in-out infinite;}
         @keyframes cp{0%,100%{box-shadow:0 6px 24px rgba(19,136,8,0.3)}50%{box-shadow:0 6px 32px rgba(19,136,8,0.55)}}
