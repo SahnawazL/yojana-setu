@@ -19,7 +19,7 @@ import {
   getSchemesForCategory,
 } from "./schemesData.js";
 import { auth, db } from "./firebase.js";
-import { RecaptchaVerifier, signInWithPhoneNumber, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { RecaptchaVerifier, signInWithPhoneNumber, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp, collection, addDoc } from "firebase/firestore";
 import AIChat from "./AIChat.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
@@ -359,7 +359,10 @@ const PT = {
     passwordLabel:"Password",passwordPh:"Min. 6 characters",
     signInTab:"Sign In",createAcctTab:"Create Account",
     signInBtn:"Sign In",createAcctBtn:"Create Account",
-    forgotHint:"Use 'Create Account' if you're new here",
+    forgotHint:"New here? Use 'Create Account' to register.",
+    forgotPassword:"Forgot Password?",
+    forgotSent:"Reset link sent. Please check your email inbox.",
+    forgotFail:"Could not send reset email. Please check the address.",
     weakPassword:"Password must be at least 6 characters",
     invalidEmail:"Please enter a valid email address",
     darkLabel:"Dark Mode",
@@ -470,7 +473,10 @@ const PT = {
     passwordLabel:"पासवर्ड",passwordPh:"कम से कम 6 अक्षर",
     signInTab:"साइन इन",createAcctTab:"अकाउंट बनाएं",
     signInBtn:"साइन इन करें",createAcctBtn:"अकाउंट बनाएं",
-    forgotHint:"नए हैं? 'अकाउंट बनाएं' चुनें",
+    forgotHint:"नए हैं? 'अकाउंट बनाएं' से पंजीकरण करें।",
+    forgotPassword:"पासवर्ड भूल गए?",
+    forgotSent:"रीसेट लिंक भेज दिया गया। अपना ईमेल इनबॉक्स जांचें।",
+    forgotFail:"रीसेट ईमेल नहीं भेजा जा सका। पता जांचें।",
     weakPassword:"पासवर्ड कम से कम 6 अक्षर का होना चाहिए",
     invalidEmail:"कृपया सही ईमेल दर्ज करें",
     darkLabel:"डार्क मोड",
@@ -2020,6 +2026,8 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   const [showPassword,setShowPassword]=useState(false);
   const [emailTab,setEmailTab]=useState("signin"); // "signin" | "signup"
   const [emailLoading,setEmailLoading]=useState(false);
+  const [forgotLoading,setForgotLoading]=useState(false);
+  const [forgotMsg,setForgotMsg]=useState(""); // "" | "sent" | "error"
   const [showReport,setShowReport]=useState(false);
   const [reportTab,setReportTab]=useState("my"); // "my" | "new"
   const [showAbout,setShowAbout]=useState(false);
@@ -2351,6 +2359,18 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     }finally{setEmailLoading(false);}
   };
 
+  // ── Forgot Password ────────────────────────────────────────────────────────
+  const handleForgotPassword=async()=>{
+    if(!isValidEmail(emailInput)){setAuthError(pt.invalidEmail);return;}
+    setForgotLoading(true);setForgotMsg("");setAuthError("");
+    try{
+      await sendPasswordResetEmail(auth,emailInput.trim());
+      setForgotMsg("sent");
+    }catch{
+      setForgotMsg("error");
+    }finally{setForgotLoading(false);}
+  };
+
   // Matched scheme count for dashboard
   const matchedCount=useMemo(()=>{
     if(!profile)return 0;
@@ -2522,11 +2542,41 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
               }
             </div>
           </div>
-          {/* Hint text */}
+          {/* Forgot Password + new account hint */}
           {emailTab==="signin"&&(
-            <div style={{marginTop:7,padding:"7px 10px",background:dark?"rgba(255,153,51,0.08)":"#FFF7ED",borderRadius:8,border:`1px solid ${dark?"rgba(255,153,51,0.15)":"rgba(255,153,51,0.25)"}`,display:"flex",alignItems:"center",gap:5}}>
-              <span style={{fontSize:12}}>💡</span>
-              <span style={{fontSize:10.5,color:dark?"#CC8844":"#92400E",fontFamily:bf,lineHeight:1.4}}>{pt.forgotHint}</span>
+            <div style={{marginTop:8,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
+              {/* New-account hint — professional, no emoji */}
+              <div style={{fontSize:10.5,color:dark?"#666":"#999",fontFamily:bf,lineHeight:1.4}}>
+                {pt.forgotHint}
+              </div>
+              {/* Forgot Password link */}
+              <div
+                onClick={()=>{
+                  if(forgotLoading)return;
+                  haptic(30);
+                  handleForgotPassword();
+                }}
+                style={{
+                  fontSize:11,fontWeight:700,fontFamily:bf,cursor:"pointer",
+                  color:forgotLoading?"#aaa":(dark?"#6B90FF":"#003580"),
+                  letterSpacing:0.1,userSelect:"none",
+                  opacity:forgotLoading?0.6:1,
+                  textDecoration:"underline",textUnderlineOffset:2,
+                  WebkitTapHighlightColor:"transparent",
+                }}>
+                {forgotLoading?(isHindi?"भेज रहे हैं...":"Sending…"):pt.forgotPassword}
+              </div>
+            </div>
+          )}
+          {/* Forgot password feedback */}
+          {emailTab==="signin"&&forgotMsg==="sent"&&(
+            <div style={{marginTop:7,padding:"8px 12px",background:dark?"rgba(19,136,8,0.12)":"#F0FDF4",borderRadius:8,border:`1px solid ${dark?"rgba(19,136,8,0.25)":"#BBF7D0"}`}}>
+              <span style={{fontSize:10.5,color:dark?"#34D058":"#166534",fontFamily:bf,lineHeight:1.4}}>{pt.forgotSent}</span>
+            </div>
+          )}
+          {emailTab==="signin"&&forgotMsg==="error"&&(
+            <div style={{marginTop:7,padding:"8px 12px",background:"#FFF5F5",borderRadius:8,border:"1px solid #FED7D7"}}>
+              <span style={{fontSize:10.5,color:"#e53e3e",fontFamily:bf,lineHeight:1.4}}>{pt.forgotFail}</span>
             </div>
           )}
           {emailTab==="signup"&&passwordInput&&!isValidPassword(passwordInput)&&(
