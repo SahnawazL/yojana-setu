@@ -2028,6 +2028,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   const [emailLoading,setEmailLoading]=useState(false);
   const [forgotLoading,setForgotLoading]=useState(false);
   const [forgotMsg,setForgotMsg]=useState(""); // "" | "sent" | "error"
+  const [showForgot,setShowForgot]=useState(false); // only reveal after a wrong-password attempt
   const [showReport,setShowReport]=useState(false);
   const [reportTab,setReportTab]=useState("my"); // "my" | "new"
   const [showAbout,setShowAbout]=useState(false);
@@ -2331,8 +2332,10 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       const code=err.code||"";
       if(code==="auth/user-not-found"||code==="auth/wrong-password"||code==="auth/invalid-credential"){
         setAuthError(isHindi?"गलत ईमेल या पासवर्ड। फिर से जाँचें।":"Wrong email or password. Please check and try again.");
+        setShowForgot(true); // ← reveal "Forgot Password?" only after a failed attempt
       }else if(code==="auth/too-many-requests"){
         setAuthError(isHindi?"बहुत अधिक प्रयास। कुछ देर बाद कोशिश करें।":"Too many attempts. Please try again later.");
+        setShowForgot(true);
       }else{
         setAuthError(err.message||"Sign in failed. Please try again.");
       }
@@ -2366,8 +2369,18 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     try{
       await sendPasswordResetEmail(auth,emailInput.trim());
       setForgotMsg("sent");
-    }catch{
-      setForgotMsg("error");
+    }catch(err){
+      const code=err?.code||"";
+      console.error("Password reset error:",code,err?.message);
+      // auth/user-not-found → show success anyway (security: don't reveal existence)
+      if(code==="auth/user-not-found"){
+        setForgotMsg("sent");
+      }else if(code==="auth/invalid-email"){
+        setAuthError(pt.invalidEmail);
+      }else{
+        // Likely cause: deployment domain not added to Firebase → Auth → Settings → Authorized domains
+        setForgotMsg("error");
+      }
     }finally{setForgotLoading(false);}
   };
 
@@ -2481,7 +2494,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           {[{key:"signin",label:pt.signInTab},{key:"signup",label:pt.createAcctTab}].map(tab=>{
             const active=emailTab===tab.key;
             return(
-              <div key={tab.key} onClick={()=>{haptic();setEmailTab(tab.key);setAuthError("");}}
+              <div key={tab.key} onClick={()=>{haptic();setEmailTab(tab.key);setAuthError("");setShowForgot(false);setForgotMsg("");}}
                 style={{flex:1,padding:"9px 6px",borderRadius:10,textAlign:"center",fontSize:12.5,fontWeight:active?700:500,
                   background:active?(dark?"#1c1c1e":"#fff"):"transparent",
                   color:active?(dark?"#f0f0f0":"#1a1a1a"):(dark?"#666":"#aaa"),
@@ -2503,7 +2516,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           <input
             type="email" inputMode="email" autoComplete="email"
             value={emailInput}
-            onChange={e=>{setEmailInput(e.target.value);setAuthError("");}}
+            onChange={e=>{setEmailInput(e.target.value);setAuthError("");setShowForgot(false);setForgotMsg("");}}
             placeholder={pt.emailPh}
             style={{
               width:"100%",padding:"13px 14px",borderRadius:13,
@@ -2549,7 +2562,8 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
               <div style={{fontSize:10.5,color:dark?"#666":"#999",fontFamily:bf,lineHeight:1.4}}>
                 {pt.forgotHint}
               </div>
-              {/* Forgot Password link */}
+              {/* Forgot Password link — only shown after a failed sign-in attempt */}
+              {showForgot&&(
               <div
                 onClick={()=>{
                   if(forgotLoading)return;
@@ -2566,6 +2580,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                 }}>
                 {forgotLoading?(isHindi?"भेज रहे हैं...":"Sending…"):pt.forgotPassword}
               </div>
+              )}
             </div>
           )}
           {/* Forgot password feedback */}
