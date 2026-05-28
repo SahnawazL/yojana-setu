@@ -12,6 +12,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { sendMessage } from "./groqClient.js";
+import aiAvatar from "./ai-avatar.webp";
 
 // ─── SOUND EFFECTS (Web Audio API — no files, no loading) ────────────────────
 // Each function creates a one-shot AudioContext, plays a tone, then closes it.
@@ -363,8 +364,10 @@ function TypingIndicator({ dark }) {
       <div className="ai-avatar-pulse" style={{
         width:32, height:32, borderRadius:"50%", flexShrink:0,
         background:"linear-gradient(135deg,#FF9933 0%,#003580 100%)",
-        display:"flex", alignItems:"center", justifyContent:"center", fontSize:14,
-      }}>🤖</div>
+        overflow:"hidden",
+      }}>
+        <img src={aiAvatar} alt="AI" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+      </div>
       <div style={{
         background: th.card,
         border:`1.5px solid ${th.border2}`,
@@ -861,9 +864,10 @@ function ChatBubble({ msg, lang, dark, isNew }) {
         {!isUser && (
           <div style={{
             width:28, height:28, borderRadius:"50%", flexShrink:0,
-            background:"linear-gradient(135deg,#FF9933 0%,#003580 100%)",
-            display:"flex", alignItems:"center", justifyContent:"center", fontSize:13,
-          }}>🤖</div>
+            overflow:"hidden",
+          }}>
+            <img src={aiAvatar} alt="AI" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+          </div>
         )}
         <div style={{
           maxWidth:"88%",
@@ -1030,9 +1034,10 @@ function WelcomeScreen({ lang, dark, onSuggest, profile }) {
       <div style={{ display:"flex", alignItems:"flex-end", gap:8, marginBottom:12 }}>
         <div style={{
           width:32, height:32, borderRadius:"50%", flexShrink:0,
-          background:"linear-gradient(135deg,#FF9933 0%,#003580 100%)",
-          display:"flex", alignItems:"center", justifyContent:"center", fontSize:14,
-        }}>🤖</div>
+          overflow:"hidden",
+        }}>
+          <img src={aiAvatar} alt="AI" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+        </div>
         <div style={{
           background:th.card, border:`1.5px solid ${th.border2}`,
           borderRadius:"18px 18px 18px 4px", padding:"13px 15px",
@@ -1305,10 +1310,12 @@ export default function AIChat({ lang="en", dark=false, profile=null, uid=null }
         <div style={{ display:"flex", alignItems:"center", gap:13 }}>
           <div style={{
             width:46, height:46, borderRadius:14, flexShrink:0,
-            background:"rgba(255,255,255,0.18)", border:"1.5px solid rgba(255,255,255,0.35)",
-            display:"flex", alignItems:"center", justifyContent:"center",
-            fontSize:22, boxShadow:"0 4px 12px rgba(0,0,0,0.15)",
-          }}>🤖</div>
+            overflow:"hidden",
+            border:"1.5px solid rgba(255,255,255,0.35)",
+            boxShadow:"0 4px 12px rgba(0,0,0,0.15)",
+          }}>
+            <img src={aiAvatar} alt="AI" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+          </div>
           <div style={{ flex:1 }}>
             <div style={{ color:"#fff", fontSize:17, fontWeight:800, lineHeight:1.2 }}>
               {isHindi ? "AI सहायक" : "AI Assistant"}
