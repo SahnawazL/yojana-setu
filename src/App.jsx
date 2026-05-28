@@ -1956,13 +1956,7 @@ function EligibilityChecker({lang,onClose,prefilledAnswers,dark=false}){
 // ─── SHARED PROFILE SUB-COMPONENTS (top-level — prevents focus loss on re-render) ─
 function TriHeader({children,bg="linear-gradient(160deg,#FF9933 0%,#FF8C00 35%,#003580 100%)"}){
   return(
-    <div style={{background:bg,paddingTop:58,paddingBottom:36,paddingLeft:24,paddingRight:24,position:"relative",overflow:"hidden",flexShrink:0}}>
-      {/* Indian tricolor stripe at very top */}
-      <div style={{position:"absolute",top:0,left:0,right:0,height:5,display:"flex",zIndex:5,pointerEvents:"none"}}>
-        <div style={{flex:1,background:"#FF9933"}}/>
-        <div style={{flex:1,background:"rgba(255,255,255,0.85)"}}/>
-        <div style={{flex:1,background:"#138808"}}/>
-      </div>
+    <div style={{background:bg,paddingTop:44,paddingBottom:24,paddingLeft:24,paddingRight:24,position:"relative",overflow:"hidden",flexShrink:0}}>
       {/* Large Ashoka Chakra watermark — absolute positioned top-right */}
       <div style={{position:"absolute",right:-18,top:12,opacity:0.08,pointerEvents:"none"}}>
         <AshokaChakra size={150} color="#fff"/>
@@ -2391,7 +2385,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
             🇮🇳&nbsp; Yojana Sahay · Government of India
           </div>
         </div>
-        <div style={{color:"rgba(255,255,255,0.84)",fontSize:12.5,lineHeight:1.65,fontFamily:bf,marginBottom:16}}>{pt.signInSub}</div>
+        <div style={{color:"rgba(255,255,255,0.84)",fontSize:12.5,lineHeight:1.65,fontFamily:bf,marginBottom:12}}>{pt.signInSub}</div>
 
         {/* ── What you unlock — 2×2 benefit grid ── */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
@@ -2399,7 +2393,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
             <div key={i} style={{
               background:"rgba(0,0,0,0.20)",
               border:"1px solid rgba(255,255,255,0.15)",
-              borderRadius:13,padding:"11px 12px 11px",
+              borderRadius:12,padding:"9px 11px",
               backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",
             }}>
               <div style={{fontSize:10.5,fontWeight:700,color:"#fff",lineHeight:1.3,fontFamily:bf,marginBottom:4}}>{b.title}</div>
