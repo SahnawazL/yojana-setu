@@ -258,7 +258,114 @@ const GLOBAL_CSS = `
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+@keyframes avatar-preview-in {
+  0%   { opacity:0; transform:scale(0.55) translateY(20px); }
+  60%  { opacity:1; transform:scale(1.04) translateY(-4px); }
+  80%  { transform:scale(0.97) translateY(2px); }
+  100% { opacity:1; transform:scale(1) translateY(0); }
+}
+@keyframes avatar-preview-out {
+  0%   { opacity:1; transform:scale(1); }
+  100% { opacity:0; transform:scale(0.6) translateY(16px); }
+}
+@keyframes avatar-overlay-in {
+  from { opacity:0; backdrop-filter:blur(0px); }
+  to   { opacity:1; backdrop-filter:blur(18px); }
+}
+@keyframes avatar-overlay-out {
+  from { opacity:1; }
+  to   { opacity:0; }
+}
+@keyframes border-rotate {
+  from { transform:rotate(0deg); }
+  to   { transform:rotate(360deg); }
+}
+@keyframes avatar-hint-pulse {
+  0%,100% { opacity:0.55; transform:scale(1); }
+  50%     { opacity:0.9;  transform:scale(1.06); }
+}
 `;
+
+// ─── AVATAR PREVIEW MODAL ────────────────────────────────────────────────────
+// Tap the avatar in the header → centered modal with animated rainbow border.
+// Tap or hold anywhere (overlay or image) to dismiss.
+function AvatarPreviewModal({ onClose }) {
+  const [closing, setClosing] = useState(false);
+
+  const dismiss = useCallback(() => {
+    if (closing) return;
+    setClosing(true);
+    setTimeout(onClose, 260);
+  }, [closing, onClose]);
+
+  // Long-press / hold also dismisses (pointerup after pointerdown)
+  const holdTimer = useRef(null);
+  const onPointerDown = () => {
+    holdTimer.current = setTimeout(dismiss, 400);
+  };
+  const onPointerUp = () => {
+    clearTimeout(holdTimer.current);
+  };
+
+  return (
+    <div
+      onClick={dismiss}
+      onPointerDown={onPointerDown}
+      onPointerUp={onPointerUp}
+      style={{
+        position:"fixed", inset:0, zIndex:9999,
+        display:"flex", alignItems:"center", justifyContent:"center",
+        background:"rgba(0,0,0,0.62)",
+        animation: closing ? "avatar-overlay-out 0.26s ease-out forwards"
+                           : "avatar-overlay-in 0.28s ease-out forwards",
+        WebkitBackdropFilter:"blur(18px)",
+        backdropFilter:"blur(18px)",
+        cursor:"pointer",
+      }}
+    >
+      {/* Outer rotating rainbow ring */}
+      <div style={{
+        position:"relative",
+        animation: closing ? "avatar-preview-out 0.26s ease-in forwards"
+                           : "avatar-preview-in 0.38s cubic-bezier(0.34,1.56,0.64,1) forwards",
+      }}>
+        {/* Spinning gradient ring behind the image */}
+        <div style={{
+          position:"absolute", inset:-5, borderRadius:"50%",
+          background:"conic-gradient(from 0deg, #FF9933, #fff, #138808, #003580, #6366f1, #FF9933)",
+          animation:"border-rotate 2.4s linear infinite",
+          zIndex:0,
+        }} />
+        {/* White halo separating ring from image */}
+        <div style={{
+          position:"absolute", inset:-2, borderRadius:"50%",
+          background:"rgba(255,255,255,0.18)",
+          zIndex:1,
+        }} />
+        {/* Avatar image */}
+        <div style={{
+          position:"relative", zIndex:2,
+          width:220, height:220, borderRadius:"50%",
+          overflow:"hidden",
+          boxShadow:"0 8px 48px rgba(0,0,0,0.55), 0 0 0 3px rgba(255,255,255,0.25)",
+        }}>
+          <img src={aiAvatar} alt="AI Avatar"
+            style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+          />
+        </div>
+        {/* "Hold to dismiss" hint */}
+        <div style={{
+          position:"absolute", bottom:-38, left:"50%", transform:"translateX(-50%)",
+          color:"rgba(255,255,255,0.7)", fontSize:12, whiteSpace:"nowrap",
+          animation:"avatar-hint-pulse 1.8s ease-in-out infinite",
+          letterSpacing:0.4,
+        }}>
+          Tap anywhere to close
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── ASHOK CHAKRA SVG ────────────────────────────────────────────────────────
 // Real 24-spoke Dharma Chakra — navy blue on white, exactly like the Indian flag.
@@ -1142,6 +1249,7 @@ export default function AIChat({ lang="en", dark=false, profile=null, uid=null }
   const [secondsLeft,  setSecondsLeft]  = useState(0);
   const [totalSeconds, setTotalSeconds] = useState(0);
   const [justUnlocked, setJustUnlocked] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(false);
 
   const cooldownRef          = useRef(null);
   const bottomRef            = useRef(null);
@@ -1298,6 +1406,9 @@ export default function AIChat({ lang="en", dark=false, profile=null, uid=null }
       background:th.appBg, overflow:"hidden", fontFamily:bf,
     }}>
       <style>{GLOBAL_CSS}</style>
+      {avatarPreview && (
+        <AvatarPreviewModal onClose={() => setAvatarPreview(false)} />
+      )}
 
       {/* HEADER */}
       <div style={{
@@ -1308,12 +1419,20 @@ export default function AIChat({ lang="en", dark=false, profile=null, uid=null }
         borderBottom:"1px solid rgba(255,255,255,0.12)",
       }}>
         <div style={{ display:"flex", alignItems:"center", gap:13 }}>
-          <div style={{
-            width:46, height:46, borderRadius:14, flexShrink:0,
-            overflow:"hidden",
-            border:"1.5px solid rgba(255,255,255,0.35)",
-            boxShadow:"0 4px 12px rgba(0,0,0,0.15)",
-          }}>
+          <div
+            onClick={() => setAvatarPreview(true)}
+            style={{
+              width:46, height:46, borderRadius:14, flexShrink:0,
+              overflow:"hidden",
+              border:"1.5px solid rgba(255,255,255,0.35)",
+              boxShadow:"0 4px 12px rgba(0,0,0,0.15)",
+              cursor:"pointer",
+              transition:"transform 0.15s, box-shadow 0.15s",
+            }}
+            onPointerDown={e => e.currentTarget.style.transform="scale(0.93)"}
+            onPointerUp={e => e.currentTarget.style.transform="scale(1)"}
+            onPointerLeave={e => e.currentTarget.style.transform="scale(1)"}
+          >
             <img src={aiAvatar} alt="AI" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
           </div>
           <div style={{ flex:1 }}>
