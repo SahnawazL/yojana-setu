@@ -1054,77 +1054,43 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
 
         {/* ── YOJANASAHAY PRO — COMING SOON ───────────────────────────── */}
         <div className="ys-card">
-          <div style={{
-            borderRadius: R.xl,
-            padding: "24px 20px",
-            background: dark
-              ? "linear-gradient(135deg, rgba(255,153,51,0.10) 0%, rgba(217,119,6,0.08) 100%)"
-              : "linear-gradient(135deg, rgba(255,153,51,0.07) 0%, rgba(255,200,80,0.04) 100%)",
-            border: `1.5px solid ${SAFFRON}35`,
-            boxShadow: dark ? "none" : `0 4px 24px ${SAFFRON}10`,
-            position: "relative", overflow: "hidden",
-          }}>
+          <Card dark={dark} accentColor={SAFFRON}>
+            <SectionHeader
+              title={s.proTitle}
+              eyebrow={s.proEyebrow}
+              accent={SAFFRON}
+              dark={dark}
+              bf={bf}
+            />
 
-            {/* Glow blob */}
+            {/* Subtitle */}
             <div style={{
-              position: "absolute", top: -60, right: -50,
-              width: 180, height: 180, borderRadius: "50%",
-              background: `radial-gradient(circle, ${SAFFRON}18 0%, transparent 70%)`,
-              pointerEvents: "none",
-            }} />
-
-            {/* Header row */}
-            <div style={{
-              display: "flex", alignItems: "flex-start",
-              justifyContent: "space-between", marginBottom: 14, position: "relative",
+              fontSize: 11, fontWeight: 600, color: th.textSub,
+              marginTop: -10, marginBottom: 16, fontFamily: bf,
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{
-                  width: 46, height: 46, borderRadius: R.md, flexShrink: 0,
-                  background: `linear-gradient(135deg, ${SAFFRON}, #D97706)`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 20, boxShadow: `0 6px 18px ${SAFFRON}40`,
-                }}>⚡</div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: th.text, fontFamily: bf, letterSpacing: -0.2 }}>
-                    {s.proTitle}
-                  </div>
-                  <div style={{ fontSize: 10, color: th.textSub, marginTop: 2, fontFamily: bf }}>
-                    {s.proSubtitle}
-                  </div>
-                </div>
-              </div>
-              {/* Coming Soon badge */}
-              <div style={{
-                background: `linear-gradient(135deg, ${SAFFRON}, #D97706)`,
-                borderRadius: 20, padding: "4px 10px", flexShrink: 0,
-                boxShadow: `0 3px 10px ${SAFFRON}40`,
-              }}>
-                <span style={{
-                  fontSize: 8, fontWeight: 800, color: "#fff",
-                  letterSpacing: 1, textTransform: "uppercase", fontFamily: bf,
-                }}>
-                  {s.proEyebrow}
-                </span>
-              </div>
+              {s.proSubtitle}
             </div>
 
-            <div style={{ height: 1, background: `${SAFFRON}28`, marginBottom: 14 }} />
-
             {/* Body text */}
-            <div style={{ fontSize: 12, color: th.textMid, lineHeight: 1.75, marginBottom: 18, fontFamily: bf, position: "relative" }}>
+            <div style={{ fontSize: 13, color: th.textMid, lineHeight: 1.85, marginBottom: 20, fontFamily: bf }}>
               {s.proBody}
             </div>
 
             {/* Free vs Pro comparison table */}
-            <div style={{ position: "relative" }}>
+            <div>
 
               {/* Column headers */}
               <div style={{
                 display: "grid", gridTemplateColumns: "1fr 80px 80px",
-                gap: 0, marginBottom: 8,
+                gap: 0, marginBottom: 0,
               }}>
-                <div />
+                <div style={{
+                  fontSize: 9, fontWeight: 700, color: th.textSub, fontFamily: bf,
+                  letterSpacing: 0.4, padding: "7px 8px 7px 10px",
+                  borderBottom: `1px solid ${th.border2}`,
+                }}>
+                  {isHindi ? "सुविधा" : "Feature"}
+                </div>
                 <div style={{
                   textAlign: "center", fontSize: 10, fontWeight: 800,
                   color: th.textSub, fontFamily: bf, letterSpacing: 0.4,
@@ -1140,7 +1106,7 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                   background: `linear-gradient(135deg, ${SAFFRON}, #D97706)`,
                   borderRadius: "0 8px 0 0", padding: "7px 4px",
                 }}>
-                  Pro ⚡
+                  Pro
                 </div>
               </div>
 
@@ -1153,21 +1119,16 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                     gap: 0,
                     borderBottom: isLast ? "none" : `1px solid ${th.border}`,
                   }}>
-                    {/* Feature label */}
+                    {/* Feature label — no emoji, clean text */}
                     <div style={{
-                      display: "flex", alignItems: "center", gap: 9,
-                      padding: "10px 8px 10px 0",
+                      padding: "10px 8px 10px 10px",
                       borderLeft: `1px solid ${th.border2}`,
-                      paddingLeft: 10,
                     }}>
-                      <span style={{ fontSize: 15, flexShrink: 0 }}>{f.icon}</span>
-                      <div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: th.text, fontFamily: bf, lineHeight: 1.3 }}>
-                          {f.title}
-                        </div>
-                        <div style={{ fontSize: 9.5, color: th.textSub, fontFamily: bf, marginTop: 2, lineHeight: 1.4 }}>
-                          {f.desc}
-                        </div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: th.text, fontFamily: bf, lineHeight: 1.3 }}>
+                        {f.title}
+                      </div>
+                      <div style={{ fontSize: 9.5, color: th.textSub, fontFamily: bf, marginTop: 2, lineHeight: 1.4 }}>
+                        {f.desc}
                       </div>
                     </div>
 
@@ -1180,7 +1141,7 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                       background: dark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
                     }}>
                       <span style={{
-                        fontSize: f.free === "✗" ? 16 : 10,
+                        fontSize: f.free === "✗" ? 14 : 10,
                         fontWeight: 700,
                         color: f.free === "✗" ? th.textLight
                           : f.free === "✓" ? IND_GREEN
@@ -1199,7 +1160,7 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                       background: dark ? `${SAFFRON}08` : `${SAFFRON}05`,
                     }}>
                       <span style={{
-                        fontSize: f.pro === "✓" ? 16 : 10,
+                        fontSize: f.pro === "✓" ? 14 : 10,
                         fontWeight: 700,
                         color: f.pro === "✓" ? IND_GREEN : SAFFRON,
                         fontFamily: bf, textAlign: "center", lineHeight: 1.3,
@@ -1220,7 +1181,7 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
             </div>
 
             {/* Pricing */}
-            <div style={{ marginTop: 20, position: "relative" }}>
+            <div style={{ marginTop: 20 }}>
               <div style={{
                 fontSize: 10, fontWeight: 700, color: th.textSub,
                 letterSpacing: 1.2, textTransform: "uppercase",
@@ -1267,24 +1228,20 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
 
             {/* Login required notice */}
             <div style={{
-              marginTop: 16, position: "relative",
+              marginTop: 16,
               background: dark ? `${SAFFRON}10` : `${SAFFRON}07`,
               border: `1px solid ${SAFFRON}38`,
               borderRadius: R.md, padding: "13px 14px",
-              display: "flex", gap: 10, alignItems: "flex-start",
             }}>
-              <div style={{ fontSize: 18, flexShrink: 0, paddingTop: 1 }}>🔑</div>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: SAFFRON, marginBottom: 4, fontFamily: bf }}>
-                  {s.proLoginTitle}
-                </div>
-                <div style={{ fontSize: 11, color: th.textMid, lineHeight: 1.7, fontFamily: bf }}>
-                  {s.proLoginNotice}
-                </div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: SAFFRON, marginBottom: 5, fontFamily: bf }}>
+                {s.proLoginTitle}
+              </div>
+              <div style={{ fontSize: 11, color: th.textMid, lineHeight: 1.7, fontFamily: bf }}>
+                {s.proLoginNotice}
               </div>
             </div>
 
-          </div>
+          </Card>
         </div>
 
         {/* ── SIGN-IN BENEFITS ─────────────────────────────────────────── */}
