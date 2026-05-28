@@ -2538,7 +2538,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
               autoComplete={emailTab==="signin"?"current-password":"new-password"}
               value={passwordInput}
               onChange={e=>{setPasswordInput(e.target.value);setAuthError("");}}
-              placeholder={pt.passwordPh}
+              placeholder={emailTab==="signup"?pt.passwordPh:(lang==="hi"?"पासवर्ड दर्ज करें":"Enter your password")}
               style={{
                 width:"100%",padding:"13px 46px 13px 14px",borderRadius:13,
                 border:`2px solid ${passwordInput&&isValidPassword(passwordInput)?"#138808":passwordInput?"#e53e3e":(dark?"#3a3a3c":"#e8e8e8")}`,
