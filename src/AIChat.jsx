@@ -345,12 +345,19 @@ function AvatarPreviewModal({ onClose }) {
         {/* Avatar image */}
         <div style={{
           position:"relative", zIndex:2,
-          width:220, height:220, borderRadius:"50%",
+          width:240, height:240, borderRadius:"50%",
           overflow:"hidden",
+          background:"#0a1628",
           boxShadow:"0 8px 48px rgba(0,0,0,0.55), 0 0 0 3px rgba(255,255,255,0.25)",
+          display:"flex", alignItems:"center", justifyContent:"center",
         }}>
           <img src={aiAvatar} alt="AI Avatar"
-            style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+            style={{
+              width:"92%", height:"92%",
+              objectFit:"contain",
+              objectPosition:"center center",
+              display:"block",
+            }}
           />
         </div>
         {/* "Hold to dismiss" hint */}
