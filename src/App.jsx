@@ -4953,19 +4953,81 @@ export default function YojanaSahay(){
         .c0{transition-delay:0.20s!important}.c1{transition-delay:0.28s!important}.c2{transition-delay:0.36s!important}
         .c3{transition-delay:0.44s!important}.c4{transition-delay:0.52s!important}.c5{transition-delay:0.60s!important}
         .c6{transition-delay:0.68s!important}.c7{transition-delay:0.76s!important}.c8{transition-delay:0.84s!important}
-        .bn{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;flex:1;-webkit-tap-highlight-color:transparent;position:relative;padding:6px 4px 5px;}
-        .bn:active .bn-pill{transform:scale(0.88);}
-        .bn-pill{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 14px 5px;border-radius:16px;transition:background 0.28s cubic-bezier(0.22,1,0.36,1),box-shadow 0.28s cubic-bezier(0.22,1,0.36,1),transform 0.18s cubic-bezier(0.34,1.56,0.64,1);will-change:transform;}
-        .bn-pill.active{background:linear-gradient(145deg,rgba(255,153,51,0.18) 0%,rgba(255,107,0,0.12) 100%);box-shadow:0 2px 12px rgba(255,153,51,0.22);}
-        .bn-pill:not(.active){background:transparent;}
-        .bn-icon-wrap{transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1);}
-        .bn-icon-wrap.popping{animation:navIconPop 0.38s cubic-bezier(0.34,1.56,0.64,1) forwards;}
-        @keyframes navIconPop{0%{transform:scale(1) translateY(0)}35%{transform:scale(1.32) translateY(-3px)}65%{transform:scale(0.92) translateY(1px)}100%{transform:scale(1) translateY(0)}}
+        /* ── FINAL PREMIUM NAV ── */
+        .bn{
+          display:flex;flex-direction:column;align-items:center;justify-content:center;
+          cursor:pointer;flex:1;-webkit-tap-highlight-color:transparent;
+          position:relative;padding:5px 2px 4px;
+          /* staggered entrance */
+          opacity:0;transform:translateY(10px);
+          animation:navItemIn 0.42s cubic-bezier(0.22,1,0.36,1) forwards;
+        }
+        .bn:nth-child(2){animation-delay:0.04s;}
+        .bn:nth-child(3){animation-delay:0.08s;}
+        .bn:nth-child(4){animation-delay:0.12s;}
+        .bn:nth-child(5){animation-delay:0.16s;}
+        .bn:nth-child(6){animation-delay:0.20s;}
+        @keyframes navItemIn{
+          from{opacity:0;transform:translateY(10px);}
+          to{opacity:1;transform:translateY(0);}
+        }
+        /* Pill — expanding on active */
+        .bn-pill{
+          display:flex;flex-direction:row;align-items:center;justify-content:center;
+          gap:0px;
+          padding:7px 12px;border-radius:50px;
+          transition:
+            background 0.32s cubic-bezier(0.22,1,0.36,1),
+            box-shadow 0.32s cubic-bezier(0.22,1,0.36,1),
+            border-color 0.32s ease,
+            padding 0.32s cubic-bezier(0.22,1,0.36,1),
+            transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
+          will-change:transform,background;
+          border:1px solid transparent;
+          overflow:hidden;
+          max-width:100%;
+        }
+        .bn-pill.active{
+          background:linear-gradient(145deg,rgba(255,153,51,0.16) 0%,rgba(255,107,0,0.10) 100%);
+          box-shadow:0 2px 16px rgba(255,153,51,0.20), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(255,153,51,0.12);
+          border-color:rgba(255,153,51,0.22);
+          padding:7px 16px;
+          gap:6px;
+        }
+        .bn:active .bn-pill{transform:scale(0.87);transition:transform 0.1s ease;}
+        /* Icon spring */
+        .bn-icon-wrap{
+          display:flex;align-items:center;justify-content:center;
+          flex-shrink:0;
+          transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1),filter 0.22s;
+        }
+        .bn-icon-wrap.popping{animation:navIconPop 0.40s cubic-bezier(0.34,1.56,0.64,1) forwards;}
+        @keyframes navIconPop{
+          0%  {transform:scale(1)   translateY(0px);}
+          30% {transform:scale(1.35) translateY(-4px);}
+          60% {transform:scale(0.90) translateY(1px);}
+          80% {transform:scale(1.06) translateY(-1px);}
+          100%{transform:scale(1)   translateY(0px);}
+        }
+        /* Chakra */
         @keyframes navChakraSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        .bn-chakra-active{animation:navChakraSpin 3s linear infinite;}
-        .bn-label{font-size:9.5px;font-weight:600;letter-spacing:0.2px;transition:color 0.22s,font-weight 0.18s,transform 0.22s;transform-origin:center;}
-        .bn-label.active{font-weight:800;transform:scale(1.05);}
-        .bn-dot{width:4px;height:4px;border-radius:50%;background:linear-gradient(135deg,#FF9933,#FF6B00);position:absolute;bottom:2px;left:50%;transform:translateX(-50%);box-shadow:0 0 6px rgba(255,153,51,0.7);transition:opacity 0.22s,transform 0.22s;}
+        .bn-chakra-active{animation:navChakraSpin 2.8s linear infinite;}
+        /* Label — only shown on active, slides+fades in */
+        .bn-label{
+          font-size:10.5px;font-weight:800;letter-spacing:0.15px;white-space:nowrap;
+          max-width:0;overflow:hidden;opacity:0;
+          transition:max-width 0.32s cubic-bezier(0.22,1,0.36,1), opacity 0.22s ease, color 0.22s;
+        }
+        .bn-label.active{max-width:80px;opacity:1;}
+        /* Glow dot */
+        .bn-dot{
+          width:3.5px;height:3.5px;border-radius:50%;
+          background:linear-gradient(135deg,#FF9933,#FF6B00);
+          position:absolute;bottom:1px;left:50%;transform:translateX(-50%);
+          box-shadow:0 0 5px rgba(255,153,51,0.9),0 0 10px rgba(255,107,0,0.5);
+          animation:dotPop 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+        }
+        @keyframes dotPop{from{transform:translateX(-50%) scale(0);}to{transform:translateX(-50%) scale(1);}}
 
         .cp{animation:cp 2.5s ease-in-out infinite;}
         @keyframes cp{0%,100%{box-shadow:0 6px 24px rgba(19,136,8,0.3)}50%{box-shadow:0 6px 32px rgba(19,136,8,0.55)}}
@@ -5474,64 +5536,66 @@ export default function YojanaSahay(){
         />
       </div>
 
-      {/* ── PREMIUM BOTTOM NAV ── */}
+      {/* ── FINAL PREMIUM BOTTOM NAV ── */}
       <div className="bnav-wrap" style={{
+        /* Frosted glass surface */
         background: dark
-          ? "rgba(28,28,30,0.97)"
-          : "rgba(255,255,255,0.97)",
-        borderTop:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)"}`,
-        backdropFilter:"blur(20px)",
-        WebkitBackdropFilter:"blur(20px)",
-        paddingTop:"4px",
-        paddingLeft:"0px",
-        paddingRight:"0px",
-        display:"flex",
-        position:"relative",
+          ? "rgba(18,18,20,0.94)"
+          : "rgba(255,255,255,0.94)",
+        backdropFilter:"blur(24px)",
+        WebkitBackdropFilter:"blur(24px)",
+        /* Light-catching inner top border */
+        borderTop:`1px solid ${dark?"rgba(255,255,255,0.09)":"rgba(0,0,0,0.06)"}`,
+        /* Depth shadow */
         boxShadow: dark
-          ? "0 -1px 0 rgba(255,255,255,0.05), 0 -8px 32px rgba(0,0,0,0.4)"
-          : "0 -1px 0 rgba(0,0,0,0.06), 0 -8px 32px rgba(0,0,0,0.08)",
+          ? "0 -1px 0 rgba(255,255,255,0.04), 0 -12px 40px rgba(0,0,0,0.5)"
+          : "0 -1px 0 rgba(0,0,0,0.04), 0 -12px 40px rgba(0,0,0,0.07)",
+        paddingTop:"6px",
+        paddingLeft:"6px",
+        paddingRight:"6px",
+        display:"flex",
+        alignItems:"center",
+        position:"relative",
         zIndex:100,
       }}>
-        {/* Sliding saffron top bar */}
-        <div style={{
-          position:"absolute",top:0,height:2.5,
-          width:"13%",borderRadius:"0 0 4px 4px",
-          background:"linear-gradient(90deg,#FF9933,#FF6B00)",
-          left:`calc(${navItems.findIndex(i=>i.tab===activeTab)} * 20% + 3.5%)`,
-          transition:"left 0.36s cubic-bezier(0.22,1,0.36,1)",
-          boxShadow:"0 0 10px rgba(255,153,51,0.75), 0 0 20px rgba(255,107,0,0.4)",
-        }}/>
-
-        {navItems.map(item=>{
+        {navItems.map((item,idx)=>{
           const active = activeTab===item.tab;
           const iconColor = active
-            ? (dark ? "#FF9933" : "#FF6B00")
-            : (dark ? "#666" : "#aaa");
-          const labelColor = active
-            ? (dark ? "#FF9933" : "#FF6B00")
-            : (dark ? "#555" : "#bbb");
+            ? "#FF7A00"
+            : (dark ? "#606060" : "#C0C0C0");
 
           return(
             <div key={item.tab} className="bn"
-              onClick={()=>{ haptic(); setActiveTab(item.tab); }}>
+              style={{animationDelay:`${idx*0.05}s`}}
+              onClick={()=>{
+                if(!active) haptic(30);   // only haptic when switching
+                setActiveTab(item.tab);
+              }}>
+
               <div className={`bn-pill${active?" active":""}`}>
 
-                {/* Icon */}
-                <div className={`bn-icon-wrap${active?" popping":""}`}
-                  key={`${item.tab}-${active}`}>
+                {/* Icon — spring bounce resets via key */}
+                <div
+                  className={`bn-icon-wrap${active?" popping":""}`}
+                  key={`${item.tab}-${active}`}
+                  style={{
+                    filter: active
+                      ? "drop-shadow(0 0 5px rgba(255,122,0,0.55))"
+                      : "none",
+                    transition:"filter 0.25s",
+                  }}>
                   {item.isChakra ? (
-                    <div className={active?"bn-chakra-active":""} style={{
-                      display:"flex",alignItems:"center",justifyContent:"center",
-                      width:22,height:22,
-                      opacity: active ? 1 : 0.38,
-                      filter: active
-                        ? "drop-shadow(0 0 4px rgba(255,153,51,0.7))"
-                        : "none",
-                      transition:"opacity 0.22s, filter 0.22s",
-                    }}>
+                    <div
+                      className={active ? "bn-chakra-active" : ""}
+                      style={{
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        width:22,height:22,
+                        opacity: active ? 1 : 0.32,
+                        transition:"opacity 0.25s",
+                      }}>
                       <AshokaChakra
                         size={22}
-                        color={active ? (dark?"#FF9933":"#FF6B00") : (dark?"#666":"#bbb")}
+                        color={active ? "#FF7A00" : (dark?"#606060":"#C0C0C0")}
                         spinning={false}
                       />
                     </div>
@@ -5542,17 +5606,16 @@ export default function YojanaSahay(){
                   )}
                 </div>
 
-                {/* Label */}
-                <div className={`bn-label${active?" active":""}`}
-                  style={{color:labelColor, fontFamily:bf}}>
+                {/* Label — only visible on active, slides in from left */}
+                <div
+                  className={`bn-label${active?" active":""}`}
+                  style={{color:"#FF7A00", fontFamily:bf}}>
                   {item.label}
                 </div>
               </div>
 
-              {/* Active dot indicator */}
-              {active && (
-                <div className="bn-dot"/>
-              )}
+              {/* Glowing dot below active tab */}
+              {active && <div className="bn-dot"/>}
             </div>
           );
         })}
