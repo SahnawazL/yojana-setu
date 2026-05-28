@@ -3353,8 +3353,8 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
               border:"3px solid rgba(255,255,255,0.45)",
               boxShadow:"0 0 0 4px rgba(255,153,51,0.28), 0 8px 24px rgba(0,0,0,0.32)",
             }}>
-              {profile?.photo
-                ?<img src={profile.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              {(profile?.photo||googlePhoto||auth.currentUser?.photoURL)
+                ?<img src={profile?.photo||googlePhoto||auth.currentUser?.photoURL} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                 :initials}
             </div>
             {/* SVG completeness ring */}
