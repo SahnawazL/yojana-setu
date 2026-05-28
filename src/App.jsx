@@ -1510,33 +1510,50 @@ function SchemesTab({lang,dark=false}){
             )}
           </div>
           <div onClick={()=>{haptic();setShowStatePicker(true);}}
-            style={{display:"flex",alignItems:"center",gap:5,background:selectedState!=="all"?SAFFRON+"18":th.pillBg,border:`1.5px solid ${selectedState!=="all"?SAFFRON:th.border2}`,borderRadius:20,padding:"5px 11px",cursor:"pointer",flexShrink:0,transition:"background 0.2s"}}>
-            <span style={{fontSize:13}}>🇮🇳</span>
+            className="fpill-state"
+            style={{
+              background:selectedState!=="all"?SAFFRON+"18":th.pillBg,
+              border:`1.5px solid ${selectedState!=="all"?SAFFRON:th.border2}`,
+              boxShadow:selectedState!=="all"?`0 2px 10px ${SAFFRON}28`:"0 1px 4px rgba(0,0,0,0.06)",
+            }}>
+            <span style={{fontSize:14,lineHeight:1}}>🇮🇳</span>
             <span style={{fontSize:11,fontWeight:700,color:selectedState!=="all"?SAFFRON:th.textMid,maxWidth:80,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:bf}}>
               {selectedState==="all"?(isHindi?"सभी राज्य":"All States"):selectedState}
             </span>
-            <span style={{fontSize:10,color:th.textSub}}>▾</span>
+            <svg width="9" height="9" viewBox="0 0 10 10" fill="none" style={{opacity:0.5,flexShrink:0}}>
+              <path d="M2 3.5L5 6.5L8 3.5" stroke={selectedState!=="all"?SAFFRON:th.textSub} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
         </div>
 
         {/* Category filter pills */}
-        <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:12,scrollbarWidth:"none"}}>
+        <div style={{display:"flex",gap:7,overflowX:"auto",paddingBottom:14,scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
           <div onClick={()=>{haptic();setFilter("all");}}
-            style={{flexShrink:0,padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:700,
-              background:filter==="all"?"#003580":th.pillBg,
-              color:filter==="all"?"#fff":th.textMid,cursor:"pointer",
-              border:`1.5px solid ${filter==="all"?"#003580":th.border2}`}}>
+            className="fpill"
+            style={{
+              background:filter==="all"?"linear-gradient(135deg,#002060,#003580)":th.pillBg,
+              color:filter==="all"?"#fff":th.textMid,
+              border:`1.5px solid ${filter==="all"?"transparent":th.border2}`,
+              boxShadow:filter==="all"?"0 3px 14px rgba(0,53,128,0.32), inset 0 1px 0 rgba(255,255,255,0.12)":"0 1px 3px rgba(0,0,0,0.05)",
+              fontFamily:bf,
+            }}>
             {isHindi?"सभी":"All"} ({filtered.length})
           </div>
-          {cats.map(cat=>(
+          {cats.map(cat=>{
+            const active=filter===cat.filterKey;
+            return(
             <div key={cat.filterKey} onClick={()=>{haptic();setFilter(cat.filterKey);}}
-              style={{flexShrink:0,padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:700,
-                background:filter===cat.filterKey?cat.color:th.pillBg,
-                color:filter===cat.filterKey?"#fff":th.textMid,cursor:"pointer",
-                border:`1.5px solid ${filter===cat.filterKey?cat.color:th.border2}`}}>
+              className="fpill"
+              style={{
+                background:active?cat.color:th.pillBg,
+                color:active?"#fff":th.textMid,
+                border:`1.5px solid ${active?"transparent":th.border2}`,
+                boxShadow:active?`0 3px 14px ${cat.color}44, inset 0 1px 0 rgba(255,255,255,0.14)`:"0 1px 3px rgba(0,0,0,0.05)",
+                fontFamily:bf,
+              }}>
               {cat.label}
             </div>
-          ))}
+          );})}
         </div>
 
         {/* Active state chip row */}
@@ -4810,6 +4827,36 @@ export default function YojanaSahay(){
         .signin-loading{background-size:200% auto!important;animation:btn-shimmer 1.4s linear infinite,btn-pulse-scale 1.4s ease-in-out infinite!important;}
         .btn-spinner{width:17px;height:17px;border-radius:50%;border:2.5px solid rgba(255,255,255,0.35);border-top-color:#fff;animation:btn-spin 0.75s linear infinite;flex-shrink:0;}
         .google-spinner{width:17px;height:17px;border-radius:50%;border:2.5px solid rgba(66,133,244,0.25);border-top-color:#4285F4;animation:btn-spin 0.75s linear infinite;flex-shrink:0;}
+
+        /* ── Premium filter pills ── */
+        .fpill{
+          display:inline-flex;align-items:center;white-space:nowrap;
+          padding:7px 16px;border-radius:50px;
+          font-size:12px;font-weight:700;letter-spacing:0.25px;
+          cursor:pointer;user-select:none;flex-shrink:0;
+          transition:
+            background 0.28s cubic-bezier(0.34,1.56,0.64,1),
+            color 0.22s ease,
+            border-color 0.28s ease,
+            box-shadow 0.28s cubic-bezier(0.34,1.56,0.64,1),
+            transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
+          -webkit-tap-highlight-color:transparent;
+          will-change:transform;
+        }
+        .fpill:active{transform:scale(0.91);transition:transform 0.1s ease,box-shadow 0.1s ease;}
+        .fpill-state{
+          display:inline-flex;align-items:center;gap:5px;
+          padding:6px 13px;border-radius:50px;cursor:pointer;
+          font-size:11px;font-weight:700;flex-shrink:0;
+          transition:
+            background 0.28s cubic-bezier(0.34,1.56,0.64,1),
+            border-color 0.28s ease,
+            box-shadow 0.28s cubic-bezier(0.34,1.56,0.64,1),
+            transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
+          -webkit-tap-highlight-color:transparent;
+          will-change:transform;
+        }
+        .fpill-state:active{transform:scale(0.93);transition:transform 0.1s ease;}
       `}</style>
 
       {/* ── TAB CONTENT — animated wrapper triggers fade+slide on every switch ── */}
