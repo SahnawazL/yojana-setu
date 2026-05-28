@@ -1511,7 +1511,7 @@ function SchemesTab({lang,dark=false}){
           </div>
           <div onClick={()=>{haptic();setShowStatePicker(true);}}
             style={{display:"flex",alignItems:"center",gap:5,background:selectedState!=="all"?SAFFRON+"18":th.pillBg,border:`1.5px solid ${selectedState!=="all"?SAFFRON:th.border2}`,borderRadius:20,padding:"5px 11px",cursor:"pointer",flexShrink:0,transition:"background 0.2s"}}>
-            <span style={{fontSize:13}}>{selectedState==="all"?"🇮🇳":"📍"}</span>
+            <span style={{fontSize:13}}>🇮🇳</span>
             <span style={{fontSize:11,fontWeight:700,color:selectedState!=="all"?SAFFRON:th.textMid,maxWidth:80,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:bf}}>
               {selectedState==="all"?(isHindi?"सभी राज्य":"All States"):selectedState}
             </span>
@@ -1534,7 +1534,7 @@ function SchemesTab({lang,dark=false}){
                 background:filter===cat.filterKey?cat.color:th.pillBg,
                 color:filter===cat.filterKey?"#fff":th.textMid,cursor:"pointer",
                 border:`1.5px solid ${filter===cat.filterKey?cat.color:th.border2}`}}>
-              {cat.icon} {cat.label}
+              {cat.label}
             </div>
           ))}
         </div>
@@ -1543,7 +1543,7 @@ function SchemesTab({lang,dark=false}){
         {selectedState!=="all"&&(
           <div style={{display:"flex",alignItems:"center",gap:6,paddingBottom:10,flexWrap:"wrap"}}>
             <div style={{display:"flex",alignItems:"center",gap:5,background:SAFFRON+"14",border:`1px solid ${SAFFRON}40`,borderRadius:20,padding:"4px 10px"}}>
-              <span style={{fontSize:11}}>📍</span>
+              <svg width="10" height="12" viewBox="0 0 10 12" fill={SAFFRON}><path d="M5 0C2.24 0 0 2.24 0 5c0 3.75 5 7 5 7s5-3.25 5-7c0-2.76-2.24-5-5-5zm0 6.5A1.5 1.5 0 1 1 5 3.5a1.5 1.5 0 0 1 0 3z"/></svg>
               <span style={{fontSize:11,fontWeight:600,color:SAFFRON,fontFamily:bf}}>{selectedState}</span>
               <span onClick={()=>{haptic();setSelectedState("all");}} style={{fontSize:14,color:SAFFRON,cursor:"pointer",marginLeft:2,lineHeight:1,fontWeight:700}}>✕</span>
             </div>
