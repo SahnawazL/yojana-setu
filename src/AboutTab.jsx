@@ -132,6 +132,30 @@ const STRINGS = {
       { icon:"⚡", text:"Powered by Groq AI for high-speed, accurate responses" },
     ],
 
+    proTitle:    "YojanaSahay Pro",
+    proEyebrow:  "COMING SOON",
+    proSubtitle: "Launching with Play Store & App Store",
+    proBody:
+      "YojanaSahay is currently free for all users. A Pro tier is coming for power users who rely on the AI assistant daily — with unlimited AI messages and premium features designed for serious scheme hunters.",
+    proFeatures: [
+      { icon:"🤖", title:"AI Messages",              desc:"Daily limit for the AI Chat assistant.",                                                                                        free:"10 / day",   pro:"Unlimited" },
+      { icon:"📄", title:"PDF Export",                desc:"Download your eligibility results as a ready-to-use PDF for offline use and CSC visits.",                                     free:"✗",          pro:"✓" },
+      { icon:"👨‍👩‍👧‍👦", title:"Family Profiles",           desc:"Add family members and check eligibility for each one separately.",                                                        free:"1 profile",  pro:"Unlimited" },
+      { icon:"🎯", title:"Deep Eligibility Matching", desc:"Precision match using all 15+ parameters — ration card, disability, kisan card, land holding, and more.",                    free:"✗",          pro:"✓" },
+      { icon:"📋", title:"Application Tracker",       desc:"Mark schemes as Interested → Applied → Received and track progress.",                                                         free:"✗",          pro:"✓" },
+      { icon:"📦", title:"Document Checklist",        desc:"One consolidated list of every document you need across all matched schemes.",                                                 free:"✗",          pro:"✓" },
+      { icon:"🔔", title:"Deadline Alerts",           desc:"Real email and push notifications for approaching scheme deadlines, filtered by your state and category.",                    free:"Basic",      pro:"Real alerts" },
+      { icon:"⭐", title:"Priority Support",          desc:"Pro reports get a Priority badge and are reviewed first — your queries go to the top of the queue.",                          free:"Standard",   pro:"Priority" },
+    ],
+    proPricingTitle: "Pricing",
+    proMonthly:      "₹49 / month",
+    proYearly:       "₹399 / year",
+    proSaveLabel:    "Save 32%",
+    proPricingNote:  "Pricing and payment options will be announced at launch. Payments via UPI, cards, and net banking.",
+    proLoginTitle:   "Login Required for AI Chat",
+    proLoginNotice:
+      "Once YojanaSahay Pro launches, signing in with Google will be mandatory to access the AI Chat tab. This links your daily usage count and Pro benefits directly to your account — ensuring fair access for free users and full access for Pro.",
+
     signInTitle: "Benefits of Signing In",
     signInSub:   "Creating an account unlocks the full YojanaSahay experience.",
     signInPoints: [
@@ -269,6 +293,30 @@ const STRINGS = {
       { icon:"🔒", text:"प्रति-खाता चैट इतिहास — निजी और सुरक्षित" },
       { icon:"⚡", text:"Groq AI द्वारा संचालित — तेज़ और सटीक उत्तर" },
     ],
+
+    proTitle:    "योजनासहाय Pro",
+    proEyebrow:  "जल्द आ रहा है",
+    proSubtitle: "Play Store और App Store पर लॉन्च होगा",
+    proBody:
+      "योजनासहाय अभी सभी उपयोगकर्ताओं के लिए निःशुल्क है। उन पावर यूज़र्स के लिए Pro टियर आ रहा है जो रोज़ाना AI सहायक का उपयोग करते हैं — असीमित AI संदेश और प्रीमियम सुविधाओं के साथ।",
+    proFeatures: [
+      { icon:"🤖", title:"AI संदेश",                 desc:"AI Chat सहायक के लिए दैनिक सीमा।",                                                                                           free:"10 / दिन",   pro:"असीमित" },
+      { icon:"📄", title:"PDF निर्यात",               desc:"ऑफलाइन उपयोग और CSC विज़िट के लिए पात्रता परिणामों की PDF डाउनलोड करें।",                                                  free:"✗",          pro:"✓" },
+      { icon:"👨‍👩‍👧‍👦", title:"परिवार प्रोफाइल",          desc:"परिवार के सदस्य जोड़ें और हर एक के लिए अलग पात्रता जांचें।",                                                              free:"1 प्रोफाइल", pro:"असीमित" },
+      { icon:"🎯", title:"गहन पात्रता मिलान",          desc:"15+ पैरामीटर — राशन कार्ड, विकलांगता, किसान कार्ड, भूमि धारण — का उपयोग करके सटीक मिलान।",                              free:"✗",          pro:"✓" },
+      { icon:"📋", title:"आवेदन ट्रैकर",              desc:"योजनाओं को Interested → Applied → Received के रूप में चिह्नित करें।",                                                       free:"✗",          pro:"✓" },
+      { icon:"📦", title:"दस्तावेज़ चेकलिस्ट",         desc:"सभी मिलान योजनाओं के लिए एक समेकित दस्तावेज़ सूची।",                                                                        free:"✗",          pro:"✓" },
+      { icon:"🔔", title:"समय-सीमा अलर्ट",            desc:"आपके राज्य और श्रेणी के अनुसार योजना की अंतिम तिथि पर ईमेल और पुश नोटिफिकेशन।",                                          free:"सामान्य",    pro:"रियल अलर्ट" },
+      { icon:"⭐", title:"प्राथमिकता सपोर्ट",          desc:"Pro रिपोर्ट को Priority बैज मिलता है और पहले समीक्षा की जाती है।",                                                          free:"सामान्य",    pro:"प्राथमिकता" },
+    ],
+    proPricingTitle: "मूल्य निर्धारण",
+    proMonthly:      "₹49 / माह",
+    proYearly:       "₹399 / वर्ष",
+    proSaveLabel:    "32% बचत",
+    proPricingNote:  "मूल्य और भुगतान विकल्प लॉन्च पर घोषित होंगे। UPI, कार्ड और नेट बैंकिंग के माध्यम से भुगतान।",
+    proLoginTitle:   "AI Chat के लिए लॉगिन आवश्यक",
+    proLoginNotice:
+      "जब YojanaSahay Pro लॉन्च होगा, तब AI Chat टैब तक पहुँचने के लिए Google से साइन इन करना अनिवार्य होगा। इससे आपकी दैनिक उपयोग सीमा और Pro सुविधाएं सीधे आपके खाते से जुड़ी रहेंगी।",
 
     signInTitle: "साइन इन के लाभ",
     signInSub:   "खाता बनाकर YojanaSahay का पूरा अनुभव प्राप्त करें।",
@@ -1001,6 +1049,241 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* ── YOJANASAHAY PRO — COMING SOON ───────────────────────────── */}
+        <div className="ys-card">
+          <div style={{
+            borderRadius: R.xl,
+            padding: "24px 20px",
+            background: dark
+              ? "linear-gradient(135deg, rgba(255,153,51,0.10) 0%, rgba(217,119,6,0.08) 100%)"
+              : "linear-gradient(135deg, rgba(255,153,51,0.07) 0%, rgba(255,200,80,0.04) 100%)",
+            border: `1.5px solid ${SAFFRON}35`,
+            boxShadow: dark ? "none" : `0 4px 24px ${SAFFRON}10`,
+            position: "relative", overflow: "hidden",
+          }}>
+
+            {/* Glow blob */}
+            <div style={{
+              position: "absolute", top: -60, right: -50,
+              width: 180, height: 180, borderRadius: "50%",
+              background: `radial-gradient(circle, ${SAFFRON}18 0%, transparent 70%)`,
+              pointerEvents: "none",
+            }} />
+
+            {/* Header row */}
+            <div style={{
+              display: "flex", alignItems: "flex-start",
+              justifyContent: "space-between", marginBottom: 14, position: "relative",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 46, height: 46, borderRadius: R.md, flexShrink: 0,
+                  background: `linear-gradient(135deg, ${SAFFRON}, #D97706)`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 20, boxShadow: `0 6px 18px ${SAFFRON}40`,
+                }}>⚡</div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: th.text, fontFamily: bf, letterSpacing: -0.2 }}>
+                    {s.proTitle}
+                  </div>
+                  <div style={{ fontSize: 10, color: th.textSub, marginTop: 2, fontFamily: bf }}>
+                    {s.proSubtitle}
+                  </div>
+                </div>
+              </div>
+              {/* Coming Soon badge */}
+              <div style={{
+                background: `linear-gradient(135deg, ${SAFFRON}, #D97706)`,
+                borderRadius: 20, padding: "4px 10px", flexShrink: 0,
+                boxShadow: `0 3px 10px ${SAFFRON}40`,
+              }}>
+                <span style={{
+                  fontSize: 8, fontWeight: 800, color: "#fff",
+                  letterSpacing: 1, textTransform: "uppercase", fontFamily: bf,
+                }}>
+                  {s.proEyebrow}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ height: 1, background: `${SAFFRON}28`, marginBottom: 14 }} />
+
+            {/* Body text */}
+            <div style={{ fontSize: 12, color: th.textMid, lineHeight: 1.75, marginBottom: 18, fontFamily: bf, position: "relative" }}>
+              {s.proBody}
+            </div>
+
+            {/* Free vs Pro comparison table */}
+            <div style={{ position: "relative" }}>
+
+              {/* Column headers */}
+              <div style={{
+                display: "grid", gridTemplateColumns: "1fr 80px 80px",
+                gap: 0, marginBottom: 8,
+              }}>
+                <div />
+                <div style={{
+                  textAlign: "center", fontSize: 10, fontWeight: 800,
+                  color: th.textSub, fontFamily: bf, letterSpacing: 0.4,
+                  background: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+                  borderRadius: "8px 0 0 0", padding: "7px 4px",
+                  border: `1px solid ${th.border2}`, borderRight: "none",
+                }}>
+                  {isHindi ? "निःशुल्क" : "Free"}
+                </div>
+                <div style={{
+                  textAlign: "center", fontSize: 10, fontWeight: 800,
+                  color: "#fff", fontFamily: bf, letterSpacing: 0.4,
+                  background: `linear-gradient(135deg, ${SAFFRON}, #D97706)`,
+                  borderRadius: "0 8px 0 0", padding: "7px 4px",
+                }}>
+                  Pro ⚡
+                </div>
+              </div>
+
+              {/* Rows */}
+              {s.proFeatures.map((f, i) => {
+                const isLast = i === s.proFeatures.length - 1;
+                return (
+                  <div key={i} style={{
+                    display: "grid", gridTemplateColumns: "1fr 80px 80px",
+                    gap: 0,
+                    borderBottom: isLast ? "none" : `1px solid ${th.border}`,
+                  }}>
+                    {/* Feature label */}
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: 9,
+                      padding: "10px 8px 10px 0",
+                      borderLeft: `1px solid ${th.border2}`,
+                      paddingLeft: 10,
+                    }}>
+                      <span style={{ fontSize: 15, flexShrink: 0 }}>{f.icon}</span>
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: th.text, fontFamily: bf, lineHeight: 1.3 }}>
+                          {f.title}
+                        </div>
+                        <div style={{ fontSize: 9.5, color: th.textSub, fontFamily: bf, marginTop: 2, lineHeight: 1.4 }}>
+                          {f.desc}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Free cell */}
+                    <div style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      padding: "10px 4px",
+                      borderLeft: `1px solid ${th.border2}`,
+                      borderRight: `1px solid ${th.border2}`,
+                      background: dark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.015)",
+                    }}>
+                      <span style={{
+                        fontSize: f.free === "✗" ? 16 : 10,
+                        fontWeight: 700,
+                        color: f.free === "✗" ? th.textLight
+                          : f.free === "✓" ? IND_GREEN
+                          : th.textMid,
+                        fontFamily: bf, textAlign: "center", lineHeight: 1.3,
+                      }}>
+                        {f.free}
+                      </span>
+                    </div>
+
+                    {/* Pro cell */}
+                    <div style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      padding: "10px 4px",
+                      borderRight: `1px solid ${SAFFRON}30`,
+                      background: dark ? `${SAFFRON}08` : `${SAFFRON}05`,
+                    }}>
+                      <span style={{
+                        fontSize: f.pro === "✓" ? 16 : 10,
+                        fontWeight: 700,
+                        color: f.pro === "✓" ? IND_GREEN : SAFFRON,
+                        fontFamily: bf, textAlign: "center", lineHeight: 1.3,
+                      }}>
+                        {f.pro}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Bottom border line */}
+              <div style={{
+                height: 1,
+                background: `linear-gradient(to right, ${th.border2}, ${SAFFRON}40, ${th.border2})`,
+                marginBottom: 4,
+              }} />
+            </div>
+
+            {/* Pricing */}
+            <div style={{ marginTop: 20, position: "relative" }}>
+              <div style={{
+                fontSize: 10, fontWeight: 700, color: th.textSub,
+                letterSpacing: 1.2, textTransform: "uppercase",
+                marginBottom: 10, fontFamily: bf,
+              }}>
+                {s.proPricingTitle}
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                {/* Monthly */}
+                <div style={{
+                  flex: 1,
+                  background: dark ? `${SAFFRON}14` : `${SAFFRON}09`,
+                  border: `1.5px solid ${SAFFRON}30`,
+                  borderRadius: R.md, padding: "12px 14px", textAlign: "center",
+                }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: SAFFRON, fontFamily: bf }}>
+                    {s.proMonthly}
+                  </div>
+                </div>
+                {/* Yearly */}
+                <div style={{
+                  flex: 1, position: "relative",
+                  background: `linear-gradient(135deg, ${SAFFRON}22, ${SAFFRON}12)`,
+                  border: `1.5px solid ${SAFFRON}50`,
+                  borderRadius: R.md, padding: "12px 14px", textAlign: "center",
+                }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: SAFFRON, fontFamily: bf }}>
+                    {s.proYearly}
+                  </div>
+                  <div style={{
+                    position: "absolute", top: -9, right: 10,
+                    background: IND_GREEN, borderRadius: 20, padding: "2px 8px",
+                  }}>
+                    <span style={{ fontSize: 8, fontWeight: 800, color: "#fff", fontFamily: bf }}>
+                      {s.proSaveLabel}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div style={{ fontSize: 10, color: th.textSub, marginTop: 10, lineHeight: 1.6, fontFamily: bf }}>
+                {s.proPricingNote}
+              </div>
+            </div>
+
+            {/* Login required notice */}
+            <div style={{
+              marginTop: 16, position: "relative",
+              background: dark ? `${SAFFRON}10` : `${SAFFRON}07`,
+              border: `1px solid ${SAFFRON}38`,
+              borderRadius: R.md, padding: "13px 14px",
+              display: "flex", gap: 10, alignItems: "flex-start",
+            }}>
+              <div style={{ fontSize: 18, flexShrink: 0, paddingTop: 1 }}>🔑</div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: SAFFRON, marginBottom: 4, fontFamily: bf }}>
+                  {s.proLoginTitle}
+                </div>
+                <div style={{ fontSize: 11, color: th.textMid, lineHeight: 1.7, fontFamily: bf }}>
+                  {s.proLoginNotice}
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
