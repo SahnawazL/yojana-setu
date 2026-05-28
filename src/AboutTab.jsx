@@ -24,6 +24,9 @@ const SAFFRON     = "#FF9933";
 const NAVY        = "#003580";
 const IND_GREEN   = "#138808";
 const ASHOKA_BLUE = "#06038D";
+const PRO_GOLD    = "#C9A84C";   // Prestige gold
+const PRO_GOLD_LT = "#F0D87A";   // Champagne highlight
+const PRO_GOLD_DK = "#7A5C1E";   // Deep aged gold
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const R = { sm: 10, md: 14, lg: 20, xl: 26 };
@@ -579,6 +582,38 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
       0%   { background-position: -200% center; }
       100% { background-position:  200% center; }
     }
+    @keyframes ys-pro-sweep {
+      0%   { background-position: -250% center; }
+      100% { background-position:  250% center; }
+    }
+    @keyframes ys-overlay-sweep {
+      0%   { transform: translateX(-200%); }
+      100% { transform: translateX(400%); }
+    }
+    .ys-coming-pill {
+      position: relative;
+      overflow: hidden;
+    }
+    .ys-coming-pill::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 45%; height: 100%;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,245,160,0.24) 50%, transparent 100%);
+      animation: ys-overlay-sweep 2.8s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .ys-coming-text {
+      background: linear-gradient(90deg,
+        #7A5C1E 0%, #C9A84C 18%, #F5E090 38%,
+        #FFF0A8 50%, #F5E090 62%, #C9A84C 82%, #7A5C1E 100%
+      );
+      background-size: 250% 100%;
+      animation: ys-pro-sweep 2.8s ease-in-out infinite;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: inline-block;
+    }
 
     .ys-card {
       animation: ys-fade-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
@@ -1057,49 +1092,61 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
           <div style={{
             borderRadius: R.xl,
             padding: "26px 20px 24px",
-            background: dark
-              ? "linear-gradient(155deg, rgba(26,14,2,0.97) 0%, rgba(12,8,1,0.98) 60%, rgba(20,12,2,0.97) 100%)"
-              : "linear-gradient(155deg, rgba(255,255,255,0.97) 0%, rgba(255,251,244,0.99) 60%, rgba(255,248,236,0.98) 100%)",
-            border: `1.5px solid ${SAFFRON}32`,
-            boxShadow: dark
-              ? `0 0 0 1px ${SAFFRON}0A, 0 2px 8px rgba(0,0,0,0.60), 0 16px 56px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05)`
-              : `0 0 0 1px ${SAFFRON}0C, 0 4px 16px ${SAFFRON}0E, 0 20px 56px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.90)`,
+            background: "linear-gradient(155deg, #08091C 0%, #0D0F26 45%, #060818 100%)",
+            border: `1.5px solid rgba(201,168,76,0.28)`,
+            boxShadow: `0 0 0 1px rgba(201,168,76,0.08), 0 4px 24px rgba(0,0,0,0.65), 0 20px 60px rgba(0,0,0,0.52), inset 0 1px 0 rgba(255,245,180,0.06)`,
             position: "relative",
             overflow: "hidden",
           }}>
 
-            {/* Ambient top glow */}
+            {/* Gold ambient top glow */}
             <div style={{
-              position: "absolute", top: -100, left: "50%",
+              position: "absolute", top: -120, left: "50%",
               transform: "translateX(-50%)",
-              width: 320, height: 200,
-              background: `radial-gradient(ellipse at center, ${SAFFRON}1E 0%, transparent 68%)`,
+              width: 380, height: 240,
+              background: "radial-gradient(ellipse at center, rgba(201,168,76,0.14) 0%, transparent 68%)",
               pointerEvents: "none",
             }} />
 
-            {/* Subtle dot-grid texture */}
+            {/* Secondary corner glow */}
+            <div style={{
+              position: "absolute", bottom: -60, right: -40,
+              width: 220, height: 180,
+              background: "radial-gradient(ellipse at center, rgba(201,168,76,0.08) 0%, transparent 70%)",
+              pointerEvents: "none",
+            }} />
+
+            {/* Subtle gold dot-grid texture */}
             <div style={{
               position: "absolute", inset: 0, pointerEvents: "none",
-              backgroundImage: `radial-gradient(circle, ${dark ? `${SAFFRON}08` : `${SAFFRON}07`} 1px, transparent 1px)`,
+              backgroundImage: "radial-gradient(circle, rgba(201,168,76,0.07) 1px, transparent 1px)",
               backgroundSize: "20px 20px",
-              opacity: 0.8,
+              opacity: 0.75,
             }} />
 
             {/* ── HEADER ── */}
             <div style={{ position: "relative", marginBottom: 20 }}>
 
-              {/* Eyebrow pill */}
-              <div style={{
-                display: "inline-flex", alignItems: "center",
-                background: dark ? `${SAFFRON}16` : `${SAFFRON}10`,
-                border: `1px solid ${SAFFRON}35`,
-                borderRadius: 20, padding: "3px 12px",
-                marginBottom: 13,
-                boxShadow: `0 0 12px ${SAFFRON}18`,
+              {/* Eyebrow pill — shimmer sweep */}
+              <div className="ys-coming-pill" style={{
+                display: "inline-flex", alignItems: "center", gap: 7,
+                background: "rgba(201,168,76,0.11)",
+                border: "1.5px solid rgba(201,168,76,0.52)",
+                borderRadius: 20, padding: "4px 14px 4px 10px",
+                marginBottom: 14,
+                boxShadow: "0 0 18px rgba(201,168,76,0.18), inset 0 1px 0 rgba(255,245,180,0.10)",
               }}>
+                {/* Pulsing live dot */}
                 <span style={{
-                  fontSize: 8.5, fontWeight: 800, letterSpacing: 1.8,
-                  textTransform: "uppercase", color: SAFFRON, fontFamily: bf,
+                  width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+                  background: "linear-gradient(135deg, #F0D87A, #C9A84C)",
+                  display: "inline-block",
+                  boxShadow: "0 0 6px rgba(201,168,76,0.65)",
+                  animation: "ys-pulse-dot 1.6s ease-in-out infinite",
+                }} />
+                <span className="ys-coming-text" style={{
+                  fontSize: 8.5, fontWeight: 800, letterSpacing: 2,
+                  textTransform: "uppercase", fontFamily: bf,
                 }}>
                   {s.proEyebrow}
                 </span>
@@ -1107,7 +1154,8 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
 
               {/* Title */}
               <div style={{
-                fontSize: 21, fontWeight: 800, color: th.text,
+                fontSize: 22, fontWeight: 800,
+                color: "#FFFFFF",
                 letterSpacing: -0.5, lineHeight: 1.1,
                 fontFamily: bf, marginBottom: 6,
               }}>
@@ -1116,7 +1164,8 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
 
               {/* Subtitle */}
               <div style={{
-                fontSize: 11, fontWeight: 500, color: th.textSub,
+                fontSize: 11, fontWeight: 500,
+                color: "rgba(201,168,76,0.60)",
                 fontFamily: bf, marginBottom: 17,
               }}>
                 {s.proSubtitle}
@@ -1125,13 +1174,13 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
               {/* Gradient rule */}
               <div style={{
                 height: 1,
-                background: `linear-gradient(to right, ${SAFFRON}55, ${SAFFRON}18, transparent)`,
+                background: "linear-gradient(to right, rgba(201,168,76,0.55), rgba(201,168,76,0.18), transparent)",
               }} />
             </div>
 
             {/* Body text */}
             <div style={{
-              fontSize: 13, color: th.textMid, lineHeight: 1.85,
+              fontSize: 13, color: "rgba(255,255,255,0.50)", lineHeight: 1.85,
               marginBottom: 22, fontFamily: bf, position: "relative",
             }}>
               {s.proBody}
@@ -1140,42 +1189,39 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
             {/* ── COMPARISON TABLE ── */}
             <div style={{
               borderRadius: R.md,
-              border: `1px solid ${dark ? `${SAFFRON}1A` : `${SAFFRON}22`}`,
+              border: "1px solid rgba(201,168,76,0.18)",
               overflow: "hidden",
               position: "relative",
-              backdropFilter: "blur(10px)",
-              boxShadow: dark
-                ? `inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 16px rgba(0,0,0,0.25)`
-                : `inset 0 1px 0 rgba(255,255,255,0.90), 0 2px 12px rgba(0,0,0,0.04)`,
+              boxShadow: "inset 0 1px 0 rgba(255,245,180,0.04), 0 4px 20px rgba(0,0,0,0.32)",
             }}>
 
               {/* Column headers */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 76px 76px" }}>
                 <div style={{
-                  fontSize: 9, fontWeight: 700, color: th.textSub, fontFamily: bf,
+                  fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.32)", fontFamily: bf,
                   letterSpacing: 0.8, textTransform: "uppercase", padding: "9px 10px",
-                  background: dark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-                  borderBottom: `1px solid ${dark ? `${SAFFRON}14` : `${SAFFRON}18`}`,
+                  background: "rgba(255,255,255,0.025)",
+                  borderBottom: "1px solid rgba(201,168,76,0.12)",
                 }}>
                   {isHindi ? "सुविधा" : "Feature"}
                 </div>
                 <div style={{
                   textAlign: "center", fontSize: 9.5, fontWeight: 800,
-                  letterSpacing: 0.5, color: th.textSub, fontFamily: bf, padding: "9px 4px",
-                  background: dark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-                  borderLeft: `1px solid ${dark ? `${SAFFRON}14` : `${SAFFRON}18`}`,
-                  borderBottom: `1px solid ${dark ? `${SAFFRON}14` : `${SAFFRON}18`}`,
+                  letterSpacing: 0.5, color: "rgba(255,255,255,0.32)", fontFamily: bf, padding: "9px 4px",
+                  background: "rgba(255,255,255,0.025)",
+                  borderLeft: "1px solid rgba(201,168,76,0.12)",
+                  borderBottom: "1px solid rgba(201,168,76,0.12)",
                 }}>
                   {isHindi ? "निःशुल्क" : "Free"}
                 </div>
                 <div style={{
                   textAlign: "center", fontSize: 9.5, fontWeight: 800,
-                  letterSpacing: 1, color: "#fff", fontFamily: bf, padding: "9px 4px",
-                  background: `linear-gradient(160deg, ${SAFFRON}E8 0%, #C96A00E0 100%)`,
-                  borderLeft: `1px solid ${SAFFRON}45`,
-                  borderBottom: `1px solid ${SAFFRON}50`,
-                  textShadow: "0 1px 4px rgba(0,0,0,0.28)",
-                  letterSpacing: 1.2,
+                  letterSpacing: 1.2, fontFamily: bf, padding: "9px 4px",
+                  background: `linear-gradient(160deg, ${PRO_GOLD_DK} 0%, ${PRO_GOLD} 55%, #B08030 100%)`,
+                  borderLeft: "1px solid rgba(201,168,76,0.35)",
+                  borderBottom: "1px solid rgba(201,168,76,0.35)",
+                  color: "#FFF8E1",
+                  textShadow: "0 1px 4px rgba(0,0,0,0.40)",
                 }}>
                   PRO
                 </div>
@@ -1188,19 +1234,17 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                 return (
                   <div key={i} style={{
                     display: "grid", gridTemplateColumns: "1fr 76px 76px",
-                    borderBottom: isLast ? "none" : `1px solid ${dark ? "rgba(255,153,51,0.07)" : "rgba(255,153,51,0.09)"}`,
+                    borderBottom: isLast ? "none" : "1px solid rgba(201,168,76,0.07)",
                   }}>
                     {/* Feature label */}
                     <div style={{
                       padding: "11px 10px",
-                      background: dark
-                        ? (isEven ? "rgba(255,255,255,0.015)" : "rgba(255,255,255,0.025)")
-                        : (isEven ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.85)"),
+                      background: isEven ? "rgba(255,255,255,0.015)" : "rgba(255,255,255,0.025)",
                     }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: th.text, fontFamily: bf, lineHeight: 1.3 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.80)", fontFamily: bf, lineHeight: 1.3 }}>
                         {f.title}
                       </div>
-                      <div style={{ fontSize: 9.5, color: th.textSub, fontFamily: bf, marginTop: 2, lineHeight: 1.4 }}>
+                      <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.32)", fontFamily: bf, marginTop: 2, lineHeight: 1.4 }}>
                         {f.desc}
                       </div>
                     </div>
@@ -1209,15 +1253,15 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                     <div style={{
                       display: "flex", alignItems: "center", justifyContent: "center",
                       padding: "11px 4px",
-                      borderLeft: `1px solid ${dark ? "rgba(255,153,51,0.08)" : "rgba(255,153,51,0.12)"}`,
-                      background: dark ? "rgba(255,255,255,0.01)" : "rgba(0,0,0,0.015)",
+                      borderLeft: "1px solid rgba(201,168,76,0.08)",
+                      background: "rgba(255,255,255,0.01)",
                     }}>
                       <span style={{
                         fontSize: f.free === "✗" ? 13 : 10,
                         fontWeight: 700,
-                        color: f.free === "✗" ? th.textLight
-                          : f.free === "✓" ? IND_GREEN
-                          : th.textMid,
+                        color: f.free === "✗" ? "rgba(255,255,255,0.14)"
+                          : f.free === "✓" ? "#4ADE80"
+                          : "rgba(255,255,255,0.42)",
                         fontFamily: bf, textAlign: "center", lineHeight: 1.3,
                       }}>
                         {f.free}
@@ -1228,13 +1272,13 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                     <div style={{
                       display: "flex", alignItems: "center", justifyContent: "center",
                       padding: "11px 4px",
-                      borderLeft: `1px solid ${SAFFRON}28`,
-                      background: dark ? `${SAFFRON}0C` : `${SAFFRON}08`,
+                      borderLeft: `1px solid rgba(201,168,76,0.20)`,
+                      background: "rgba(201,168,76,0.07)",
                     }}>
                       <span style={{
                         fontSize: f.pro === "✓" ? 13 : 10,
                         fontWeight: 700,
-                        color: f.pro === "✓" ? IND_GREEN : SAFFRON,
+                        color: f.pro === "✓" ? "#4ADE80" : PRO_GOLD,
                         fontFamily: bf, textAlign: "center", lineHeight: 1.3,
                       }}>
                         {f.pro}
@@ -1246,9 +1290,10 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
             </div>
 
             {/* ── PRICING ── */}
-            <div style={{ marginTop: 22, position: "relative" }}>
+            <div style={{ marginTop: 24, position: "relative" }}>
               <div style={{
-                fontSize: 9, fontWeight: 700, color: th.textSub,
+                fontSize: 9, fontWeight: 700,
+                color: "rgba(201,168,76,0.58)",
                 letterSpacing: 1.6, textTransform: "uppercase",
                 marginBottom: 12, fontFamily: bf,
               }}>
@@ -1260,22 +1305,20 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                 {/* Monthly */}
                 <div style={{
                   flex: 1,
-                  background: dark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.75)",
-                  border: `1.5px solid ${SAFFRON}2A`,
+                  background: "rgba(255,255,255,0.04)",
+                  border: `1.5px solid rgba(201,168,76,0.22)`,
                   borderRadius: R.md, padding: "15px 12px", textAlign: "center",
                   backdropFilter: "blur(10px)",
-                  boxShadow: dark
-                    ? `inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 12px rgba(0,0,0,0.30)`
-                    : `inset 0 1px 0 rgba(255,255,255,0.90), 0 2px 8px rgba(0,0,0,0.04)`,
+                  boxShadow: "inset 0 1px 0 rgba(255,245,180,0.04), 0 2px 12px rgba(0,0,0,0.32)",
                 }}>
                   <div style={{
-                    fontSize: 9, fontWeight: 600, color: th.textSub,
+                    fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.32)",
                     letterSpacing: 0.9, textTransform: "uppercase",
                     marginBottom: 6, fontFamily: bf,
                   }}>
                     {isHindi ? "मासिक" : "Monthly"}
                   </div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: SAFFRON, fontFamily: bf, letterSpacing: -0.3 }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: PRO_GOLD, fontFamily: bf, letterSpacing: -0.3 }}>
                     {s.proMonthly}
                   </div>
                 </div>
@@ -1283,15 +1326,11 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                 {/* Yearly — highlighted */}
                 <div style={{
                   flex: 1, position: "relative",
-                  background: dark
-                    ? `linear-gradient(145deg, ${SAFFRON}1C 0%, ${SAFFRON}0E 100%)`
-                    : `linear-gradient(145deg, ${SAFFRON}16 0%, ${SAFFRON}0A 100%)`,
-                  border: `1.5px solid ${SAFFRON}45`,
+                  background: "linear-gradient(145deg, rgba(201,168,76,0.14) 0%, rgba(201,168,76,0.07) 100%)",
+                  border: `1.5px solid rgba(201,168,76,0.48)`,
                   borderRadius: R.md, padding: "15px 12px", textAlign: "center",
                   backdropFilter: "blur(10px)",
-                  boxShadow: dark
-                    ? `0 0 0 1px ${SAFFRON}12, 0 4px 20px ${SAFFRON}14, inset 0 1px 0 rgba(255,255,255,0.06)`
-                    : `0 0 0 1px ${SAFFRON}10, 0 4px 20px ${SAFFRON}18, inset 0 1px 0 rgba(255,255,255,0.90)`,
+                  boxShadow: `0 0 0 1px rgba(201,168,76,0.10), 0 4px 20px rgba(201,168,76,0.14), inset 0 1px 0 rgba(255,245,180,0.08)`,
                 }}>
                   {/* Save badge */}
                   <div style={{
@@ -1305,19 +1344,19 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
                     </span>
                   </div>
                   <div style={{
-                    fontSize: 9, fontWeight: 600, color: th.textSub,
+                    fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.32)",
                     letterSpacing: 0.9, textTransform: "uppercase",
                     marginBottom: 6, fontFamily: bf,
                   }}>
                     {isHindi ? "वार्षिक" : "Yearly"}
                   </div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: SAFFRON, fontFamily: bf, letterSpacing: -0.3 }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: PRO_GOLD, fontFamily: bf, letterSpacing: -0.3 }}>
                     {s.proYearly}
                   </div>
                 </div>
               </div>
 
-              <div style={{ fontSize: 10.5, color: th.textSub, marginTop: 11, lineHeight: 1.65, fontFamily: bf }}>
+              <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.28)", marginTop: 11, lineHeight: 1.65, fontFamily: bf }}>
                 {s.proPricingNote}
               </div>
             </div>
@@ -1325,23 +1364,20 @@ export default function AboutTab({ lang: propLang = "en", dark = false, toggleLa
             {/* ── LOGIN NOTICE ── */}
             <div style={{
               marginTop: 18, position: "relative",
-              background: dark ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.72)",
-              border: `1px solid ${SAFFRON}28`,
-              borderLeft: `3px solid ${SAFFRON}CC`,
+              background: "rgba(255,255,255,0.025)",
+              border: "1px solid rgba(201,168,76,0.20)",
+              borderLeft: "3px solid rgba(201,168,76,0.72)",
               borderRadius: `0 ${R.md}px ${R.md}px 0`,
               padding: "13px 15px",
-              backdropFilter: "blur(10px)",
-              boxShadow: dark
-                ? `inset 0 1px 0 rgba(255,255,255,0.04)`
-                : `inset 0 1px 0 rgba(255,255,255,0.85), 0 2px 8px rgba(0,0,0,0.03)`,
+              boxShadow: "inset 0 1px 0 rgba(255,245,180,0.04)",
             }}>
               <div style={{
-                fontSize: 11.5, fontWeight: 700, color: SAFFRON,
+                fontSize: 11.5, fontWeight: 700, color: PRO_GOLD,
                 marginBottom: 5, fontFamily: bf, letterSpacing: 0.1,
               }}>
                 {s.proLoginTitle}
               </div>
-              <div style={{ fontSize: 11, color: th.textMid, lineHeight: 1.75, fontFamily: bf }}>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.42)", lineHeight: 1.75, fontFamily: bf }}>
                 {s.proLoginNotice}
               </div>
             </div>
