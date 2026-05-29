@@ -22,6 +22,7 @@ import { auth, db } from "./firebase.js";
 import { RecaptchaVerifier, signInWithPhoneNumber, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp, collection, addDoc } from "firebase/firestore";
 import AIChat from "./AIChat.jsx";
+import AILockedScreen from "./AILockedScreen.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
 import ReportIssueSheet from "./ReportIssueSheet.jsx";
 import UserReportsTab from "./UserReportsTab.jsx";
@@ -5612,7 +5613,8 @@ export default function YojanaSahay(){
       {/* ── AI TAB — always mounted so chat history survives tab switches.
            IMPORTANT: never use display:none here — it makes scrollHeight=0,
            which causes the auto-resize textarea to collapse to height:0px.
-           Instead we keep display:flex always and toggle flex/visibility. ── */}
+           Instead we keep display:flex always and toggle flex/visibility.
+           ── Gate: show AILockedScreen when signed out, AIChat when signed in. ── */}
       <div style={{
         display:"flex",
         flex:activeTab==="ai"?1:0,
@@ -5620,13 +5622,21 @@ export default function YojanaSahay(){
         visibility:activeTab==="ai"?"visible":"hidden",
         pointerEvents:activeTab==="ai"?"auto":"none",
       }}>
-        <AIChat
-          lang={lang}
-          dark={dark}
-          profile={profile}
-          uid={auth.currentUser?.uid || null}
-          key={auth.currentUser?.uid || "guest"}
-        />
+        {auth.currentUser ? (
+          <AIChat
+            lang={lang}
+            dark={dark}
+            profile={profile}
+            uid={auth.currentUser.uid}
+            key={auth.currentUser.uid}
+          />
+        ) : (
+          <AILockedScreen
+            lang={lang}
+            dark={dark}
+            onGoToProfile={() => setActiveTab("profile")}
+          />
+        )}
       </div>
 
       {/* ── FINAL PREMIUM BOTTOM NAV ── */}

@@ -1185,30 +1185,6 @@ function WelcomeScreen({ lang, dark, onSuggest, profile }) {
         </div>
       )}
 
-      {/* ── Login nudge card — only when NOT logged in ── */}
-      {!profile && (
-        <div style={{
-          marginLeft:40, marginBottom:16,
-          background: dark ? "rgba(255,153,51,0.1)" : "#FFFBEB",
-          border:`1.5px solid ${dark ? "rgba(255,153,51,0.32)" : "#FDE68A"}`,
-          borderRadius:14, padding:"11px 13px",
-          display:"flex", alignItems:"flex-start", gap:10,
-          animation:"badge-pop 0.35s 0.15s ease-out both",
-        }}>
-          <span style={{ fontSize:22, flexShrink:0, marginTop:1 }}>🔓</span>
-          <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontSize:12, fontWeight:700, color: dark?"#fbbf24":"#92400e", fontFamily:bf, marginBottom:3 }}>
-              {isHindi ? "लॉगिन करें — AI पर्सनल बने" : "Login for Personalized AI"}
-            </div>
-            <div style={{ fontSize:10.5, color: dark?"#d97706":"#78350f", lineHeight:1.5, fontFamily:bf }}>
-              {isHindi
-                ? "AI आपकी प्रोफाइल देखकर सटीक योजनाएं बताता है · चैट इतिहास सेव · अलर्ट"
-                : "AI uses your profile for tailored matches · Chat saved · Scheme alerts"}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Suggested chips label */}
       <div style={{ fontSize:10, fontWeight:700, color:th.textSub, letterSpacing:0.8, textTransform:"uppercase", marginBottom:10, paddingLeft:40, fontFamily:bf }}>
         {isHindi ? "यह पूछें" : "Try asking"}
