@@ -1,8 +1,7 @@
 // groqClient.js — Yojana Sahay AI · Groq API handler
-// REDESIGNED: Two-tier context system
-//   Tier 1 (always present): App info, developer info, ALL scheme names + counts
-//   Tier 2 (dynamic):        Full details of up to 6 relevant schemes per query
-// This gives the AI complete awareness while keeping token usage low.
+// UPDATED: System prompt now tells the AI it has web search capability.
+// Everything else is unchanged — same two-tier context, same key rotation,
+// same CHIPS parsing. Web search execution happens entirely in chat.js (backend).
 
 import { SCHEME_DB } from "./schemesData.js";
 
@@ -50,8 +49,9 @@ const APP = {
     "Reading-time cooldown for rural users (10–15s after each reply)",
     "Light / dark mode, Ashok Chakra animation in header",
     "Powered by Groq AI (llama-3.3-70b-versatile) via Vercel serverless API",
+    "Web search powered by Tavily for real-time scheme updates",
   ],
-  tech: "React.js, Vercel, Groq API, Tailwind CSS, Vite",
+  tech: "React.js, Vercel, Groq API, Tavily Search, Vite",
   builtBy: DEVELOPER.name,
 };
 
@@ -399,6 +399,7 @@ function buildSmartContext(query, lang = "en", profile = null) {
 //   • Identity (who you are, who built you, what app you live in)
 //   • Scheme counts + full index (Tier 1) — AI knows everything
 //   • Relevant scheme details (Tier 2) — injected at the end
+//   • WEB SEARCH GUIDANCE (NEW) — tells AI when/how to use search results
 function buildSystemPrompt(query, lang, profile = null) {
   const isHindi  = lang === "hi";
   const national = SCHEME_DB.filter(s => s.scope === "national").length;
@@ -433,7 +434,14 @@ CHIPS:["question 1","question 2","question 3"]
 - EXACT total: ${total} schemes (${national} Central + ${state} State-specific)
 - NEVER guess or invent scheme counts — the context below always has the exact numbers
 - NEVER invent per-state counts — only use the breakdown provided in the context
-- You only know what's in our database — never add or rename schemes
+- You know what's in our database AND you can search the web for real-time updates
+
+══ WEB SEARCH (NEW) ══
+- You have access to a web_search tool that searches the internet in real time.
+- USE IT when the user asks about: new or recently launched schemes, deadlines, latest news, installment dates, any scheme you are unsure about, or anything that may have changed recently.
+- DO NOT USE IT for: scheme names/details already in your database, eligibility questions answered by the user's profile, count/list queries already handled by the database context.
+- When web search results are provided to you (in a tool result message), USE THOSE RESULTS to build your answer. Always mention the source URL if available.
+- If search results and database data both exist for the same scheme, PREFER the web search result for dates/deadlines/news, and prefer the database for eligibility and documents.
 
 ══ APP NAVIGATION (guide users here for live counts) ══
 - Schemes tab (bottom nav): shows ALL schemes with live count in "All (N)" pill
@@ -481,7 +489,7 @@ FORMATTING (follow strictly):
 - Show each scheme's OFFICIAL_LINK immediately below it as "🔗 https://..." on a new line
 - NEVER use plain bullet dots (•) for scheme lists — use numbers
 - COUNT RULE: If data has "YOUR FIRST LINE MUST BE EXACTLY THIS", use that sentence as your very first line — do NOT include the label itself. NEVER recount the list yourself — two schemes sharing the same website are still two separate schemes
-- NEVER hallucinate links — ONLY use links from OFFICIAL_LINK field in data below
+- NEVER hallucinate links — ONLY use links from OFFICIAL_LINK field in data below OR from web search results
 - NEVER show "${APP.url}" as a link — user is already in the app
 - If OFFICIAL_LINK is missing for a scheme: write "🔗 Apply at nearest govt. office"
 - Full detail (docs, annual, ministry) only when user asks for details/documents/how to apply
