@@ -5639,20 +5639,123 @@ export default function YojanaSahay(){
 
       {/* ── OVERLAYS ── */}
       {showAvatarModal&&(
-        <div onClick={()=>setShowAvatarModal(false)}
-          style={{position:"fixed",inset:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",
-            background:"rgba(0,0,0,0.72)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",
-            animation:"avatarFadeIn 0.22s cubic-bezier(0.34,1.56,0.64,1)"}}>
+        <div
+          onClick={()=>setShowAvatarModal(false)}
+          style={{
+            position:"fixed",inset:0,zIndex:9999,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            background:"rgba(4,4,20,0.58)",
+            backdropFilter:"blur(28px)",WebkitBackdropFilter:"blur(28px)",
+            animation:"avBg 0.30s ease forwards",
+          }}>
           <style>{`
-            @keyframes avatarFadeIn{from{opacity:0;transform:scale(0.82)}to{opacity:1;transform:scale(1)}}
+            @keyframes avBg   { from{opacity:0} to{opacity:1} }
+            @keyframes avCard {
+              from { opacity:0; transform:scale(0.66) translateY(28px); }
+              to   { opacity:1; transform:scale(1)    translateY(0);    }
+            }
+            @keyframes avShine {
+              0%   { transform:translateX(-200%); }
+              100% { transform:translateX(420%);  }
+            }
+            @keyframes avBadge {
+              from { opacity:0; transform:translateY(10px); }
+              to   { opacity:1; transform:translateY(0);    }
+            }
           `}</style>
-          <div onClick={e=>e.stopPropagation()}
-            style={{borderRadius:28,overflow:"hidden",
-              boxShadow:"0 24px 80px rgba(0,0,0,0.6), 0 0 0 2.5px rgba(255,255,255,0.18)",
-              width:"min(78vw,320px)",height:"min(78vw,320px)",
-              animation:"avatarFadeIn 0.22s cubic-bezier(0.34,1.56,0.64,1)"}}>
-            <img src={appLogo} alt="Yojana Sahay"
-              style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+
+          {/* ── Content card ── */}
+          <div
+            onClick={e=>e.stopPropagation()}
+            style={{
+              display:"flex",flexDirection:"column",alignItems:"center",gap:16,
+              animation:"avCard 0.48s cubic-bezier(0.34,1.56,0.64,1) forwards",
+            }}>
+
+            {/* ── Logo block with tri-color glow halo ── */}
+            <div style={{position:"relative"}}>
+              {/* Tri-color glow halo */}
+              <div style={{
+                position:"absolute",inset:-8,borderRadius:34,zIndex:0,
+                background:"linear-gradient(135deg,#FF9933 0%,#06038D 50%,#138808 100%)",
+                opacity:0.50,filter:"blur(14px)",
+              }}/>
+              {/* Clean white ring */}
+              <div style={{
+                position:"absolute",inset:-2,borderRadius:30,zIndex:1,
+                border:"1.5px solid rgba(255,255,255,0.22)",
+                boxShadow:"0 0 0 1px rgba(0,0,0,0.12)",
+              }}/>
+              {/* Image */}
+              <div style={{
+                position:"relative",zIndex:2,
+                width:"min(50vw,158px)",height:"min(50vw,158px)",
+                borderRadius:26,overflow:"hidden",
+                boxShadow:"0 0 0 2px rgba(255,255,255,0.26), 0 20px 52px rgba(0,0,0,0.55)",
+              }}>
+                <img
+                  src={appLogo} alt="Yojana Sahay"
+                  style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                {/* Shine sweep — one-shot on open */}
+                <div style={{
+                  position:"absolute",top:0,left:0,height:"100%",width:"45%",
+                  background:"linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.34) 50%,transparent 100%)",
+                  animation:"avShine 0.80s 0.52s ease-out forwards",
+                  pointerEvents:"none",
+                }}/>
+              </div>
+            </div>
+
+            {/* ── App branding ── */}
+            <div style={{
+              textAlign:"center",
+              animation:"avBadge 0.38s 0.22s cubic-bezier(0.22,1,0.36,1) both",
+            }}>
+              <div style={{
+                color:"#fff",fontSize:17,fontWeight:900,
+                fontFamily:bf,letterSpacing:-0.4,lineHeight:1.15,
+                textShadow:"0 2px 18px rgba(0,0,0,0.55)",
+              }}>
+                {t.appName}
+              </div>
+              <div style={{
+                display:"flex",alignItems:"center",justifyContent:"center",
+                gap:5,marginTop:4,
+              }}>
+                <span style={{fontSize:11}}>🇮🇳</span>
+                <span style={{
+                  color:"rgba(255,255,255,0.56)",
+                  fontSize:10,fontWeight:700,letterSpacing:0.6,
+                  fontFamily:"'Noto Sans',sans-serif",
+                  textTransform:"uppercase",
+                }}>
+                  {t.appSub}
+                </span>
+              </div>
+              {/* Tri-color accent strip */}
+              <div style={{
+                display:"flex",margin:"9px auto 0",
+                width:48,height:2,borderRadius:99,overflow:"hidden",
+              }}>
+                <div style={{flex:1,background:"#FF9933"}}/>
+                <div style={{flex:1,background:"rgba(255,255,255,0.65)"}}/>
+                <div style={{flex:1,background:"#138808"}}/>
+              </div>
+            </div>
+
+            {/* ── Dismiss pill ── */}
+            <div style={{
+              background:"rgba(255,255,255,0.07)",
+              border:"1px solid rgba(255,255,255,0.12)",
+              borderRadius:50,padding:"6px 20px",
+              color:"rgba(255,255,255,0.38)",
+              fontSize:9.5,fontWeight:700,letterSpacing:0.9,
+              fontFamily:"'Noto Sans',sans-serif",
+              cursor:"pointer",
+              animation:"avBadge 0.38s 0.32s cubic-bezier(0.22,1,0.36,1) both",
+            }}>
+              TAP ANYWHERE TO CLOSE
+            </div>
           </div>
         </div>
       )}
