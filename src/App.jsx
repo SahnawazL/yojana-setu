@@ -2021,7 +2021,6 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   const [googleLoading,setGoogleLoading]=useState(false);
   const [googleEmail,setGoogleEmail]=useState("");
   const [googlePhoto,setGooglePhoto]=useState("");
-  const [profilePreview,setProfilePreview]=useState(false);
   const [emailInput,setEmailInput]=useState("");
   const [passwordInput,setPasswordInput]=useState("");
   const [showPassword,setShowPassword]=useState(false);
@@ -3420,25 +3419,16 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
 
         {/* Avatar + Identity row */}
         <div style={{display:"flex",alignItems:"flex-start",gap:16,marginBottom:20}}>
-        {/* Avatar with completeness ring */}
+          {/* Avatar with completeness ring */}
           <div style={{position:"relative",flexShrink:0}}>
-            <div
-              onClick={()=>setProfilePreview(true)}
-              style={{
-                width:74,height:74,borderRadius:"50%",overflow:"hidden",
-                background:"linear-gradient(135deg,#FF9933 0%,#FF8C00 100%)",
-                display:"flex",alignItems:"center",justifyContent:"center",
-                fontSize:26,fontWeight:800,color:"#fff",letterSpacing:-1,
-                border:"3px solid rgba(255,255,255,0.45)",
-                boxShadow:"0 0 0 4px rgba(255,153,51,0.28), 0 8px 24px rgba(0,0,0,0.32)",
-                cursor:"pointer",
-                transition:"transform 0.15s cubic-bezier(0.16,1,0.3,1), box-shadow 0.15s",
-                WebkitTapHighlightColor:"transparent",
-              }}
-              onPointerDown={e=>{e.currentTarget.style.transform="scale(0.91)";e.currentTarget.style.boxShadow="0 0 0 2px rgba(255,153,51,0.2), 0 4px 12px rgba(0,0,0,0.28)";}}
-              onPointerUp={e=>{e.currentTarget.style.transform="scale(1)";e.currentTarget.style.boxShadow="0 0 0 4px rgba(255,153,51,0.28), 0 8px 24px rgba(0,0,0,0.32)";}}
-              onPointerLeave={e=>{e.currentTarget.style.transform="scale(1)";e.currentTarget.style.boxShadow="0 0 0 4px rgba(255,153,51,0.28), 0 8px 24px rgba(0,0,0,0.32)";}}
-            >
+            <div style={{
+              width:74,height:74,borderRadius:"50%",overflow:"hidden",
+              background:"linear-gradient(135deg,#FF9933 0%,#FF8C00 100%)",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:26,fontWeight:800,color:"#fff",letterSpacing:-1,
+              border:"3px solid rgba(255,255,255,0.45)",
+              boxShadow:"0 0 0 4px rgba(255,153,51,0.28), 0 8px 24px rgba(0,0,0,0.32)",
+            }}>
               {(profile?.photo||googlePhoto||auth.currentUser?.photoURL)
                 ?<img src={profile?.photo||googlePhoto||auth.currentUser?.photoURL} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                 :initials}
@@ -4712,136 +4702,6 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark, uid }) {
 }
 
 // ─── MAIN APP ──────────────────────────────────────────────────────────────────
-// ─── PROFILE PHOTO PREVIEW MODAL ──────────────────────────────────────────────
-function ProfilePhotoPreview({ src, name, initials, onClose, dark, bf }){
-  const [closing, setClosing] = useState(false);
-
-  const dismiss = useCallback(()=>{
-    if(closing) return;
-    setClosing(true);
-    setTimeout(onClose, 280);
-  },[closing, onClose]);
-
-  return(
-    <div
-      onClick={dismiss}
-      style={{
-        position:"fixed", inset:0, zIndex:9999,
-        display:"flex", alignItems:"center", justifyContent:"center",
-        background: closing
-          ? "rgba(0,0,0,0)"
-          : "rgba(0,0,0,0.68)",
-        backdropFilter:"blur(22px)",
-        WebkitBackdropFilter:"blur(22px)",
-        animation: closing
-          ? "ppOverlayOut 0.28s cubic-bezier(0.16,1,0.3,1) forwards"
-          : "ppOverlayIn  0.32s cubic-bezier(0.16,1,0.3,1) forwards",
-        cursor:"pointer",
-      }}
-    >
-      {/* Card */}
-      <div
-        onClick={e=>e.stopPropagation()}
-        style={{
-          position:"relative",
-          animation: closing
-            ? "ppCardOut 0.26s cubic-bezier(0.16,1,0.3,1) forwards"
-            : "ppCardIn  0.44s cubic-bezier(0.16,1,0.3,1) forwards",
-          display:"flex", flexDirection:"column",
-          alignItems:"center",
-          cursor:"default",
-        }}
-      >
-        {/* Spinning gradient ring — square rounded */}
-        <div style={{
-          position:"absolute",
-          inset:-4,
-          borderRadius:32,
-          background:"conic-gradient(from 0deg, #FF9933, #ffffff, #138808, #000080, #FF9933)",
-          animation:"ppBorderSpin 3s linear infinite",
-          zIndex:0,
-        }}/>
-
-        {/* White separator gap */}
-        <div style={{
-          position:"absolute",
-          inset:-1,
-          borderRadius:29,
-          background: dark ? "#1a1a1a" : "#f5f5f5",
-          zIndex:1,
-        }}/>
-
-        {/* Photo frame — square rounded, NOT circle */}
-        <div style={{
-          position:"relative", zIndex:2,
-          width:240, height:240,
-          borderRadius:28,
-          overflow:"hidden",
-          background: dark
-            ? "linear-gradient(135deg,#1e1e2e,#2a1a0e)"
-            : "linear-gradient(135deg,#fff5eb,#ffe4c4)",
-          display:"flex", alignItems:"center", justifyContent:"center",
-          boxShadow:"0 8px 40px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.25)",
-        }}>
-          {src
-            ? <img
-                src={src} alt={name||"Profile"}
-                style={{
-                  width:"100%", height:"100%",
-                  objectFit:"cover",
-                  display:"block",
-                }}
-              />
-            : <div style={{
-                fontSize:72, fontWeight:900, color:"#FF9933",
-                fontFamily:bf, letterSpacing:-3,
-                textShadow:"0 4px 20px rgba(255,153,51,0.5)",
-              }}>
-                {initials}
-              </div>
-          }
-        </div>
-
-        {/* Name tag below photo */}
-        {name && (
-          <div style={{
-            position:"relative", zIndex:2,
-            marginTop:16,
-            background: dark
-              ? "rgba(255,255,255,0.08)"
-              : "rgba(0,0,0,0.06)",
-            border:`1px solid ${dark?"rgba(255,255,255,0.12)":"rgba(0,0,0,0.08)"}`,
-            borderRadius:50,
-            padding:"7px 22px",
-            color: dark ? "#fff" : "#111",
-            fontSize:14, fontWeight:700,
-            fontFamily:bf, letterSpacing:0.2,
-            backdropFilter:"blur(8px)",
-            animation:"ppNameIn 0.38s 0.18s cubic-bezier(0.16,1,0.3,1) both",
-            boxShadow:"0 2px 12px rgba(0,0,0,0.18)",
-          }}>
-            {name}
-          </div>
-        )}
-
-        {/* Tap to close hint */}
-        <div style={{
-          position:"relative", zIndex:2,
-          marginTop:14,
-          color:"rgba(255,255,255,0.55)",
-          fontSize:11, letterSpacing:0.3,
-          animation:"ppHintPulse 2s ease-in-out infinite, ppNameIn 0.4s 0.28s ease both",
-          cursor:"pointer",
-        }}
-          onClick={dismiss}
-        >
-          Tap to close
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function YojanaSahay(){
   const [lang,setLang]=useState(()=>localStorage.getItem("yojana_lang")||"en");
   const [dark,setDark]=useState(()=>localStorage.getItem("yojana_dark")==="true");
@@ -4854,6 +4714,7 @@ export default function YojanaSahay(){
   const [showChecker,setShowChecker]=useState(false);
   const [selectedScheme,setSelectedScheme]=useState(null);   // SchemeDetailSheet
   const [selectedCategory,setSelectedCategory]=useState(null); // CategorySheet
+  const [showAvatarModal,setShowAvatarModal]=useState(false);
   const [profile,setProfile]=useState(()=>{
     try{return JSON.parse(localStorage.getItem("yojana_profile")||"null")||null;}catch{return null;}
   });
@@ -5069,17 +4930,6 @@ export default function YojanaSahay(){
 
   return(
     <div className="app-root" style={{fontFamily:bf,background:th.appBg,maxWidth:420,margin:"0 auto",position:"relative",display:"flex",flexDirection:"column",overflowX:"hidden",boxShadow:"0 0 60px rgba(0,0,0,0.15)",opacity:langAnim?0.7:1,transition:"opacity 0.12s,background 0.3s"}}>
-      {/* ── PROFILE PHOTO PREVIEW MODAL ── */}
-      {profilePreview&&(
-        <ProfilePhotoPreview
-          src={profile?.photo||googlePhoto||auth.currentUser?.photoURL||""}
-          name={profile?.name||""}
-          initials={initials}
-          onClose={()=>setProfilePreview(false)}
-          dark={dark}
-          bf={bf}
-        />
-      )}
       {/* ── SPLASH SCREEN — shown once per session ── */}
       {!splashDone&&(
         <SplashScreen onDone={()=>{
@@ -5193,29 +5043,6 @@ export default function YojanaSahay(){
         }
         @keyframes dotFadeIn{from{opacity:0;transform:translateX(-50%) scale(0.3);}to{opacity:1;transform:translateX(-50%) scale(1);}}
 
-        /* ── PROFILE PHOTO PREVIEW ── */
-        @keyframes ppOverlayIn{from{opacity:0;}to{opacity:1;}}
-        @keyframes ppOverlayOut{from{opacity:1;}to{opacity:0;}}
-        @keyframes ppCardIn{
-          0%  {opacity:0;transform:scale(0.70) translateY(28px);}
-          55% {opacity:1;transform:scale(1.03) translateY(-3px);}
-          78% {transform:scale(0.98) translateY(1px);}
-          100%{opacity:1;transform:scale(1) translateY(0);}
-        }
-        @keyframes ppCardOut{
-          0%  {opacity:1;transform:scale(1);}
-          100%{opacity:0;transform:scale(0.76) translateY(18px);}
-        }
-        @keyframes ppBorderSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-        @keyframes ppNameIn{
-          from{opacity:0;transform:translateY(7px);}
-          to  {opacity:1;transform:translateY(0);}
-        }
-        @keyframes ppHintPulse{
-          0%,100%{opacity:0.5;transform:translateY(0);}
-          50%    {opacity:0.85;transform:translateY(-2px);}
-        }
-
         .cp{animation:cp 2.5s ease-in-out infinite;}
         @keyframes cp{0%,100%{box-shadow:0 6px 24px rgba(19,136,8,0.3)}50%{box-shadow:0 6px 32px rgba(19,136,8,0.55)}}
         .app-root{height:100vh;height:100dvh;}
@@ -5299,8 +5126,10 @@ export default function YojanaSahay(){
             {/* Top nav bar */}
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"52px 20px 14px",position:"relative"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:44,height:44,borderRadius:12,overflow:"hidden",flexShrink:0,
-                  boxShadow:"0 2px 12px rgba(0,0,0,0.22), 0 0 0 1.5px rgba(255,255,255,0.30)"}}>
+                <div onClick={()=>{haptic(30);setShowAvatarModal(true);}}
+                  style={{width:44,height:44,borderRadius:12,overflow:"hidden",flexShrink:0,cursor:"pointer",
+                    boxShadow:"0 2px 12px rgba(0,0,0,0.22), 0 0 0 1.5px rgba(255,255,255,0.30)",
+                    WebkitTapHighlightColor:"transparent"}}>
                   <img src={appLogo} alt="Yojana Sahay"
                     style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
                 </div>
@@ -5809,6 +5638,24 @@ export default function YojanaSahay(){
       </div>
 
       {/* ── OVERLAYS ── */}
+      {showAvatarModal&&(
+        <div onClick={()=>setShowAvatarModal(false)}
+          style={{position:"fixed",inset:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",
+            background:"rgba(0,0,0,0.72)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",
+            animation:"avatarFadeIn 0.22s cubic-bezier(0.34,1.56,0.64,1)"}}>
+          <style>{`
+            @keyframes avatarFadeIn{from{opacity:0;transform:scale(0.82)}to{opacity:1;transform:scale(1)}}
+          `}</style>
+          <div onClick={e=>e.stopPropagation()}
+            style={{borderRadius:28,overflow:"hidden",
+              boxShadow:"0 24px 80px rgba(0,0,0,0.6), 0 0 0 2.5px rgba(255,255,255,0.18)",
+              width:"min(78vw,320px)",height:"min(78vw,320px)",
+              animation:"avatarFadeIn 0.22s cubic-bezier(0.34,1.56,0.64,1)"}}>
+            <img src={appLogo} alt="Yojana Sahay"
+              style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+          </div>
+        </div>
+      )}
       {showAdmin&&(
         <AdminDashboard onClose={()=>setShowAdmin(false)} dark={dark}/>
       )}
