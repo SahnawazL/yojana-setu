@@ -2029,6 +2029,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   const [forgotLoading,setForgotLoading]=useState(false);
   const [forgotMsg,setForgotMsg]=useState(""); // "" | "sent" | "error"
   const [showForgot,setShowForgot]=useState(false); // only reveal after a wrong-password attempt
+  const [loginToast,setLoginToast]=useState(null);  // { name, photo } | null
   const [showReport,setShowReport]=useState(false);
   const [reportTab,setReportTab]=useState("my"); // "my" | "new"
   const [showAbout,setShowAbout]=useState(false);
@@ -2264,9 +2265,17 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       const user=result.user;
       setGoogleEmail(user.email||"");
       setGooglePhoto(user.photoURL||"");
+      // Show welcome toast regardless of new/returning user
+      setLoginToast({name:user.displayName||user.email||"",photo:user.photoURL||""});
+      setTimeout(()=>setLoginToast(null),3200);
       try{
         const snap=await getDoc(doc(db,"users",user.uid));
-        if(snap.exists()){setProfile(snap.data());setStage("dashboard");return;}
+        if(snap.exists()){
+          setProfile(snap.data());setStage("dashboard");
+          setLoginToast({name:user.displayName||user.email||"",photo:user.photoURL||""});
+          setTimeout(()=>setLoginToast(null),3200);
+          return;
+        }
       }catch{}
       if(user.displayName) setSetupName(user.displayName);
       if(savedAnswers){
@@ -2323,6 +2332,8 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           if(snap.exists()){
             setProfile(snap.data());
             setStage("dashboard");
+            setLoginToast({name:auth.currentUser?.displayName||emailInput.trim()||"",photo:auth.currentUser?.photoURL||""});
+            setTimeout(()=>setLoginToast(null),3200);
             return;
           }
         }catch{}
@@ -4164,6 +4175,72 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                 embeddedMode={true}
               />
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Login Success Toast ── */}
+      <style>{`
+        @keyframes toastSlideIn {
+          from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes toastFadeOut {
+          from { opacity: 1; }
+          to   { opacity: 0; }
+        }
+      `}</style>
+      {loginToast&&(
+        <div style={{
+          position:"fixed",
+          bottom:96,
+          left:"50%",
+          transform:"translateX(-50%)",
+          zIndex:9999,
+          display:"flex",
+          alignItems:"center",
+          gap:10,
+          background:dark?"rgba(30,30,32,0.96)":"rgba(255,255,255,0.97)",
+          border:`1px solid ${dark?"rgba(255,255,255,0.10)":"rgba(0,0,0,0.08)"}`,
+          borderRadius:18,
+          padding:"10px 16px 10px 10px",
+          boxShadow:dark
+            ?"0 8px 32px rgba(0,0,0,0.45)"
+            :"0 8px 32px rgba(0,0,0,0.12)",
+          minWidth:220,
+          maxWidth:"86vw",
+          animation:"toastSlideIn 0.38s cubic-bezier(0.22,1,0.36,1) forwards",
+        }}>
+          {/* Avatar */}
+          {loginToast.photo
+            ?<img src={loginToast.photo} alt=""
+                style={{width:36,height:36,borderRadius:"50%",flexShrink:0,objectFit:"cover",border:`1.5px solid ${dark?"rgba(255,255,255,0.12)":"rgba(0,0,0,0.08)"}`}}/>
+            :<div style={{
+                width:36,height:36,borderRadius:"50%",flexShrink:0,
+                background:dark?"#2c2c2e":"#f0f0f0",
+                display:"flex",alignItems:"center",justifyContent:"center",
+                fontSize:17,
+              }}>🙏</div>
+          }
+
+          {/* Text */}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{
+              fontSize:12.5,fontWeight:700,
+              color:dark?"#f0f0f0":"#1a1a1a",
+              fontFamily:bf,lineHeight:1.3,
+            }}>
+              {isHindi?"साइन इन सफल":"Signed in successfully"} ✓
+            </div>
+            <div style={{
+              fontSize:11,
+              color:dark?"#888":"#888",
+              fontFamily:bf,
+              marginTop:2,
+              overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+            }}>
+              {isHindi?"स्वागत है,":"Welcome,"} {loginToast.name}
+            </div>
           </div>
         </div>
       )}
