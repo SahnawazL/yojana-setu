@@ -555,5 +555,15 @@ export async function sendMessage(conversationHistory, userQuery, lang = "en", p
   }
 
   const data = await res.json();
-  return parseResponse(data.choices[0].message.content.trim());
+
+  // FIX: Guard against unexpected response shapes (e.g. Groq error after a
+  // tool-call round-trip). Without this, data.choices[0] being undefined
+  // causes an unhandled crash that shows a cryptic error to the user.
+  const content = data?.choices?.[0]?.message?.content;
+  if (!content) {
+    const errMsg = data?.error?.message || "Empty response from AI. Please try again.";
+    throw new Error(errMsg);
+  }
+
+  return parseResponse(content.trim());
 }
