@@ -4800,39 +4800,76 @@ export default function YojanaSahay(){
   const [splashDone,setSplashDone]=useState(()=>sessionStorage.getItem("ys_splashed")==="1");
   const toggleDark=()=>setDark(d=>!d);
 
-  // ── SWIPE LEFT/RIGHT TO SWITCH TABS ─────────────────────────────────────────
-  // Tab order mirrors the bottom nav — swiping left goes forward, right goes back.
-  const TABS = ["home","search","schemes","ai","profile"];
-  const swipeRef = useRef(null); // stores { x, y } of touchstart
+  // ── SMOOTH SWIPE — direction-aware slide transition ────────────────────────
+  const TABS        = ["home","search","schemes","ai","profile"];
+  const swipeRef    = useRef(null);   // { x, y, lockedAxis } from touchstart
+  const [swipeDir,  setSwipeDir]  = useState(null);   // "left"|"right"|null
+  const [dragX,     setDragX]     = useState(0);       // live finger offset px
 
   const handleTouchStart = useCallback((e) => {
-    // Don't interfere when any overlay is open
     if (showAdmin || showChecker || selectedScheme || selectedCategory) return;
     const t = e.touches[0];
-    swipeRef.current = { x: t.clientX, y: t.clientY };
+    swipeRef.current = { x: t.clientX, y: t.clientY, lockedAxis: null };
+    setDragX(0);
   }, [showAdmin, showChecker, selectedScheme, selectedCategory]);
+
+  const handleTouchMove = useCallback((e) => {
+    if (!swipeRef.current) return;
+    const t   = e.touches[0];
+    const dx  = t.clientX - swipeRef.current.x;
+    const dy  = t.clientY - swipeRef.current.y;
+
+    // Lock axis on first significant movement
+    if (swipeRef.current.lockedAxis === null) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      swipeRef.current.lockedAxis = Math.abs(dx) >= Math.abs(dy) ? "h" : "v";
+    }
+    if (swipeRef.current.lockedAxis !== "h") return;
+
+    const idx = TABS.indexOf(activeTab);
+    // Resist at edges — rubber-band feel
+    const atStart = idx === 0;
+    const atEnd   = idx === TABS.length - 1;
+    const rubber  = (raw) => raw * 0.22;
+    const clamped = (atStart && dx > 0) ? rubber(dx)
+                  : (atEnd   && dx < 0) ? rubber(dx)
+                  : dx;
+
+    // Dampen so content doesn't fly off screen (max 55% of screen width)
+    const maxDrag = window.innerWidth * 0.55;
+    setDragX(Math.max(-maxDrag, Math.min(maxDrag, clamped)));
+  }, [activeTab, showAdmin, showChecker, selectedScheme, selectedCategory]);
 
   const handleTouchEnd = useCallback((e) => {
     if (!swipeRef.current) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - swipeRef.current.x;
-    const dy = t.clientY - swipeRef.current.y;
+    const t   = e.changedTouches[0];
+    const dx  = t.clientX - swipeRef.current.x;
+    const dy  = t.clientY - swipeRef.current.y;
     swipeRef.current = null;
 
-    // Only fire if horizontal swipe dominates (not a scroll) and is long enough
-    if (Math.abs(dx) < 52 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+    // Snap drag back instantly regardless of outcome
+    setDragX(0);
 
-    const currentIndex = TABS.indexOf(activeTab);
-    if (dx < 0 && currentIndex < TABS.length - 1) {
-      // Swipe LEFT → next tab
+    if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+
+    const idx = TABS.indexOf(activeTab);
+    if (dx < 0 && idx < TABS.length - 1) {
       haptic();
-      setActiveTab(TABS[currentIndex + 1]);
-    } else if (dx > 0 && currentIndex > 0) {
-      // Swipe RIGHT → previous tab
+      setSwipeDir("left");
+      setActiveTab(TABS[idx + 1]);
+    } else if (dx > 0 && idx > 0) {
       haptic();
-      setActiveTab(TABS[currentIndex - 1]);
+      setSwipeDir("right");
+      setActiveTab(TABS[idx - 1]);
     }
   }, [activeTab, showAdmin, showChecker, selectedScheme, selectedCategory]);
+
+  // Clear swipeDir after animation completes
+  useEffect(() => {
+    if (!swipeDir) return;
+    const t = setTimeout(() => setSwipeDir(null), 380);
+    return () => clearTimeout(t);
+  }, [swipeDir, activeTab]);
 
   useEffect(()=>{localStorage.setItem("yojana_lang",lang);},[lang]);
   useEffect(()=>{localStorage.setItem("yojana_dark",dark);},[dark]);
@@ -5041,7 +5078,7 @@ export default function YojanaSahay(){
   ],[t]);
 
   return(
-    <div className="app-root" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{fontFamily:bf,background:th.appBg,maxWidth:420,margin:"0 auto",position:"relative",display:"flex",flexDirection:"column",overflowX:"hidden",boxShadow:"0 0 60px rgba(0,0,0,0.15)",opacity:langAnim?0.7:1,transition:"opacity 0.12s,background 0.3s"}}>
+    <div className="app-root" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{fontFamily:bf,background:th.appBg,maxWidth:420,margin:"0 auto",position:"relative",display:"flex",flexDirection:"column",overflowX:"hidden",boxShadow:"0 0 60px rgba(0,0,0,0.15)",opacity:langAnim?0.7:1,transition:"opacity 0.12s,background 0.3s"}}>
       {/* ── SPLASH SCREEN — shown once per session ── */}
       {!splashDone&&(
         <SplashScreen onDone={()=>{
@@ -5160,7 +5197,26 @@ export default function YojanaSahay(){
         .app-root{height:100vh;height:100dvh;}
         .bnav-wrap{flex-shrink:0;position:sticky;bottom:0;padding-bottom:max(20px,env(safe-area-inset-bottom,20px));}
         @keyframes fadeSlide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+        /* Direction-aware slide: swipe-left → new tab enters from right; swipe-right → from left */
+        @keyframes slideInFromRight{
+          0%  {opacity:0;transform:translateX(52px) scale(0.97);}
+          60% {opacity:1;}
+          100%{opacity:1;transform:translateX(0) scale(1);}
+        }
+        @keyframes slideInFromLeft{
+          0%  {opacity:0;transform:translateX(-52px) scale(0.97);}
+          60% {opacity:1;}
+          100%{opacity:1;transform:translateX(0) scale(1);}
+        }
         @keyframes tabEnter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .tab-enter-left {
+          flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;
+          animation:slideInFromRight 0.32s cubic-bezier(0.25,1,0.5,1) both;
+        }
+        .tab-enter-right{
+          flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;
+          animation:slideInFromLeft 0.32s cubic-bezier(0.25,1,0.5,1) both;
+        }
         @keyframes iconPop{0%{transform:scale(1)}45%{transform:scale(1.28)}100%{transform:scale(1)}}
         @keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
         @keyframes badgePulse{0%,100%{opacity:1}50%{opacity:0.6}}
@@ -5211,9 +5267,16 @@ export default function YojanaSahay(){
         .fpill-state:active{transform:scale(0.93);transition:transform 0.1s ease;}
       `}</style>
 
-      {/* ── TAB CONTENT — animated wrapper triggers fade+slide on every switch ── */}
+      {/* ── TAB CONTENT — direction-aware slide + live drag follow ── */}
       {activeTab!=="ai"&&(
-        <div key={activeTab} className="tab-enter">
+        <div
+          key={activeTab}
+          className={swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":"tab-enter"}
+          style={{
+            transform: dragX !== 0 ? `translateX(${dragX}px)` : undefined,
+            transition: dragX !== 0 ? "none" : undefined,
+            willChange:"transform",
+          }}>
           {/* HOME */}
           {activeTab==="home"&&(
             <div style={{flex:1,overflowY:"auto"}}>
@@ -5652,14 +5715,22 @@ export default function YojanaSahay(){
            IMPORTANT: never use display:none here — it makes scrollHeight=0,
            which causes the auto-resize textarea to collapse to height:0px.
            Instead we keep display:flex always and toggle flex/visibility.
-           ── Gate: show AILockedScreen when signed out, AIChat when signed in. ── */}
-      <div style={{
-        display:"flex",
-        flex:activeTab==="ai"?1:0,
-        flexDirection:"column",minHeight:0,overflow:"hidden",
-        visibility:activeTab==="ai"?"visible":"hidden",
-        pointerEvents:activeTab==="ai"?"auto":"none",
-      }}>
+           ── Gate: show AILockedScreen when signed out, AIChat when signed in.
+           ── Smooth swipe: direction animation + live dragX applied when active. ── */}
+      <div
+        className={activeTab==="ai"
+          ? (swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":undefined)
+          : undefined}
+        style={{
+          display:"flex",
+          flex:activeTab==="ai"?1:0,
+          flexDirection:"column",minHeight:0,overflow:"hidden",
+          visibility:activeTab==="ai"?"visible":"hidden",
+          pointerEvents:activeTab==="ai"?"auto":"none",
+          transform: activeTab==="ai" && dragX!==0 ? `translateX(${dragX}px)` : undefined,
+          transition: activeTab==="ai" && dragX!==0 ? "none" : undefined,
+          willChange:"transform",
+        }}>
         {auth.currentUser ? (
           <AIChat
             lang={lang}
