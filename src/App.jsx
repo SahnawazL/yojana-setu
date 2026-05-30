@@ -4800,6 +4800,40 @@ export default function YojanaSahay(){
   const [splashDone,setSplashDone]=useState(()=>sessionStorage.getItem("ys_splashed")==="1");
   const toggleDark=()=>setDark(d=>!d);
 
+  // ── SWIPE LEFT/RIGHT TO SWITCH TABS ─────────────────────────────────────────
+  // Tab order mirrors the bottom nav — swiping left goes forward, right goes back.
+  const TABS = ["home","search","schemes","ai","profile"];
+  const swipeRef = useRef(null); // stores { x, y } of touchstart
+
+  const handleTouchStart = useCallback((e) => {
+    // Don't interfere when any overlay is open
+    if (showAdmin || showChecker || selectedScheme || selectedCategory) return;
+    const t = e.touches[0];
+    swipeRef.current = { x: t.clientX, y: t.clientY };
+  }, [showAdmin, showChecker, selectedScheme, selectedCategory]);
+
+  const handleTouchEnd = useCallback((e) => {
+    if (!swipeRef.current) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - swipeRef.current.x;
+    const dy = t.clientY - swipeRef.current.y;
+    swipeRef.current = null;
+
+    // Only fire if horizontal swipe dominates (not a scroll) and is long enough
+    if (Math.abs(dx) < 52 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+
+    const currentIndex = TABS.indexOf(activeTab);
+    if (dx < 0 && currentIndex < TABS.length - 1) {
+      // Swipe LEFT → next tab
+      haptic();
+      setActiveTab(TABS[currentIndex + 1]);
+    } else if (dx > 0 && currentIndex > 0) {
+      // Swipe RIGHT → previous tab
+      haptic();
+      setActiveTab(TABS[currentIndex - 1]);
+    }
+  }, [activeTab, showAdmin, showChecker, selectedScheme, selectedCategory]);
+
   useEffect(()=>{localStorage.setItem("yojana_lang",lang);},[lang]);
   useEffect(()=>{localStorage.setItem("yojana_dark",dark);},[dark]);
   useEffect(()=>{const id=setTimeout(()=>setLoaded(true),100);return()=>clearTimeout(id);},[]);
@@ -5007,7 +5041,7 @@ export default function YojanaSahay(){
   ],[t]);
 
   return(
-    <div className="app-root" style={{fontFamily:bf,background:th.appBg,maxWidth:420,margin:"0 auto",position:"relative",display:"flex",flexDirection:"column",overflowX:"hidden",boxShadow:"0 0 60px rgba(0,0,0,0.15)",opacity:langAnim?0.7:1,transition:"opacity 0.12s,background 0.3s"}}>
+    <div className="app-root" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{fontFamily:bf,background:th.appBg,maxWidth:420,margin:"0 auto",position:"relative",display:"flex",flexDirection:"column",overflowX:"hidden",boxShadow:"0 0 60px rgba(0,0,0,0.15)",opacity:langAnim?0.7:1,transition:"opacity 0.12s,background 0.3s"}}>
       {/* ── SPLASH SCREEN — shown once per session ── */}
       {!splashDone&&(
         <SplashScreen onDone={()=>{
@@ -5610,6 +5644,10 @@ export default function YojanaSahay(){
         </div>
       )}
 
+      {/* ── AI TAB — always mounted so chat history survives tab switches.
+           IMPORTANT: never use display:none here — it makes scrollHeight=0,
+           which causes the auto-resize textarea to collapse to height:0px.
+           Instead we keep display:flex always and toggle flex/visibility. ── */}
       {/* ── AI TAB — always mounted so chat history survives tab switches.
            IMPORTANT: never use display:none here — it makes scrollHeight=0,
            which causes the auto-resize textarea to collapse to height:0px.
