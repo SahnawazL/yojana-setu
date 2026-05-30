@@ -5198,25 +5198,16 @@ export default function YojanaSahay(){
         .bnav-wrap{flex-shrink:0;position:sticky;bottom:0;padding-bottom:max(20px,env(safe-area-inset-bottom,20px));}
         @keyframes fadeSlide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
         /* Direction-aware slide: swipe-left → new tab enters from right; swipe-right → from left */
+        /* Direction-aware slide — opacity stays 1 the whole time, no flash frame */
         @keyframes slideInFromRight{
-          0%  {opacity:0;transform:translateX(52px) scale(0.97);}
-          60% {opacity:1;}
-          100%{opacity:1;transform:translateX(0) scale(1);}
+          from{transform:translateX(60px);}
+          to  {transform:translateX(0);}
         }
         @keyframes slideInFromLeft{
-          0%  {opacity:0;transform:translateX(-52px) scale(0.97);}
-          60% {opacity:1;}
-          100%{opacity:1;transform:translateX(0) scale(1);}
+          from{transform:translateX(-60px);}
+          to  {transform:translateX(0);}
         }
         @keyframes tabEnter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        .tab-enter-left {
-          flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;
-          animation:slideInFromRight 0.32s cubic-bezier(0.25,1,0.5,1) both;
-        }
-        .tab-enter-right{
-          flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;
-          animation:slideInFromLeft 0.32s cubic-bezier(0.25,1,0.5,1) both;
-        }
         @keyframes iconPop{0%{transform:scale(1)}45%{transform:scale(1.28)}100%{transform:scale(1)}}
         @keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
         @keyframes badgePulse{0%,100%{opacity:1}50%{opacity:0.6}}
@@ -5227,6 +5218,8 @@ export default function YojanaSahay(){
         @keyframes vault-row-in{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
         @keyframes vault-check{from{stroke-dashoffset:20}to{stroke-dashoffset:0}}
         .tab-enter{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;animation:tabEnter 0.28s cubic-bezier(0.22,1,0.36,1);}
+        .tab-enter-left {animation:slideInFromRight 0.30s cubic-bezier(0.25,1,0.5,1) both;}
+        .tab-enter-right{animation:slideInFromLeft  0.30s cubic-bezier(0.25,1,0.5,1) both;}
         .bn-icon{transition:transform 0.2s cubic-bezier(0.22,1,0.36,1);}
         .bn-icon.active{animation:iconPop 0.35s cubic-bezier(0.22,1,0.36,1);}
         @keyframes btn-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
@@ -5267,19 +5260,23 @@ export default function YojanaSahay(){
         .fpill-state:active{transform:scale(0.93);transition:transform 0.1s ease;}
       `}</style>
 
-      {/* ── TAB CONTENT — direction-aware slide + live drag follow ── */}
-      {activeTab!=="ai"&&(
-        <div
-          key={activeTab}
-          className={swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":"tab-enter"}
-          style={{
-            transform: dragX !== 0 ? `translateX(${dragX}px)` : undefined,
-            transition: dragX !== 0 ? "none" : undefined,
-            willChange:"transform",
-          }}>
-          {/* HOME */}
-          {activeTab==="home"&&(
-            <div style={{flex:1,overflowY:"auto"}}>
+      {/* ── TAB CONTENT — all tabs always mounted, zero DOM remount, zero blink ──
+           Each tab uses the same flex+visibility trick as the AI tab.
+           Animation class is applied on the wrapper when the tab becomes active.    ── */}
+
+      {/* HOME */}
+      <div
+        className={activeTab==="home" ? (swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":undefined) : undefined}
+        style={{
+          display:"flex",flex:activeTab==="home"?1:0,
+          flexDirection:"column",minHeight:0,overflow:"hidden",
+          visibility:activeTab==="home"?"visible":"hidden",
+          pointerEvents:activeTab==="home"?"auto":"none",
+          transform:activeTab==="home"&&dragX!==0?`translateX(${dragX}px)`:undefined,
+          transition:activeTab==="home"&&dragX!==0?"none":undefined,
+          willChange:"transform",
+        }}>
+        <div style={{flex:1,overflowY:"auto"}}>
           {/* ── PREMIUM HEADER ── */}
           <div style={{background:"linear-gradient(160deg,#0c1445 0%,#06038D 38%,#003580 65%,#FF8C00 100%)",padding:"0 0 0",position:"relative",overflow:"hidden"}}>
             {/* Decorative: large spinning chakra watermark */}
@@ -5678,39 +5675,64 @@ export default function YojanaSahay(){
             </div>
           </div>
         </div>
-      )}
+      )
+      </div>
 
-          {/* ── SEARCH TAB ── */}
-          {activeTab==="search"&&(
-            <SearchTab lang={lang} initialQuery={searchText} dark={dark}/>
-          )}
+      {/* SEARCH */}
+      <div
+        className={activeTab==="search" ? (swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":undefined) : undefined}
+        style={{
+          display:"flex",flex:activeTab==="search"?1:0,
+          flexDirection:"column",minHeight:0,overflow:"hidden",
+          visibility:activeTab==="search"?"visible":"hidden",
+          pointerEvents:activeTab==="search"?"auto":"none",
+          transform:activeTab==="search"&&dragX!==0?`translateX(${dragX}px)`:undefined,
+          transition:activeTab==="search"&&dragX!==0?"none":undefined,
+          willChange:"transform",
+        }}>
+        <SearchTab lang={lang} initialQuery={searchText} dark={dark}/>
+      </div>
 
-          {/* ── SCHEMES TAB ── */}
-          {activeTab==="schemes"&&(
-            <SchemesTab lang={lang} dark={dark}/>
-          )}
+      {/* SCHEMES */}
+      <div
+        className={activeTab==="schemes" ? (swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":undefined) : undefined}
+        style={{
+          display:"flex",flex:activeTab==="schemes"?1:0,
+          flexDirection:"column",minHeight:0,overflow:"hidden",
+          visibility:activeTab==="schemes"?"visible":"hidden",
+          pointerEvents:activeTab==="schemes"?"auto":"none",
+          transform:activeTab==="schemes"&&dragX!==0?`translateX(${dragX}px)`:undefined,
+          transition:activeTab==="schemes"&&dragX!==0?"none":undefined,
+          willChange:"transform",
+        }}>
+        <SchemesTab lang={lang} dark={dark}/>
+      </div>
 
-          {/* ── PROFILE TAB ── */}
-          {activeTab==="profile"&&(
-            <ProfileTab
-              lang={lang}
-              profile={profile}
-              setProfile={setProfile}
-              toggleLang={toggleLang}
-              onViewChecker={()=>setShowChecker(true)}
-              dark={dark}
-              toggleDark={toggleDark}
-              isAdmin={auth.currentUser?.uid===ADMIN_UID}
-              onAdminOpen={()=>setShowAdmin(true)}
-            />
-          )}
-        </div>
-      )}
+      {/* PROFILE */}
+      <div
+        className={activeTab==="profile" ? (swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":undefined) : undefined}
+        style={{
+          display:"flex",flex:activeTab==="profile"?1:0,
+          flexDirection:"column",minHeight:0,overflow:"hidden",
+          visibility:activeTab==="profile"?"visible":"hidden",
+          pointerEvents:activeTab==="profile"?"auto":"none",
+          transform:activeTab==="profile"&&dragX!==0?`translateX(${dragX}px)`:undefined,
+          transition:activeTab==="profile"&&dragX!==0?"none":undefined,
+          willChange:"transform",
+        }}>
+        <ProfileTab
+          lang={lang}
+          profile={profile}
+          setProfile={setProfile}
+          toggleLang={toggleLang}
+          onViewChecker={()=>setShowChecker(true)}
+          dark={dark}
+          toggleDark={toggleDark}
+          isAdmin={auth.currentUser?.uid===ADMIN_UID}
+          onAdminOpen={()=>setShowAdmin(true)}
+        />
+      </div>
 
-      {/* ── AI TAB — always mounted so chat history survives tab switches.
-           IMPORTANT: never use display:none here — it makes scrollHeight=0,
-           which causes the auto-resize textarea to collapse to height:0px.
-           Instead we keep display:flex always and toggle flex/visibility. ── */}
       {/* ── AI TAB — always mounted so chat history survives tab switches.
            IMPORTANT: never use display:none here — it makes scrollHeight=0,
            which causes the auto-resize textarea to collapse to height:0px.
