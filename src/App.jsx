@@ -72,6 +72,8 @@ const googleSearchScheme = (name) => {
 // ─── STAT TARGETS (stable reference — prevents useCountUp from re-animating) ──
 const STAT_TARGETS = [3000, 28, 50];
 const STORAGE_KEY = "yojana_eligibility_answers";
+// ─── TAB ORDER (stable reference — defined once at module level) ───────────────
+const TABS = ["home","search","schemes","ai","profile"];
 const fontFamily = (lang) => lang==="hi"
   ? "'Noto Sans Devanagari',sans-serif"
   : "'Noto Sans',sans-serif";
@@ -4779,6 +4781,181 @@ function DocumentVaultCard({ allMatchedSchemes, lang, dark, uid }) {
   );
 }
 
+// ─── APP STYLES (module-level — allocated once, never recreated on re-render) ──
+const APP_STYLES = `
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
+        .fu{opacity:0;transform:translateY(20px);transition:all 0.5s cubic-bezier(0.22,1,0.36,1);}
+        .fu.show{opacity:1;transform:translateY(0);}
+        .ch{transition:transform 0.2s;cursor:pointer;} .ch:active{transform:scale(0.97);}
+        .sc:hover{transform:translateY(-2px);}
+        .spin{animation:spin 20s linear infinite;}
+        @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+        ::-webkit-scrollbar{display:none;}
+        .tb{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;}
+        .sb{transition:all 0.3s;} .sb.fc{box-shadow:0 0 0 3px rgba(255,153,51,0.25);}
+        .s1{transition-delay:0.1s!important}.s2{transition-delay:0.2s!important}.s3{transition-delay:0.3s!important}
+        .s4{transition-delay:0.4s!important}.s5{transition-delay:0.5s!important}.s6{transition-delay:0.6s!important}
+        .c0{transition-delay:0.20s!important}.c1{transition-delay:0.28s!important}.c2{transition-delay:0.36s!important}
+        .c3{transition-delay:0.44s!important}.c4{transition-delay:0.52s!important}.c5{transition-delay:0.60s!important}
+        .c6{transition-delay:0.68s!important}.c7{transition-delay:0.76s!important}.c8{transition-delay:0.84s!important}
+        /* ── FINAL PREMIUM NAV ── */
+        .bn{
+          display:flex;flex-direction:column;align-items:center;justify-content:center;
+          cursor:pointer;flex:1;-webkit-tap-highlight-color:transparent;
+          position:relative;padding:5px 2px 4px;
+          opacity:0;transform:translateY(6px);
+          animation:navItemIn 0.55s cubic-bezier(0.16,1,0.3,1) forwards;
+        }
+        .bn:nth-child(2){animation-delay:0.03s;}
+        .bn:nth-child(3){animation-delay:0.06s;}
+        .bn:nth-child(4){animation-delay:0.09s;}
+        .bn:nth-child(5){animation-delay:0.12s;}
+        .bn:nth-child(6){animation-delay:0.15s;}
+        @keyframes navItemIn{
+          from{opacity:0;transform:translateY(6px);}
+          to{opacity:1;transform:translateY(0);}
+        }
+        /* Pill — NO padding transition (causes reflow/jump).
+           Use scaleX on a pseudo-width via transform instead.
+           Pill stays same padding always; width controlled by label visibility. */
+        .bn-pill{
+          display:flex;flex-direction:row;align-items:center;justify-content:center;
+          gap:0px;
+          padding:8px 13px;border-radius:50px;
+          transition:
+            background 0.38s cubic-bezier(0.16,1,0.3,1),
+            box-shadow 0.38s cubic-bezier(0.16,1,0.3,1),
+            border-color 0.38s ease,
+            gap 0.38s cubic-bezier(0.16,1,0.3,1);
+          will-change:background,box-shadow;
+          border:1px solid transparent;
+          overflow:hidden;
+        }
+        .bn-pill.active{
+          background:linear-gradient(145deg,rgba(255,153,51,0.15) 0%,rgba(255,107,0,0.09) 100%);
+          box-shadow:0 2px 14px rgba(255,153,51,0.18), inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(255,153,51,0.10);
+          border-color:rgba(255,153,51,0.20);
+          gap:7px;
+        }
+        /* Tap feedback — gentle, no jump */
+        .bn:active .bn-pill{
+          transform:scale(0.92);
+          transition:transform 0.12s cubic-bezier(0.16,1,0.3,1);
+        }
+        /* Icon — NO translateY, only gentle scale */
+        .bn-icon-wrap{
+          display:flex;align-items:center;justify-content:center;
+          flex-shrink:0;
+          transition:filter 0.28s ease;
+          will-change:filter;
+        }
+        .bn-icon-wrap.popping{animation:navIconPop 0.45s cubic-bezier(0.16,1,0.3,1) forwards;}
+        @keyframes navIconPop{
+          0%  {transform:scale(1);}
+          40% {transform:scale(1.18);}
+          70% {transform:scale(0.94);}
+          100%{transform:scale(1);}
+        }
+        /* Chakra */
+        @keyframes navChakraSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        .bn-chakra-active{animation:navChakraSpin 3s linear infinite;}
+        /* Label — clip-path fade instead of max-width (no reflow, truly smooth) */
+        .bn-label{
+          font-size:10.5px;font-weight:800;letter-spacing:0.1px;white-space:nowrap;
+          overflow:hidden;
+          /* clip-path slides the label in from left, opacity fades it */
+          clip-path:inset(0 100% 0 0);
+          opacity:0;
+          width:0;
+          transition:
+            clip-path 0.42s cubic-bezier(0.16,1,0.3,1),
+            opacity 0.30s ease,
+            width 0.42s cubic-bezier(0.16,1,0.3,1);
+        }
+        .bn-label.active{
+          clip-path:inset(0 0% 0 0);
+          opacity:1;
+          width:52px;
+        }
+        /* Glow dot — fades in softly, no spring bounce */
+        .bn-dot{
+          width:3px;height:3px;border-radius:50%;
+          background:linear-gradient(135deg,#FF9933,#FF6B00);
+          position:absolute;bottom:1px;left:50%;transform:translateX(-50%);
+          box-shadow:0 0 6px rgba(255,153,51,0.85),0 0 12px rgba(255,107,0,0.4);
+          animation:dotFadeIn 0.35s ease forwards;
+        }
+        @keyframes dotFadeIn{from{opacity:0;transform:translateX(-50%) scale(0.3);}to{opacity:1;transform:translateX(-50%) scale(1);}}
+
+        .cp{animation:cp 2.5s ease-in-out infinite;}
+        @keyframes cp{0%,100%{box-shadow:0 6px 24px rgba(19,136,8,0.3)}50%{box-shadow:0 6px 32px rgba(19,136,8,0.55)}}
+        .app-root{height:100vh;height:100dvh;}
+        .bnav-wrap{flex-shrink:0;position:sticky;bottom:0;padding-bottom:max(20px,env(safe-area-inset-bottom,20px));}
+        @keyframes fadeSlide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+        /* Direction-aware slide: swipe-left → new tab enters from right; swipe-right → from left */
+        /* Direction-aware slide — opacity stays 1 the whole time, no flash frame */
+        @keyframes slideInFromRight{
+          from{transform:translateX(60px);}
+          to  {transform:translateX(0);}
+        }
+        @keyframes slideInFromLeft{
+          from{transform:translateX(-60px);}
+          to  {transform:translateX(0);}
+        }
+        @keyframes tabEnter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes iconPop{0%{transform:scale(1)}45%{transform:scale(1.28)}100%{transform:scale(1)}}
+        @keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+        @keyframes badgePulse{0%,100%{opacity:1}50%{opacity:0.6}}
+        @keyframes calc-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.85)}}
+        @keyframes calc-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        @keyframes calc-slide-in{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes vault-slide-down{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes vault-row-in{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes vault-check{from{stroke-dashoffset:20}to{stroke-dashoffset:0}}
+        .tab-enter{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;animation:tabEnter 0.28s cubic-bezier(0.22,1,0.36,1);}
+        .tab-enter-left {animation:slideInFromRight 0.30s cubic-bezier(0.25,1,0.5,1) both;}
+        .tab-enter-right{animation:slideInFromLeft  0.30s cubic-bezier(0.25,1,0.5,1) both;}
+        .bn-icon{transition:transform 0.2s cubic-bezier(0.22,1,0.36,1);}
+        .bn-icon.active{animation:iconPop 0.35s cubic-bezier(0.22,1,0.36,1);}
+        @keyframes btn-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes btn-shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+        @keyframes btn-pulse-scale{0%,100%{transform:scale(1)}50%{transform:scale(1.012)}}
+        .signin-loading{background-size:200% auto!important;animation:btn-shimmer 1.4s linear infinite,btn-pulse-scale 1.4s ease-in-out infinite!important;}
+        .btn-spinner{width:17px;height:17px;border-radius:50%;border:2.5px solid rgba(255,255,255,0.35);border-top-color:#fff;animation:btn-spin 0.75s linear infinite;flex-shrink:0;}
+        .google-spinner{width:17px;height:17px;border-radius:50%;border:2.5px solid rgba(66,133,244,0.25);border-top-color:#4285F4;animation:btn-spin 0.75s linear infinite;flex-shrink:0;}
+
+        /* ── Premium filter pills ── */
+        .fpill{
+          display:inline-flex;align-items:center;white-space:nowrap;
+          padding:7px 16px;border-radius:50px;
+          font-size:12px;font-weight:700;letter-spacing:0.25px;
+          cursor:pointer;user-select:none;flex-shrink:0;
+          transition:
+            background 0.28s cubic-bezier(0.34,1.56,0.64,1),
+            color 0.22s ease,
+            border-color 0.28s ease,
+            box-shadow 0.28s cubic-bezier(0.34,1.56,0.64,1),
+            transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
+          -webkit-tap-highlight-color:transparent;
+          will-change:transform;
+        }
+        .fpill:active{transform:scale(0.91);transition:transform 0.1s ease,box-shadow 0.1s ease;}
+        .fpill-state{
+          display:inline-flex;align-items:center;gap:5px;
+          padding:6px 13px;border-radius:50px;cursor:pointer;
+          font-size:11px;font-weight:700;flex-shrink:0;
+          transition:
+            background 0.28s cubic-bezier(0.34,1.56,0.64,1),
+            border-color 0.28s ease,
+            box-shadow 0.28s cubic-bezier(0.34,1.56,0.64,1),
+            transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
+          -webkit-tap-highlight-color:transparent;
+          will-change:transform;
+        }
+        .fpill-state:active{transform:scale(0.93);transition:transform 0.1s ease;}
+`;
+
 // ─── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function YojanaSahay(){
   const [lang,setLang]=useState(()=>localStorage.getItem("yojana_lang")||"en");
@@ -4801,16 +4978,21 @@ export default function YojanaSahay(){
   const toggleDark=()=>setDark(d=>!d);
 
   // ── SMOOTH SWIPE — direction-aware slide transition ────────────────────────
-  const TABS        = ["home","search","schemes","ai","profile"];
   const swipeRef    = useRef(null);   // { x, y, lockedAxis } from touchstart
   const [swipeDir,  setSwipeDir]  = useState(null);   // "left"|"right"|null
-  const [dragX,     setDragX]     = useState(0);       // live finger offset px
+  const dragXRef      = useRef(0);          // live finger offset — no re-render
+  const dragTargetRef = useRef(null);       // DOM ref to whichever tab is active
 
   const handleTouchStart = useCallback((e) => {
     if (showAdmin || showChecker || selectedScheme || selectedCategory) return;
     const t = e.touches[0];
     swipeRef.current = { x: t.clientX, y: t.clientY, lockedAxis: null };
-    setDragX(0);
+    dragXRef.current = 0;
+    // Safety: clear any stale transform from an interrupted previous touch
+    if (dragTargetRef.current) {
+      dragTargetRef.current.style.transform = "";
+      dragTargetRef.current.style.transition = "";
+    }
   }, [showAdmin, showChecker, selectedScheme, selectedCategory]);
 
   const handleTouchMove = useCallback((e) => {
@@ -4835,9 +5017,13 @@ export default function YojanaSahay(){
                   : (atEnd   && dx < 0) ? rubber(dx)
                   : dx;
 
-    // Dampen so content doesn't fly off screen (max 55% of screen width)
+    // Write directly to DOM — zero React re-renders during drag
     const maxDrag = window.innerWidth * 0.55;
-    setDragX(Math.max(-maxDrag, Math.min(maxDrag, clamped)));
+    dragXRef.current = Math.max(-maxDrag, Math.min(maxDrag, clamped));
+    if (dragTargetRef.current) {
+      dragTargetRef.current.style.transform = `translateX(${dragXRef.current}px)`;
+      dragTargetRef.current.style.transition = "none";
+    }
   }, [activeTab, showAdmin, showChecker, selectedScheme, selectedCategory]);
 
   const handleTouchEnd = useCallback((e) => {
@@ -4847,8 +5033,12 @@ export default function YojanaSahay(){
     const dy  = t.clientY - swipeRef.current.y;
     swipeRef.current = null;
 
-    // Snap drag back instantly regardless of outcome
-    setDragX(0);
+    // Reset DOM directly — one re-render only when tab actually switches
+    dragXRef.current = 0;
+    if (dragTargetRef.current) {
+      dragTargetRef.current.style.transform = "";
+      dragTargetRef.current.style.transition = "";
+    }
 
     if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
 
@@ -4869,7 +5059,7 @@ export default function YojanaSahay(){
     if (!swipeDir) return;
     const t = setTimeout(() => setSwipeDir(null), 380);
     return () => clearTimeout(t);
-  }, [swipeDir, activeTab]);
+  }, [swipeDir]); // activeTab removed — not used inside, was restarting timer on every tab switch
 
   useEffect(()=>{localStorage.setItem("yojana_lang",lang);},[lang]);
   useEffect(()=>{localStorage.setItem("yojana_dark",dark);},[dark]);
@@ -5086,179 +5276,7 @@ export default function YojanaSahay(){
           setSplashDone(true);
         }}/>
       )}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700;800&display=swap');
-        *{box-sizing:border-box;margin:0;padding:0;}
-        .fu{opacity:0;transform:translateY(20px);transition:all 0.5s cubic-bezier(0.22,1,0.36,1);}
-        .fu.show{opacity:1;transform:translateY(0);}
-        .ch{transition:transform 0.2s;cursor:pointer;} .ch:active{transform:scale(0.97);}
-        .sc:hover{transform:translateY(-2px);}
-        .spin{animation:spin 20s linear infinite;}
-        @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-        ::-webkit-scrollbar{display:none;}
-        .tb{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;}
-        .sb{transition:all 0.3s;} .sb.fc{box-shadow:0 0 0 3px rgba(255,153,51,0.25);}
-        .s1{transition-delay:0.1s!important}.s2{transition-delay:0.2s!important}.s3{transition-delay:0.3s!important}
-        .s4{transition-delay:0.4s!important}.s5{transition-delay:0.5s!important}.s6{transition-delay:0.6s!important}
-        .c0{transition-delay:0.20s!important}.c1{transition-delay:0.28s!important}.c2{transition-delay:0.36s!important}
-        .c3{transition-delay:0.44s!important}.c4{transition-delay:0.52s!important}.c5{transition-delay:0.60s!important}
-        .c6{transition-delay:0.68s!important}.c7{transition-delay:0.76s!important}.c8{transition-delay:0.84s!important}
-        /* ── FINAL PREMIUM NAV ── */
-        .bn{
-          display:flex;flex-direction:column;align-items:center;justify-content:center;
-          cursor:pointer;flex:1;-webkit-tap-highlight-color:transparent;
-          position:relative;padding:5px 2px 4px;
-          opacity:0;transform:translateY(6px);
-          animation:navItemIn 0.55s cubic-bezier(0.16,1,0.3,1) forwards;
-        }
-        .bn:nth-child(2){animation-delay:0.03s;}
-        .bn:nth-child(3){animation-delay:0.06s;}
-        .bn:nth-child(4){animation-delay:0.09s;}
-        .bn:nth-child(5){animation-delay:0.12s;}
-        .bn:nth-child(6){animation-delay:0.15s;}
-        @keyframes navItemIn{
-          from{opacity:0;transform:translateY(6px);}
-          to{opacity:1;transform:translateY(0);}
-        }
-        /* Pill — NO padding transition (causes reflow/jump).
-           Use scaleX on a pseudo-width via transform instead.
-           Pill stays same padding always; width controlled by label visibility. */
-        .bn-pill{
-          display:flex;flex-direction:row;align-items:center;justify-content:center;
-          gap:0px;
-          padding:8px 13px;border-radius:50px;
-          transition:
-            background 0.38s cubic-bezier(0.16,1,0.3,1),
-            box-shadow 0.38s cubic-bezier(0.16,1,0.3,1),
-            border-color 0.38s ease,
-            gap 0.38s cubic-bezier(0.16,1,0.3,1);
-          will-change:background,box-shadow;
-          border:1px solid transparent;
-          overflow:hidden;
-        }
-        .bn-pill.active{
-          background:linear-gradient(145deg,rgba(255,153,51,0.15) 0%,rgba(255,107,0,0.09) 100%);
-          box-shadow:0 2px 14px rgba(255,153,51,0.18), inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(255,153,51,0.10);
-          border-color:rgba(255,153,51,0.20);
-          gap:7px;
-        }
-        /* Tap feedback — gentle, no jump */
-        .bn:active .bn-pill{
-          transform:scale(0.92);
-          transition:transform 0.12s cubic-bezier(0.16,1,0.3,1);
-        }
-        /* Icon — NO translateY, only gentle scale */
-        .bn-icon-wrap{
-          display:flex;align-items:center;justify-content:center;
-          flex-shrink:0;
-          transition:filter 0.28s ease;
-          will-change:filter;
-        }
-        .bn-icon-wrap.popping{animation:navIconPop 0.45s cubic-bezier(0.16,1,0.3,1) forwards;}
-        @keyframes navIconPop{
-          0%  {transform:scale(1);}
-          40% {transform:scale(1.18);}
-          70% {transform:scale(0.94);}
-          100%{transform:scale(1);}
-        }
-        /* Chakra */
-        @keyframes navChakraSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        .bn-chakra-active{animation:navChakraSpin 3s linear infinite;}
-        /* Label — clip-path fade instead of max-width (no reflow, truly smooth) */
-        .bn-label{
-          font-size:10.5px;font-weight:800;letter-spacing:0.1px;white-space:nowrap;
-          overflow:hidden;
-          /* clip-path slides the label in from left, opacity fades it */
-          clip-path:inset(0 100% 0 0);
-          opacity:0;
-          width:0;
-          transition:
-            clip-path 0.42s cubic-bezier(0.16,1,0.3,1),
-            opacity 0.30s ease,
-            width 0.42s cubic-bezier(0.16,1,0.3,1);
-        }
-        .bn-label.active{
-          clip-path:inset(0 0% 0 0);
-          opacity:1;
-          width:52px;
-        }
-        /* Glow dot — fades in softly, no spring bounce */
-        .bn-dot{
-          width:3px;height:3px;border-radius:50%;
-          background:linear-gradient(135deg,#FF9933,#FF6B00);
-          position:absolute;bottom:1px;left:50%;transform:translateX(-50%);
-          box-shadow:0 0 6px rgba(255,153,51,0.85),0 0 12px rgba(255,107,0,0.4);
-          animation:dotFadeIn 0.35s ease forwards;
-        }
-        @keyframes dotFadeIn{from{opacity:0;transform:translateX(-50%) scale(0.3);}to{opacity:1;transform:translateX(-50%) scale(1);}}
-
-        .cp{animation:cp 2.5s ease-in-out infinite;}
-        @keyframes cp{0%,100%{box-shadow:0 6px 24px rgba(19,136,8,0.3)}50%{box-shadow:0 6px 32px rgba(19,136,8,0.55)}}
-        .app-root{height:100vh;height:100dvh;}
-        .bnav-wrap{flex-shrink:0;position:sticky;bottom:0;padding-bottom:max(20px,env(safe-area-inset-bottom,20px));}
-        @keyframes fadeSlide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
-        /* Direction-aware slide: swipe-left → new tab enters from right; swipe-right → from left */
-        /* Direction-aware slide — opacity stays 1 the whole time, no flash frame */
-        @keyframes slideInFromRight{
-          from{transform:translateX(60px);}
-          to  {transform:translateX(0);}
-        }
-        @keyframes slideInFromLeft{
-          from{transform:translateX(-60px);}
-          to  {transform:translateX(0);}
-        }
-        @keyframes tabEnter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes iconPop{0%{transform:scale(1)}45%{transform:scale(1.28)}100%{transform:scale(1)}}
-        @keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-        @keyframes badgePulse{0%,100%{opacity:1}50%{opacity:0.6}}
-        @keyframes calc-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.85)}}
-        @keyframes calc-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-        @keyframes calc-slide-in{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
-        @keyframes vault-slide-down{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes vault-row-in{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
-        @keyframes vault-check{from{stroke-dashoffset:20}to{stroke-dashoffset:0}}
-        .tab-enter{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;animation:tabEnter 0.28s cubic-bezier(0.22,1,0.36,1);}
-        .tab-enter-left {animation:slideInFromRight 0.30s cubic-bezier(0.25,1,0.5,1) both;}
-        .tab-enter-right{animation:slideInFromLeft  0.30s cubic-bezier(0.25,1,0.5,1) both;}
-        .bn-icon{transition:transform 0.2s cubic-bezier(0.22,1,0.36,1);}
-        .bn-icon.active{animation:iconPop 0.35s cubic-bezier(0.22,1,0.36,1);}
-        @keyframes btn-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        @keyframes btn-shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
-        @keyframes btn-pulse-scale{0%,100%{transform:scale(1)}50%{transform:scale(1.012)}}
-        .signin-loading{background-size:200% auto!important;animation:btn-shimmer 1.4s linear infinite,btn-pulse-scale 1.4s ease-in-out infinite!important;}
-        .btn-spinner{width:17px;height:17px;border-radius:50%;border:2.5px solid rgba(255,255,255,0.35);border-top-color:#fff;animation:btn-spin 0.75s linear infinite;flex-shrink:0;}
-        .google-spinner{width:17px;height:17px;border-radius:50%;border:2.5px solid rgba(66,133,244,0.25);border-top-color:#4285F4;animation:btn-spin 0.75s linear infinite;flex-shrink:0;}
-
-        /* ── Premium filter pills ── */
-        .fpill{
-          display:inline-flex;align-items:center;white-space:nowrap;
-          padding:7px 16px;border-radius:50px;
-          font-size:12px;font-weight:700;letter-spacing:0.25px;
-          cursor:pointer;user-select:none;flex-shrink:0;
-          transition:
-            background 0.28s cubic-bezier(0.34,1.56,0.64,1),
-            color 0.22s ease,
-            border-color 0.28s ease,
-            box-shadow 0.28s cubic-bezier(0.34,1.56,0.64,1),
-            transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
-          -webkit-tap-highlight-color:transparent;
-          will-change:transform;
-        }
-        .fpill:active{transform:scale(0.91);transition:transform 0.1s ease,box-shadow 0.1s ease;}
-        .fpill-state{
-          display:inline-flex;align-items:center;gap:5px;
-          padding:6px 13px;border-radius:50px;cursor:pointer;
-          font-size:11px;font-weight:700;flex-shrink:0;
-          transition:
-            background 0.28s cubic-bezier(0.34,1.56,0.64,1),
-            border-color 0.28s ease,
-            box-shadow 0.28s cubic-bezier(0.34,1.56,0.64,1),
-            transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
-          -webkit-tap-highlight-color:transparent;
-          will-change:transform;
-        }
-        .fpill-state:active{transform:scale(0.93);transition:transform 0.1s ease;}
-      `}</style>
+      <style>{APP_STYLES}</style>
 
       {/* ── TAB CONTENT — all tabs always mounted, zero DOM remount, zero blink ──
            Each tab uses the same flex+visibility trick as the AI tab.
@@ -5266,14 +5284,13 @@ export default function YojanaSahay(){
 
       {/* HOME */}
       <div
+        ref={activeTab==="home" ? dragTargetRef : null}
         className={activeTab==="home" ? (swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":undefined) : undefined}
         style={{
           display:"flex",flex:activeTab==="home"?1:0,
           flexDirection:"column",minHeight:0,overflow:"hidden",
           visibility:activeTab==="home"?"visible":"hidden",
           pointerEvents:activeTab==="home"?"auto":"none",
-          transform:activeTab==="home"&&dragX!==0?`translateX(${dragX}px)`:undefined,
-          transition:activeTab==="home"&&dragX!==0?"none":undefined,
           willChange:"transform",
         }}>
         <div style={{flex:1,overflowY:"auto"}}>
@@ -5680,14 +5697,13 @@ export default function YojanaSahay(){
 
       {/* SEARCH */}
       <div
+        ref={activeTab==="search" ? dragTargetRef : null}
         className={activeTab==="search" ? (swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":undefined) : undefined}
         style={{
           display:"flex",flex:activeTab==="search"?1:0,
           flexDirection:"column",minHeight:0,overflow:"hidden",
           visibility:activeTab==="search"?"visible":"hidden",
           pointerEvents:activeTab==="search"?"auto":"none",
-          transform:activeTab==="search"&&dragX!==0?`translateX(${dragX}px)`:undefined,
-          transition:activeTab==="search"&&dragX!==0?"none":undefined,
           willChange:"transform",
         }}>
         <SearchTab lang={lang} initialQuery={searchText} dark={dark}/>
@@ -5695,14 +5711,13 @@ export default function YojanaSahay(){
 
       {/* SCHEMES */}
       <div
+        ref={activeTab==="schemes" ? dragTargetRef : null}
         className={activeTab==="schemes" ? (swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":undefined) : undefined}
         style={{
           display:"flex",flex:activeTab==="schemes"?1:0,
           flexDirection:"column",minHeight:0,overflow:"hidden",
           visibility:activeTab==="schemes"?"visible":"hidden",
           pointerEvents:activeTab==="schemes"?"auto":"none",
-          transform:activeTab==="schemes"&&dragX!==0?`translateX(${dragX}px)`:undefined,
-          transition:activeTab==="schemes"&&dragX!==0?"none":undefined,
           willChange:"transform",
         }}>
         <SchemesTab lang={lang} dark={dark}/>
@@ -5710,14 +5725,13 @@ export default function YojanaSahay(){
 
       {/* PROFILE */}
       <div
+        ref={activeTab==="profile" ? dragTargetRef : null}
         className={activeTab==="profile" ? (swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":undefined) : undefined}
         style={{
           display:"flex",flex:activeTab==="profile"?1:0,
           flexDirection:"column",minHeight:0,overflow:"hidden",
           visibility:activeTab==="profile"?"visible":"hidden",
           pointerEvents:activeTab==="profile"?"auto":"none",
-          transform:activeTab==="profile"&&dragX!==0?`translateX(${dragX}px)`:undefined,
-          transition:activeTab==="profile"&&dragX!==0?"none":undefined,
           willChange:"transform",
         }}>
         <ProfileTab
@@ -5740,6 +5754,7 @@ export default function YojanaSahay(){
            ── Gate: show AILockedScreen when signed out, AIChat when signed in.
            ── Smooth swipe: direction animation + live dragX applied when active. ── */}
       <div
+        ref={activeTab==="ai" ? dragTargetRef : null}
         className={activeTab==="ai"
           ? (swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":undefined)
           : undefined}
@@ -5749,8 +5764,6 @@ export default function YojanaSahay(){
           flexDirection:"column",minHeight:0,overflow:"hidden",
           visibility:activeTab==="ai"?"visible":"hidden",
           pointerEvents:activeTab==="ai"?"auto":"none",
-          transform: activeTab==="ai" && dragX!==0 ? `translateX(${dragX}px)` : undefined,
-          transition: activeTab==="ai" && dragX!==0 ? "none" : undefined,
           willChange:"transform",
         }}>
         {auth.currentUser ? (
