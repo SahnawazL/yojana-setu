@@ -1,14 +1,14 @@
 // api/chat.js — Vercel Serverless Function · Yojana Sahay
 // ─────────────────────────────────────────────────────────────────────────────
-// UPDATED: Tavily web search tool support added.
 // Flow:
 //   1. Send user message to Groq WITH a web_search tool definition.
 //   2. If Groq decides to search → call Tavily API → get real-time results.
-//   3. Send results back to Groq → get final polished answer for the user.
+//   3. Send results back to Groq (tools omitted) → get final polished answer.
 //   4. If Groq does NOT search → return first response directly (same as before).
 //
-// KEY ROTATION: unchanged — up to 5 Groq keys, round-robin, skip on 429.
-// TAVILY KEY: add TAVILY_API_KEY in Vercel → Settings → Environment Variables.
+// KEY ROTATION: up to 6 Groq keys (GROQ_API_KEY … GROQ_API_KEY_5), round-robin,
+//               skip on 429.
+// TAVILY KEY:   add TAVILY_API_KEY in Vercel → Settings → Environment Variables.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const GROQ_URL   = "https://api.groq.com/openai/v1/chat/completions";
@@ -16,7 +16,7 @@ const TAVILY_URL = "https://api.tavily.com/search";
 
 // ── Web search tool definition sent to Groq ───────────────────────────────────
 // Groq reads this description to decide WHEN to trigger a search.
-// Keep the description specific so it only fires for truly live/unknown queries.
+// Kept specific so it only fires for truly live / unknown queries.
 const WEB_SEARCH_TOOL = {
   type: "function",
   function: {
@@ -32,7 +32,7 @@ const WEB_SEARCH_TOOL = {
       properties: {
         query: {
           type: "string",
-          description: "A clear, specific search query in English (e.g. 'PM Kisan 2025 installment date')",
+          description: "A clear, specific search query in English (e.g. 'PM Kisan 2026 installment date')",
         },
       },
       required: ["query"],
@@ -60,7 +60,7 @@ function loadKeys() {
 }
 
 // ── Tavily web search ─────────────────────────────────────────────────────────
-// Returns a clean formatted string of results, or null on failure.
+// Returns a clean formatted string of results, or a fallback message on failure.
 async function searchWeb(query) {
   const tavilyKey = process.env.TAVILY_API_KEY;
 
@@ -74,12 +74,12 @@ async function searchWeb(query) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        api_key:           tavilyKey,
+        api_key:             tavilyKey,
         query,
-        max_results:       3,        // 3 results = enough context, low token cost
-        search_depth:      "basic",  // "basic" is free tier; "advanced" costs 2 credits
-        include_answer:    true,     // Tavily's own summary — very useful for AI
-        include_raw_content: false,  // raw HTML is too noisy and wastes tokens
+        max_results:         3,       // 3 results = enough context, low token cost
+        search_depth:        "basic", // "basic" is free tier; "advanced" costs 2 credits
+        include_answer:      true,    // Tavily's own summary — very useful for AI
+        include_raw_content: false,   // raw HTML is too noisy and wastes tokens
       }),
     });
 
@@ -114,8 +114,7 @@ async function searchWeb(query) {
 }
 
 // ── Call Groq with key rotation ───────────────────────────────────────────────
-// Shared by both the first call and the second (tool-result) call.
-// Returns { status, data }.
+// Tries each key in order; skips on 429. Returns { status, data }.
 async function callGroq(keys, bodyObject) {
   let lastError = null;
 
@@ -196,7 +195,7 @@ export default async function handler(req, res) {
 
   const { status: firstStatus, data: firstData } = await callGroq(keys, firstCallBody);
 
-  // If first call failed for a non-tool reason, return the error immediately
+  // If first call failed, return the error immediately
   if (firstStatus !== 200) {
     return res.status(firstStatus).json(firstData);
   }
@@ -210,7 +209,8 @@ export default async function handler(req, res) {
     if (toolCall?.function?.name === "web_search") {
 
       // Parse the search query Groq chose
-      let searchQuery = "Indian government scheme latest news 2025";
+      // FIX: updated fallback query year to 2026
+      let searchQuery = "Indian government scheme latest news 2026";
       try {
         searchQuery = JSON.parse(toolCall.function.arguments).query;
       } catch {
@@ -222,13 +222,19 @@ export default async function handler(req, res) {
       // Call Tavily
       const searchResult = await searchWeb(searchQuery);
 
-      // ── STEP 3: Second Groq call — WITH search results ──────────────────────
-      // Append the AI's tool_call message + our tool result to the conversation,
-      // then ask Groq to write the final answer based on real data.
+      // ── STEP 3: Second Groq call — with Tavily results injected ─────────────
+      // FIXES:
+      //   1. tools OMITTED entirely — no point defining a tool we won't call;
+      //      also avoids the tool_choice:"none" + tools-defined edge-case warning
+      //      and saves ~120 tokens per Step-3 call.
+      //   2. max_tokens bumped to 1600 — web search path returns longer context
+      //      (original messages + tool call msg + Tavily results). The original
+      //      800/1200 budget from groqClient.js frequently caused mid-sentence
+      //      cutoffs on search-backed answers.
       const secondCallBody = {
         ...requestBody,
-        tools:       [WEB_SEARCH_TOOL],
-        tool_choice: "none", // Don't allow another search in this follow-up call
+        // tools intentionally omitted — Groq won't attempt a second search
+        max_tokens: 1600, // Override: web-search answers need more room
         messages: [
           ...requestBody.messages,
           firstChoice.message,           // Groq's tool_call message (required by API)
@@ -245,6 +251,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── No tool call → return first response directly (same as before) ───────────
+  // ── No tool call → return first response directly ─────────────────────────
   return res.status(firstStatus).json(firstData);
 }
