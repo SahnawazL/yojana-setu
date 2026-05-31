@@ -5435,31 +5435,6 @@ export default function YojanaSahay(){
               <div style={{color:"rgba(255,255,255,0.72)",fontSize:13,lineHeight:1.5}}>{t.subheadline}</div>
             </div>
 
-            {/* Search bar — elevated card style */}
-            <div style={{padding:"0 16px",position:"relative",zIndex:2}}>
-              <div className={`sb ${searchFocused?"fc":""}`}
-                style={{background:th.card,borderRadius:16,display:"flex",alignItems:"center",gap:10,padding:"11px 14px",
-                  border:`2px solid ${searchFocused?"#FF9933":"rgba(255,255,255,0.5)"}`,
-                  boxShadow:"0 8px 32px rgba(0,0,0,0.22)",transition:"border-color 0.2s,box-shadow 0.2s"}}>
-                <div style={{width:32,height:32,background:"linear-gradient(135deg,#FF9933,#FF8C00)",borderRadius:9,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                  </svg>
-                </div>
-                <input value={searchText} onChange={e=>setSearchText(e.target.value)}
-                  onFocus={()=>setSearchFocused(true)}
-                  onBlur={()=>setSearchFocused(false)}
-                  onKeyDown={e=>{if(e.key==="Enter"&&searchText.trim())setActiveTab("search");}}
-                  placeholder={t.searchPlaceholder}
-                  style={{border:"none",outline:"none",fontSize:14,flex:1,background:"transparent",color:th.text,fontFamily:bf}}/>
-                {searchText.trim()&&(
-                  <div onClick={()=>{haptic();setActiveTab("search");}}
-                    style={{background:"linear-gradient(135deg,#FF9933,#FF8C00)",borderRadius:9,padding:"7px 13px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",flexShrink:0,boxShadow:"0 3px 10px rgba(255,140,0,0.35)"}}>
-                    {t.searchBtn}
-                  </div>
-                )}
-              </div>
-            </div>
             {/* Wave divider */}
             <div style={{height:28,position:"relative",marginTop:6}}>
               <svg viewBox="0 0 420 28" preserveAspectRatio="none" style={{width:"100%",height:"100%",display:"block"}}>
