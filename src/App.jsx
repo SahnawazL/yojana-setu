@@ -1473,6 +1473,7 @@ function SchemesTab({lang,dark=false}){
   const stateHeaderRef=useRef(null);
   const centralHeaderRef=useRef(null);
   const loadMoreRef=useRef(null);
+  const pendingScrollCentral=useRef(false);
 
   // Deferred values: pill taps are instant; heavy filtering runs async
   const deferredFilter=useDeferredValue(filter);
@@ -1515,6 +1516,15 @@ function SchemesTab({lang,dark=false}){
     obs.observe(loadMoreRef.current);
     return()=>obs.disconnect();
   },[hasMore,totalVisible]);
+
+  // When central pill is tapped before central schemes are rendered,
+  // we force-load them (visibleCount bump) and set pendingScrollCentral=true.
+  // This effect fires once visibleNat is non-empty and does the deferred scroll.
+  useEffect(()=>{
+    if(!pendingScrollCentral.current||visibleNat.length===0)return;
+    pendingScrollCentral.current=false;
+    requestAnimationFrame(()=>scrollToRef(centralHeaderRef));
+  },[visibleNat.length]);
 
   const scrollToRef=(ref)=>{
     if(!ref.current||!scrollContainerRef.current)return;
@@ -1615,7 +1625,7 @@ function SchemesTab({lang,dark=false}){
               </span>
               {stateSchemes.length>0&&<span style={{fontSize:9,color:"#b45309",marginLeft:1}}>↓</span>}
             </div>
-            <div onClick={()=>{if(national.length>0){haptic(30);scrollToRef(centralHeaderRef);}}}
+            <div onClick={()=>{if(national.length>0){haptic(30);if(visibleNat.length>0){scrollToRef(centralHeaderRef);}else{pendingScrollCentral.current=true;setVisibleCount(stateSchemes.length+PAGE_SIZE);}}}}
               style={{display:"flex",alignItems:"center",gap:4,
                 background:"#EFF6FF",border:"1.5px solid #3b82f6",
                 borderRadius:20,padding:"4px 10px",
