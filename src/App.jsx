@@ -11,7 +11,7 @@
  * See the LICENSE file in the project root for full license terms.
  */
 
-import { useState, useEffect, useRef, useMemo, useCallback, useDeferredValue } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, useDeferredValue, memo } from "react";
 import {
   INDIA_STATES,
   SCHEME_DB,
@@ -38,18 +38,27 @@ const ADMIN_UID = "A3V8OsHYFAZPv8WNfh5a2ueOl632";
 function useCountUp(targets, trigger, duration=1400){
   const [counts,setCounts]=useState(targets.map(()=>0));
   const raf=useRef(null);
+  // Refs keep the latest targets/duration accessible inside the effect
+  // without making them deps — avoids re-triggering on every array reference change.
+  const targetsRef=useRef(targets);
+  const durationRef=useRef(duration);
+  useEffect(()=>{ targetsRef.current=targets; },[targets]);
+  useEffect(()=>{ durationRef.current=duration; },[duration]);
+
   useEffect(()=>{
-    if(!trigger){setCounts(targets.map(()=>0));return;}
+    const t=targetsRef.current;
+    const d=durationRef.current;
+    if(!trigger){setCounts(t.map(()=>0));return;}
     const start=performance.now();
     const step=(now)=>{
-      const p=Math.min((now-start)/duration,1);
+      const p=Math.min((now-start)/d,1);
       const ease=1-Math.pow(1-p,3); // cubic ease-out
-      setCounts(targets.map(t=>Math.floor(ease*t)));
+      setCounts(t.map(v=>Math.floor(ease*v)));
       if(p<1) raf.current=requestAnimationFrame(step);
     };
     raf.current=requestAnimationFrame(step);
     return()=>{if(raf.current)cancelAnimationFrame(raf.current);};
-  },[trigger]);
+  },[trigger]); // trigger is the only true re-run signal; targets/duration read via refs
   return counts;
 }
 // ─── HAPTIC FEEDBACK ───────────────────────────────────────────────────────────
@@ -105,24 +114,45 @@ const THEME={
 };
 
 // ─── ASHOKA CHAKRA SVG (24-spoke wheel) ────────────────────────────────────────
-function AshokaChakra({size=18,color=ASHOKA_BLUE,spinning=false}){
-  const spokes=Array.from({length:24},(_,i)=>i);
+// Stable index array — never changes, no reason to recreate it per render
+const SPOKE_INDICES=Array.from({length:24},(_,i)=>i);
+// Cache of precomputed spoke coords keyed by size (sizes used: 18, 22, 24 …)
+const _spokeCoordsCache=new Map();
+function getSpokeCoords(size){
+  if(_spokeCoordsCache.has(size))return _spokeCoordsCache.get(size);
   const cx=size/2,cy=size/2,r=size/2-1,innerR=r*0.28;
+  const coords=SPOKE_INDICES.map(i=>{
+    const a=(i*360/24)*Math.PI/180;
+    return{i,x1:cx+innerR*Math.cos(a),y1:cy+innerR*Math.sin(a),x2:cx+r*0.78*Math.cos(a),y2:cy+r*0.78*Math.sin(a)};
+  });
+  _spokeCoordsCache.set(size,coords);
+  return coords;
+}
+function AshokaChakra({size=18,color=ASHOKA_BLUE,spinning=false}){
+  const cx=size/2,cy=size/2,r=size/2-1,innerR=r*0.28;
+  const spokeCoords=getSpokeCoords(size);
   return(
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}
       style={{flexShrink:0,animation:spinning?"chakra-spin 3s linear infinite":"none"}}>
-      <style>{`@keyframes chakra-spin{from{transform-box:fill-box;transform-origin:center;transform:rotate(0deg)}to{transform-box:fill-box;transform-origin:center;transform:rotate(360deg)}}`}</style>
       <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={size*0.055}/>
       <circle cx={cx} cy={cy} r={innerR} fill={color}/>
-      {spokes.map(i=>{
-        const a=(i*360/24)*Math.PI/180;
-        return <line key={i} x1={cx+innerR*Math.cos(a)} y1={cy+innerR*Math.sin(a)} x2={cx+r*0.78*Math.cos(a)} y2={cy+r*0.78*Math.sin(a)} stroke={color} strokeWidth={size*0.042}/>;
-      })}
+      {spokeCoords.map(({i,x1,y1,x2,y2})=>(
+        <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={size*0.042}/>
+      ))}
     </svg>
   );
 }
 
 // ─── TRANSLATIONS ──────────────────────────────────────────────────────────────
+// Precomputed spoke lines for the fixed 220×220 decorative watermark chakra
+// (cx=110, cy=110, r=100, ir=28 — never changes)
+const WATERMARK_SPOKES=(()=>{
+  const cx=110,cy=110,r=100,ir=28;
+  return SPOKE_INDICES.map(i=>{
+    const a=(i*360/24)*Math.PI/180;
+    return{i,x1:cx+ir*Math.cos(a),y1:cy+ir*Math.sin(a),x2:cx+r*0.78*Math.cos(a),y2:cy+r*0.78*Math.sin(a)};
+  });
+})();
 const T = {
   en: {
     appName:"Yojana Sahay", appSub:"Official Scheme Finder",
@@ -1402,14 +1432,8 @@ function SkeletonCard({dark=false}){
   const th=THEME[dark?"dark":"light"];
   return(
     <div style={{background:th.card,borderRadius:16,padding:"14px 16px",marginBottom:10,
-      border:`1.5px solid ${th.border}`,overflow:"hidden",position:"relative"}}>
-      <style>{`
-        @keyframes sk-shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
-        .sk-s{position:relative;overflow:hidden}
-        .sk-s::after{content:"";position:absolute;inset:0;
-          background:linear-gradient(90deg,transparent 0%,${dark?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.75)"} 50%,transparent 100%);
-          animation:sk-shimmer 1.4s infinite}
-      `}</style>
+      border:`1.5px solid ${th.border}`,overflow:"hidden",position:"relative",
+      "--sk-shimmer-color": dark?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.75)"}}>
       <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
         <div className="sk-s" style={{width:42,height:42,borderRadius:13,flexShrink:0,
           background:dark?"#2c2c2e":"#eeeeea"}}/>
@@ -2106,6 +2130,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       startTimer();setOtp(["","","","","",""]);setStage("otp");
     }catch(err){
       setAuthError(err.message||"Failed to send OTP. Please try again.");
+      verifierRef.current?.clear(); // destroy widget & free the DOM element before next attempt
       verifierRef.current=null;
     }finally{setAuthLoading(false);}
   };
@@ -2275,8 +2300,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
         const snap=await getDoc(doc(db,"users",user.uid));
         if(snap.exists()){
           setProfile(snap.data());setStage("dashboard");
-          setLoginToast({name:user.displayName||user.email||"",photo:user.photoURL||""});
-          setTimeout(()=>setLoginToast(null),3200);
+          setGoogleLoading(false); // reset spinner — toast already shown at line above
           return;
         }
       }catch{}
@@ -2290,6 +2314,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
         if(savedAnswers.house)  setSetupHouse(savedAnswers.house);
       }
       setStage("setup1");
+      setGoogleLoading(false); // reset spinner for new user entering setup flow
     }).catch(err=>{
       if(err.code==="auth/popup-blocked"||err.code==="auth/popup-closed-by-user"){
         // Popup blocked — fall back to full-page redirect
@@ -2820,6 +2845,9 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   // ── STAGE: SETUP 1 — Name + Gender ──────────────────────────────────────────
   if(stage==="setup1"){
     const canNext=setupName.trim().length>=2&&!!setupGender;
+    // Extracted from IIFE — computed once per render, not inside JSX
+    const isPhoneUser=auth.currentUser?.providerData?.some(p=>p.providerId==="phone");
+    const phoneValid=phone.length===0||phone.length===10;
     return(
       <div style={{flex:1,display:"flex",flexDirection:"column",background:th.appBg,overflowY:"auto"}}>
         <TriHeader bg="linear-gradient(135deg,#003580 0%,#1a56db 100%)">
@@ -2860,11 +2888,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
           </div>
 
           {/* Optional phone number — shown for Google/email users; read-only for phone-auth users */}
-          {(()=>{
-            const isPhoneUser=auth.currentUser?.providerData?.some(p=>p.providerId==="phone");
-            const phoneValid=phone.length===0||phone.length===10;
-            return(
-              <div style={{marginBottom:22}}>
+          <div style={{marginBottom:22}}>
                 <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                   <div style={{fontSize:12,fontWeight:700,color:th.textMid,fontFamily:bf,letterSpacing:0.3}}>
                     📱 {isHindi?"मोबाइल नंबर":"Mobile Number"}
@@ -2904,8 +2928,6 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                   </div>
                 )}
               </div>
-            );
-          })()}
 
           <div onClick={()=>{if(canNext)haptic();handleSetup1Next();}}
             style={{background:canNext?"linear-gradient(135deg,#FF9933,#FF8C00)":"#ddd",borderRadius:14,padding:15,textAlign:"center",fontSize:15,fontWeight:700,color:"#fff",cursor:canNext?"pointer":"default",fontFamily:bf,boxShadow:canNext?"0 6px 22px rgba(255,153,51,0.42)":"none",transition:"all 0.22s"}}>
@@ -3396,6 +3418,16 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
   const areaLabel=T[lang].fields.areas.find(a=>a.v===profile?.area)?.l||profile?.area||"—";
   const houseVal=profile?.house==="yes"?(isHindi?"पक्का मकान":"Pucca House"):profile?.house==="no"?(isHindi?"मकान नहीं":"No House"):(isHindi?"कच्चा":"Kutcha");
 
+  // Welfare card variables — extracted from IIFE so they're computed once, not inside JSX
+  const welfareRationLabel=pt.rations.find(r=>r.v===profile?.ration)?.l||null;
+  const welfareMaritalLabel=pt.maritals.find(m=>m.v===profile?.marital)?.l||null;
+  const welfareDisabilityLabel=profile?.disability==="none"
+    ?pt.disabilityNone
+    :(pt.disabilityTypes.find(d=>d.v===profile?.disability)?.l||pt.disabilityYes);
+  const welfareRationColor=profile?.ration==="aay"?"#DC2626":profile?.ration==="bpl"?"#D97706":profile?.ration==="apl"?"#2563EB":"#6B7280";
+  const welfareMaritalColor=profile?.marital==="widowed"?"#DC2626":profile?.marital==="married"?"#FF9933":"#003580";
+  const welfareDisabilityColor=profile?.disability==="none"?"#138808":"#7C3AED";
+
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",background:th.appBg,overflowY:"auto"}}>
 
@@ -3584,16 +3616,7 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
         </div>
 
         {/* ── Welfare Profile Summary ── */}
-        {(profile?.ration||profile?.marital||profile?.disability)&&(()=>{
-          const rationLabel=pt.rations.find(r=>r.v===profile.ration)?.l||null;
-          const maritalLabel=pt.maritals.find(m=>m.v===profile.marital)?.l||null;
-          const disabilityLabel=profile.disability==="none"
-            ?pt.disabilityNone
-            :(pt.disabilityTypes.find(d=>d.v===profile.disability)?.l||pt.disabilityYes);
-          const rationColor=profile.ration==="aay"?"#DC2626":profile.ration==="bpl"?"#D97706":profile.ration==="apl"?"#2563EB":"#6B7280";
-          const maritalColor=profile.marital==="widowed"?"#DC2626":profile.marital==="married"?"#FF9933":"#003580";
-          const disabilityColor=profile.disability==="none"?"#138808":"#7C3AED";
-          return(
+        {(profile?.ration||profile?.marital||profile?.disability)&&(
             <div style={{
               background:th.card,borderRadius:18,overflow:"hidden",marginBottom:14,
               border:`1.5px solid ${th.border}`,
@@ -3610,40 +3633,39 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
                 </div>
               </div>
               <div style={{padding:"8px 16px"}}>
-                {rationLabel&&(
+                {welfareRationLabel&&(
                   <div style={{display:"flex",alignItems:"center",gap:12,padding:"11px 0",borderBottom:`1px solid ${th.divider}`}}>
-                    <div style={{width:38,height:38,borderRadius:11,background:`${rationColor}15`,border:`1.5px solid ${rationColor}28`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>🪪</div>
+                    <div style={{width:38,height:38,borderRadius:11,background:`${welfareRationColor}15`,border:`1.5px solid ${welfareRationColor}28`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>🪪</div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:9.5,color:th.textSub,fontFamily:bf,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600}}>{pt.rationLabel}</div>
-                      <div style={{fontSize:13.5,fontWeight:700,color:rationColor,fontFamily:bf,marginTop:2}}>{rationLabel}</div>
+                      <div style={{fontSize:13.5,fontWeight:700,color:welfareRationColor,fontFamily:bf,marginTop:2}}>{welfareRationLabel}</div>
                     </div>
-                    <div style={{width:8,height:8,borderRadius:"50%",background:rationColor,boxShadow:`0 0 8px ${rationColor}70`,flexShrink:0}}/>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:welfareRationColor,boxShadow:`0 0 8px ${welfareRationColor}70`,flexShrink:0}}/>
                   </div>
                 )}
-                {maritalLabel&&(
+                {welfareMaritalLabel&&(
                   <div style={{display:"flex",alignItems:"center",gap:12,padding:"11px 0",borderBottom:`1px solid ${th.divider}`}}>
-                    <div style={{width:38,height:38,borderRadius:11,background:`${maritalColor}15`,border:`1.5px solid ${maritalColor}28`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>💍</div>
+                    <div style={{width:38,height:38,borderRadius:11,background:`${welfareMaritalColor}15`,border:`1.5px solid ${welfareMaritalColor}28`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>💍</div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:9.5,color:th.textSub,fontFamily:bf,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600}}>{pt.maritalLabel}</div>
-                      <div style={{fontSize:13.5,fontWeight:700,color:maritalColor,fontFamily:bf,marginTop:2}}>{maritalLabel}</div>
+                      <div style={{fontSize:13.5,fontWeight:700,color:welfareMaritalColor,fontFamily:bf,marginTop:2}}>{welfareMaritalLabel}</div>
                     </div>
-                    <div style={{width:8,height:8,borderRadius:"50%",background:maritalColor,boxShadow:`0 0 8px ${maritalColor}70`,flexShrink:0}}/>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:welfareMaritalColor,boxShadow:`0 0 8px ${welfareMaritalColor}70`,flexShrink:0}}/>
                   </div>
                 )}
                 {profile.disability!==undefined&&(
                   <div style={{display:"flex",alignItems:"center",gap:12,padding:"11px 0"}}>
-                    <div style={{width:38,height:38,borderRadius:11,background:`${disabilityColor}15`,border:`1.5px solid ${disabilityColor}28`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>♿</div>
+                    <div style={{width:38,height:38,borderRadius:11,background:`${welfareDisabilityColor}15`,border:`1.5px solid ${welfareDisabilityColor}28`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>♿</div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:9.5,color:th.textSub,fontFamily:bf,letterSpacing:0.5,textTransform:"uppercase",fontWeight:600}}>{pt.disabilityLabel}</div>
-                      <div style={{fontSize:13.5,fontWeight:700,color:disabilityColor,fontFamily:bf,marginTop:2}}>{disabilityLabel}</div>
+                      <div style={{fontSize:13.5,fontWeight:700,color:welfareDisabilityColor,fontFamily:bf,marginTop:2}}>{welfareDisabilityLabel}</div>
                     </div>
-                    <div style={{width:8,height:8,borderRadius:"50%",background:disabilityColor,boxShadow:`0 0 8px ${disabilityColor}70`,flexShrink:0}}/>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:welfareDisabilityColor,boxShadow:`0 0 8px ${welfareDisabilityColor}70`,flexShrink:0}}/>
                   </div>
                 )}
               </div>
             </div>
-          );
-        })()}
+        )}
 
         {/* ── Settings Card ── */}
         <div style={{
@@ -3784,20 +3806,6 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
             padding:"20px",
             animation:"so_bd 0.25s ease both",
           }}>
-          <style>{`
-            @keyframes so_bd{from{opacity:0}to{opacity:1}}
-            @keyframes so_in{
-              0%  {opacity:0;transform:scale(0.82) translateY(24px)}
-              65% {opacity:1;transform:scale(1.02) translateY(-3px)}
-              100%{opacity:1;transform:scale(1)   translateY(0)}
-            }
-            @keyframes so_ring1{0%,100%{transform:scale(1);opacity:0.5}50%{transform:scale(1.18);opacity:0}}
-            @keyframes so_ring2{0%,100%{transform:scale(1);opacity:0.35}50%{transform:scale(1.32);opacity:0}}
-            @keyframes so_iconbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-            @keyframes so_fadeslide{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-            @keyframes so_avatarring{0%,100%{box-shadow:0 0 0 3px rgba(255,153,51,0.55)}50%{box-shadow:0 0 0 5px rgba(255,153,51,0.18)}}
-            @keyframes so_btnshine{0%{left:-80%}100%{left:130%}}
-          `}</style>
 
           <div
             onClick={e=>e.stopPropagation()}
@@ -4183,16 +4191,6 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
       )}
 
       {/* ── Login Success Toast ── */}
-      <style>{`
-        @keyframes toastSlideIn {
-          from { opacity: 0; transform: translateX(-50%) translateY(16px); }
-          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        @keyframes toastFadeOut {
-          from { opacity: 1; }
-          to   { opacity: 0; }
-        }
-      `}</style>
       {loginToast&&(
         <div style={{
           position:"fixed",
@@ -4250,6 +4248,10 @@ function ProfileTab({lang,profile,setProfile,toggleLang,onViewChecker,dark=false
     </div>
   );
 }
+
+// Memoised so it only re-renders when its own props actually change.
+// All function props passed to it must be stable (useCallback) for this to work.
+const ProfileTabMemo = memo(ProfileTab);
 
 // ─── BENEFIT CALCULATOR CARD ───────────────────────────────────────────────────
 function BenefitCalculatorCard({ allMatchedSchemes, lang, dark, onSchemeOpen }) {
@@ -4954,6 +4956,61 @@ const APP_STYLES = `
           will-change:transform;
         }
         .fpill-state:active{transform:scale(0.93);transition:transform 0.1s ease;}
+
+        /* ── AshokaChakra spin (moved from inline SVG <style>) ── */
+        @keyframes chakra-spin{
+          from{transform-box:fill-box;transform-origin:center;transform:rotate(0deg)}
+          to{transform-box:fill-box;transform-origin:center;transform:rotate(360deg)}
+        }
+
+        /* ── Avatar modal animations (moved from inline render <style>) ── */
+        @keyframes avBg   { from{opacity:0} to{opacity:1} }
+        @keyframes avCard {
+          from { opacity:0; transform:scale(0.66) translateY(28px); }
+          to   { opacity:1; transform:scale(1)    translateY(0);    }
+        }
+        @keyframes avShine {
+          0%   { transform:translateX(-200%); }
+          100% { transform:translateX(420%);  }
+        }
+        @keyframes avBadge {
+          from { opacity:0; transform:translateY(10px); }
+          to   { opacity:1; transform:translateY(0);    }
+        }
+
+        /* ── Sign-out modal animations (moved from inline render <style>) ── */
+        @keyframes so_bd{from{opacity:0}to{opacity:1}}
+        @keyframes so_in{
+          0%  {opacity:0;transform:scale(0.82) translateY(24px)}
+          65% {opacity:1;transform:scale(1.02) translateY(-3px)}
+          100%{opacity:1;transform:scale(1)   translateY(0)}
+        }
+        @keyframes so_ring1{0%,100%{transform:scale(1);opacity:0.5}50%{transform:scale(1.18);opacity:0}}
+        @keyframes so_ring2{0%,100%{transform:scale(1);opacity:0.35}50%{transform:scale(1.32);opacity:0}}
+        @keyframes so_iconbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+        @keyframes so_fadeslide{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes so_avatarring{0%,100%{box-shadow:0 0 0 3px rgba(255,153,51,0.55)}50%{box-shadow:0 0 0 5px rgba(255,153,51,0.18)}}
+        @keyframes so_btnshine{0%{left:-80%}100%{left:130%}}
+
+        /* ── Skeleton shimmer (moved from SkeletonCard inline <style>) ── */
+        @keyframes sk-shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+        .sk-s{position:relative;overflow:hidden}
+        .sk-s::after{content:"";position:absolute;inset:0;
+          background:linear-gradient(90deg,transparent 0%,var(--sk-shimmer-color,rgba(255,255,255,0.75)) 50%,transparent 100%);
+          animation:sk-shimmer 1.4s infinite}
+        .dark .sk-s::after{
+          background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.07) 50%,transparent 100%);
+        }
+
+        /* ── Login toast animations (moved from ProfileTab inline <style>) ── */
+        @keyframes toastSlideIn {
+          from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes toastFadeOut {
+          from { opacity: 1; }
+          to   { opacity: 0; }
+        }
 `;
 
 // ─── MAIN APP ──────────────────────────────────────────────────────────────────
@@ -4975,13 +5032,18 @@ export default function YojanaSahay(){
   });
   // Shows once per browser session — won't replay on tab switch
   const [splashDone,setSplashDone]=useState(()=>sessionStorage.getItem("ys_splashed")==="1");
-  const toggleDark=()=>setDark(d=>!d);
+  const toggleDark=useCallback(()=>setDark(d=>!d),[]);
 
   // ── SMOOTH SWIPE — direction-aware slide transition ────────────────────────
   const swipeRef    = useRef(null);   // { x, y, lockedAxis } from touchstart
   const [swipeDir,  setSwipeDir]  = useState(null);   // "left"|"right"|null
   const dragXRef      = useRef(0);          // live finger offset — no re-render
   const dragTargetRef = useRef(null);       // DOM ref to whichever tab is active
+  // Lazy-mount tracker — tabs are only mounted on first visit, then kept alive.
+  // We mutate the Set during render (before JSX) so the newly-active tab
+  // mounts on the SAME render it becomes active — no one-frame blank flash.
+  // "home" is pre-seeded because it's the initial activeTab.
+  const mountedTabsRef = useRef(new Set(["home"]));
 
   const handleTouchStart = useCallback((e) => {
     if (showAdmin || showChecker || selectedScheme || selectedCategory) return;
@@ -5112,7 +5174,10 @@ export default function YojanaSahay(){
   const t=T[lang];
   const isHindi=lang==="hi";
   const bf=fontFamily(lang);
-  const toggleLang=()=>{setLangAnim(true);setTimeout(()=>{setLang(l=>l==="en"?"hi":"en");setLangAnim(false);},120);};
+  const toggleLang=useCallback(()=>{setLangAnim(true);setTimeout(()=>{setLang(l=>l==="en"?"hi":"en");setLangAnim(false);},120);},[]);
+  // Stable callbacks for ProfileTabMemo — inline arrows would break memoisation
+  const handleViewChecker=useCallback(()=>setShowChecker(true),[]);
+  const handleAdminOpen  =useCallback(()=>setShowAdmin(true),[]);
 
   // ── HARDWARE BACK BUTTON (Android) — top-level overlays ─────────────────────
   // Push a history entry for each top-level overlay so pressing back closes it
@@ -5267,6 +5332,9 @@ export default function YojanaSahay(){
     },
   ],[t]);
 
+  // Seed the currently-active tab before JSX so its content renders immediately
+  mountedTabsRef.current.add(activeTab);
+
   return(
     <div className="app-root" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{fontFamily:bf,background:th.appBg,maxWidth:420,margin:"0 auto",position:"relative",display:"flex",flexDirection:"column",overflowX:"hidden",boxShadow:"0 0 60px rgba(0,0,0,0.15)",opacity:langAnim?0.7:1,transition:"opacity 0.12s,background 0.3s"}}>
       {/* ── SPLASH SCREEN — shown once per session ── */}
@@ -5282,15 +5350,14 @@ export default function YojanaSahay(){
            Each tab uses the same flex+visibility trick as the AI tab.
            Animation class is applied on the wrapper when the tab becomes active.    ── */}
 
-      {/* HOME */}
+      {/* HOME — always mounted (initial tab); hidden with display:none when inactive */}
       <div
         ref={activeTab==="home" ? dragTargetRef : null}
         className={activeTab==="home" ? (swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":undefined) : undefined}
         style={{
-          display:"flex",flex:activeTab==="home"?1:0,
+          display:activeTab==="home"?"flex":"none",
+          flex:1,
           flexDirection:"column",minHeight:0,overflow:"hidden",
-          visibility:activeTab==="home"?"visible":"hidden",
-          pointerEvents:activeTab==="home"?"auto":"none",
           willChange:"transform",
         }}>
         <div style={{flex:1,overflowY:"auto"}}>
@@ -5299,10 +5366,9 @@ export default function YojanaSahay(){
             {/* Decorative: large spinning chakra watermark */}
             <div className="spin" style={{position:"absolute",right:-55,top:-55,width:220,height:220,borderRadius:"50%",border:"2px solid rgba(255,255,255,0.06)",opacity:1,pointerEvents:"none"}}>
               <svg width="220" height="220" viewBox="0 0 220 220" style={{position:"absolute",inset:0,opacity:0.07}}>
-                {Array.from({length:24},(_,i)=>{
-                  const a=(i*360/24)*Math.PI/180,cx=110,cy=110,r=100,ir=28;
-                  return <line key={i} x1={cx+ir*Math.cos(a)} y1={cy+ir*Math.sin(a)} x2={cx+r*0.78*Math.cos(a)} y2={cy+r*0.78*Math.sin(a)} stroke="#fff" strokeWidth={3}/>;
-                })}
+                {WATERMARK_SPOKES.map(({i,x1,y1,x2,y2})=>(
+                  <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#fff" strokeWidth={3}/>
+                ))}
                 <circle cx="110" cy="110" r="100" fill="none" stroke="#fff" strokeWidth="5"/>
                 <circle cx="110" cy="110" r="28" fill="#fff"/>
               </svg>
@@ -5695,56 +5761,53 @@ export default function YojanaSahay(){
       )
       </div>
 
-      {/* SEARCH */}
+      {/* SEARCH — lazy mount: nothing rendered until first visit */}
       <div
         ref={activeTab==="search" ? dragTargetRef : null}
         className={activeTab==="search" ? (swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":undefined) : undefined}
         style={{
-          display:"flex",flex:activeTab==="search"?1:0,
+          display:activeTab==="search"?"flex":"none",
+          flex:1,
           flexDirection:"column",minHeight:0,overflow:"hidden",
-          visibility:activeTab==="search"?"visible":"hidden",
-          pointerEvents:activeTab==="search"?"auto":"none",
           willChange:"transform",
         }}>
-        <SearchTab lang={lang} initialQuery={searchText} dark={dark}/>
+        {mountedTabsRef.current.has("search") && <SearchTab lang={lang} initialQuery={searchText} dark={dark}/>}
       </div>
 
-      {/* SCHEMES */}
+      {/* SCHEMES — lazy mount: nothing rendered until first visit */}
       <div
         ref={activeTab==="schemes" ? dragTargetRef : null}
         className={activeTab==="schemes" ? (swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":undefined) : undefined}
         style={{
-          display:"flex",flex:activeTab==="schemes"?1:0,
+          display:activeTab==="schemes"?"flex":"none",
+          flex:1,
           flexDirection:"column",minHeight:0,overflow:"hidden",
-          visibility:activeTab==="schemes"?"visible":"hidden",
-          pointerEvents:activeTab==="schemes"?"auto":"none",
           willChange:"transform",
         }}>
-        <SchemesTab lang={lang} dark={dark}/>
+        {mountedTabsRef.current.has("schemes") && <SchemesTab lang={lang} dark={dark}/>}
       </div>
 
-      {/* PROFILE */}
+      {/* PROFILE — lazy mount: nothing rendered until first visit */}
       <div
         ref={activeTab==="profile" ? dragTargetRef : null}
         className={activeTab==="profile" ? (swipeDir==="left"?"tab-enter-left":swipeDir==="right"?"tab-enter-right":undefined) : undefined}
         style={{
-          display:"flex",flex:activeTab==="profile"?1:0,
+          display:activeTab==="profile"?"flex":"none",
+          flex:1,
           flexDirection:"column",minHeight:0,overflow:"hidden",
-          visibility:activeTab==="profile"?"visible":"hidden",
-          pointerEvents:activeTab==="profile"?"auto":"none",
           willChange:"transform",
         }}>
-        <ProfileTab
+        {mountedTabsRef.current.has("profile") && <ProfileTabMemo
           lang={lang}
           profile={profile}
           setProfile={setProfile}
           toggleLang={toggleLang}
-          onViewChecker={()=>setShowChecker(true)}
+          onViewChecker={handleViewChecker}
           dark={dark}
           toggleDark={toggleDark}
           isAdmin={auth.currentUser?.uid===ADMIN_UID}
-          onAdminOpen={()=>setShowAdmin(true)}
-        />
+          onAdminOpen={handleAdminOpen}
+        />}
       </div>
 
       {/* ── AI TAB — always mounted so chat history survives tab switches.
@@ -5879,21 +5942,6 @@ export default function YojanaSahay(){
             backdropFilter:"blur(28px)",WebkitBackdropFilter:"blur(28px)",
             animation:"avBg 0.30s ease forwards",
           }}>
-          <style>{`
-            @keyframes avBg   { from{opacity:0} to{opacity:1} }
-            @keyframes avCard {
-              from { opacity:0; transform:scale(0.66) translateY(28px); }
-              to   { opacity:1; transform:scale(1)    translateY(0);    }
-            }
-            @keyframes avShine {
-              0%   { transform:translateX(-200%); }
-              100% { transform:translateX(420%);  }
-            }
-            @keyframes avBadge {
-              from { opacity:0; transform:translateY(10px); }
-              to   { opacity:1; transform:translateY(0);    }
-            }
-          `}</style>
 
           {/* ── Content card ── */}
           <div
