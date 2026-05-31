@@ -1560,7 +1560,12 @@ function SchemesTab({lang,dark=false}){
         </div>
 
         {/* Category filter pills */}
-        <div style={{display:"flex",gap:7,overflowX:"auto",paddingBottom:14,scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
+        <div
+          style={{display:"flex",gap:7,overflowX:"auto",paddingBottom:14,scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}
+          onTouchStart={e=>e.stopPropagation()}
+          onTouchMove={e=>e.stopPropagation()}
+          onTouchEnd={e=>e.stopPropagation()}
+        >
           <div onClick={()=>{haptic();setFilter("all");}}
             className="fpill"
             style={{
