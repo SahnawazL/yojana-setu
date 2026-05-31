@@ -599,7 +599,7 @@ function DarkModeToggle({dark,onToggle}){
 // ─── SCHEME CARD (used in eligibility results, schemes tab & category sheet) ─────
 // Smooth expand/collapse via CSS grid 0fr→1fr trick.
 // Content is ALWAYS mounted — animation works in both directions everywhere.
-function SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
+function _SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
   const th=THEME[dark?"dark":"light"];
   const t=T[lang];
   const bf=fontFamily(lang);
@@ -825,6 +825,14 @@ function SchemeCard({scheme,lang,expanded,onToggle,dark=false}){
     </div>
   );
 }
+// Custom memo comparator — ignores onToggle (always a new arrow fn) and only
+// re-renders when the data that actually affects the UI changes.
+const SchemeCard = memo(_SchemeCard, (prev, next) =>
+  prev.scheme  === next.scheme  &&
+  prev.lang    === next.lang    &&
+  prev.expanded=== next.expanded&&
+  prev.dark    === next.dark
+);
 
 // ─── CATEGORY FILTER SHEET ─────────────────────────────────────────────────────
 // Opens when user taps a category tile on home page.
@@ -5373,7 +5381,7 @@ export default function YojanaSahay(){
           display:activeTab==="home"?"flex":"none",
           flex:1,
           flexDirection:"column",minHeight:0,overflow:"hidden",
-          willChange:"transform",
+          willChange:activeTab==="home"?"transform":"auto",
         }}>
         <div style={{flex:1,overflowY:"auto"}}>
           {/* ── PREMIUM HEADER ── */}
@@ -5759,7 +5767,7 @@ export default function YojanaSahay(){
           display:activeTab==="search"?"flex":"none",
           flex:1,
           flexDirection:"column",minHeight:0,overflow:"hidden",
-          willChange:"transform",
+          willChange:activeTab==="search"?"transform":"auto",
         }}>
         {mountedTabsRef.current.has("search") && <SearchTab lang={lang} initialQuery={searchText} dark={dark}/>}
       </div>
@@ -5772,7 +5780,7 @@ export default function YojanaSahay(){
           display:activeTab==="schemes"?"flex":"none",
           flex:1,
           flexDirection:"column",minHeight:0,overflow:"hidden",
-          willChange:"transform",
+          willChange:activeTab==="schemes"?"transform":"auto",
         }}>
         {mountedTabsRef.current.has("schemes") && <SchemesTab lang={lang} dark={dark}/>}
       </div>
@@ -5785,7 +5793,7 @@ export default function YojanaSahay(){
           display:activeTab==="profile"?"flex":"none",
           flex:1,
           flexDirection:"column",minHeight:0,overflow:"hidden",
-          willChange:"transform",
+          willChange:activeTab==="profile"?"transform":"auto",
         }}>
         {mountedTabsRef.current.has("profile") && <ProfileTabMemo
           lang={lang}
@@ -5817,7 +5825,7 @@ export default function YojanaSahay(){
           flexDirection:"column",minHeight:0,overflow:"hidden",
           visibility:activeTab==="ai"?"visible":"hidden",
           pointerEvents:activeTab==="ai"?"auto":"none",
-          willChange:"transform",
+          willChange:activeTab==="ai"?"transform":"auto",
         }}>
         {auth.currentUser ? (
           <AIChat
